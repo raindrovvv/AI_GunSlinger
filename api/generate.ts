@@ -37,32 +37,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { round = 1, previousNames = [] } = req.body ?? {}
   const spec = difficultySpec(Number(round) || 1)
   const archetype = ARCHETYPES[spec.round - 1] ?? ARCHETYPES[0]
+  const avoidList = Array.isArray(previousNames) ? previousNames.slice(-6).join(', ') : ''
 
-  const systemPrompt = `당신은 서부극 캐릭터 설계자입니다. 결투 상대 한 명을 만들어 JSON으로 반환하세요.
+  const systemPrompt = `서부극 결투 상대 캐릭터를 생성해 JSON으로 반환하세요.
 
-[이번 상대의 결]
-${archetype}
+[상대 유형] ${archetype}
+[기준 스탯] baseReactionMs ~${spec.reaction} (낮을수록 빠름), baseAccuracy ~${spec.accuracy}, bounty ~$${spec.bounty}
 
-[난이도 ${spec.round}/9 기준값]
-- baseReactionMs: ${spec.reaction} 근처 (±25). 낮을수록 빠르다.
-- baseAccuracy: ${spec.accuracy} 근처 (±0.04)
-- bounty: ${spec.bounty} 근처
-
-[필드 작성 규칙]
 ${NAME_RULES}
-- 이미 쓴 이름·별명과 겹치면 안 된다 → ${JSON.stringify(previousNames).slice(0, 300)}
-- crime: 죄목 한 줄. 구체적인 사건으로.
-- appearance: 결투장에서 눈에 보이는 겉모습 한 줄.
-- tell: 총을 뽑기 직전 반드시 나오는 '몸의 습관' 한 줄.
-  → 반드시 눈으로 관찰 가능한 동작이어야 한다 (손, 눈, 발, 입, 장비).
-  → 심리 묘사나 추상적 표현("살기를 뿜는다") 금지.
-- personality: 성격 + 어떤 말에 흔들리는지 한 줄. 대화 공략 단서가 되어야 한다.
-- taunt: 결투 전 던지는 도발 한마디. 40자 이내, 실제 입말.
+${avoidList ? `- 중복 방지: ${avoidList}` : ''}
+- crime: 구체적 범죄 한 줄
+- appearance: 외모 특징 한 줄
+- tell: 뽑기 직전 관찰 가능한 신체 버릇 한 줄(손/눈/모자/장비 등)
+- personality: 성격 및 대화 공략 약점 한 줄
+- taunt: 결투 직전 도발 대사(40자 이내)
 
 ${KOREAN_RULES}
-
 ${WORLD_RULES}
-
 ${OUTPUT_RULES}
 
 [출력 스키마]
@@ -72,11 +63,11 @@ ${OUTPUT_RULES}
     const completion = await getClient().chat.completions.create({
       model: MODEL,
       temperature: 1.05,
-      max_tokens: 400,
+      max_tokens: 240,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `라운드 ${spec.round} 상대를 만들어라.` },
+        { role: 'user', content: `라운드 ${spec.round} 무법자 1명 생성` },
       ],
     })
 

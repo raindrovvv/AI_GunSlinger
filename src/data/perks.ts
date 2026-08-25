@@ -26,6 +26,21 @@ export const PERKS: Perk[] = [
     name: '낡은 부적',
     desc: '상대의 반응이 35ms 느려진다',
   },
+  {
+    id: 'second_chance',
+    name: '속사 리볼버',
+    desc: '빗맞혔을 때 즉시 1회 재사격 기회를 얻는다',
+  },
+  {
+    id: 'golden_spur',
+    name: '황금 박차',
+    desc: '결투 및 화해 보상 현상금이 30% 증가한다',
+  },
+  {
+    id: 'poker_face',
+    name: '포커페이스',
+    desc: '대치에서 상대가 침착해지지 않아 불리함을 막아준다',
+  },
 ]
 
 export function perkById(id: PerkId): Perk {

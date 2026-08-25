@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { bgm } from '../audio/bgm'
 import { sfx } from '../audio/sfx'
 import { CANVAS_LABEL_FONT } from '../fonts'
+import { getFameInfo } from '../data/fame'
 import { perkById } from '../data/perks'
 import { PerkIcon } from './PerkIcon'
 import { geometryOf, getBackdrop } from '../canvas/backdrop'
@@ -26,6 +27,7 @@ interface Props {
   round: number
   perks: PerkId[]
   streak: number
+  playerName?: string
   onResult: (outcome: DuelOutcome) => void
 }
 
@@ -37,6 +39,16 @@ interface Particle {
   life: number
   decay: number
   size: number
+}
+
+interface Tracer {
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+  life: number
+  color: string
+  width: number
 }
 
 const HOLD_STEPS = [620, 1240, 1860]
@@ -56,7 +68,15 @@ const GRADE_LABEL: Record<DrawGrade, string> = {
   '-': '',
 }
 
-export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) {
+export function Duel({
+  opponent,
+  mods,
+  round,
+  perks,
+  streak,
+  playerName = 'YOU',
+  onResult,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fxCanvasRef = useRef<HTMLCanvasElement>(null)
   const [phase, setPhase] = useState<Phase>('idle')
@@ -67,14 +87,39 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
   const [flash, setFlash] = useState<'none' | 'draw' | 'win' | 'lose'>('none')
 
   const has = useCallback((id: PerkId) => perks.includes(id), [perks])
+  const fame = useMemo(() => getFameInfo(streak), [streak])
 
   const tuning = useMemo(() => {
-    // Deterministic jitter per opponent/round to maintain purity
+    // 1. 라운드 난이도 & 상대 민첩성: 초반(1~3R)은 둔해서 +14%, 후반(7~9R)은 날렵해서 -12%
+    const roundScale = round <= 3 ? 1.14 : round <= 6 ? 1.0 : 0.88
+
+    // 2. 대치(심리전) 결과: 공포/위축/경계 상태면 자세가 무너져 +14%, 평정이면 정자세 -8%
+    const moodScale =
+      mods.mood === 'scared' || mods.mood === 'intimidated' || mods.mood === 'suspicious'
+        ? 1.14
+        : mods.mood === 'angered'
+          ? 1.08
+          : mods.mood === 'calm'
+            ? 0.92
+            : 1.0
+
+    // 3. 사막 거리감 & 바람에 따른 고유 편차 (±8% 미세 편차)
+    const envJitter = (((opponent.name.length * 13 + round * 37) % 17) - 8) * 0.01
+
+    // 4. 전리품 보너스
+    const perkHitScale = perks.includes('keen') ? 1.3 : 1.0
+    const perkHeadScale = perks.includes('silver') ? 1.2 : 1.0
+
+    // 최종 결투 히트박스 스케일
+    const totalHitScale = roundScale * moodScale * (1 + envJitter) * perkHitScale
+
+    // 결정론적 반응속도 지터
     const jitter = (((opponent.name.length * 17 + round * 23) % 41) - 20)
+
     return {
       warnings: 1 + (perks.includes('steady') ? 1 : 0),
-      hitScale: perks.includes('keen') ? 1.3 : 1,
-      headScale: perks.includes('silver') ? 1.2 : 1,
+      hitScale: totalHitScale,
+      headScale: perkHeadScale,
       fastGrace: perks.includes('fast') ? 60 : 0,
       enemyReaction: Math.max(
         170,
@@ -84,8 +129,18 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
           (perks.includes('charm') ? 35 : 0),
       ),
       accuracy: Math.min(0.99, Math.max(0.2, opponent.baseAccuracy + mods.accuracyDelta)),
+      hitBonusPercent: Math.round((totalHitScale - 1) * 100),
     }
-  }, [opponent.name, opponent.baseReactionMs, opponent.baseAccuracy, mods.reactionDeltaMs, mods.accuracyDelta, perks, round])
+  }, [
+    opponent.name,
+    opponent.baseReactionMs,
+    opponent.baseAccuracy,
+    mods.reactionDeltaMs,
+    mods.accuracyDelta,
+    mods.mood,
+    perks,
+    round,
+  ])
 
   const [warningsLeft, setWarningsLeft] = useState(() => tuning.warnings)
 
@@ -109,6 +164,8 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
   const resolvedRef = useRef(false)
   const dustRef = useRef<Particle[]>([])
   const smokeRef = useRef<Particle[]>([])
+  const tracersRef = useRef<Tracer[]>([])
+  const secondChanceUsedRef = useRef(false)
   const shakeRef = useRef(0)
   const resultFlashRef = useRef(0)
   const zoomRef = useRef(0)
@@ -364,10 +421,19 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
         if (phaseRef.current === 'draw' && playerShotAtRef.current === null) {
           const enemyHits = Math.random() < effAccuracy()
           const L = layout()
+          tracersRef.current.push({
+            x1: L.enemyX - 24 * L.s,
+            y1: L.bodyY - 4 * L.s,
+            x2: enemyHits ? L.playerX : L.playerX - 40 * L.s,
+            y2: L.bodyY,
+            life: 1,
+            color: '#ff6644',
+            width: 3.2,
+          })
           spawnDust(enemyHits ? L.playerX : L.enemyX, L.bodyY, 16)
           resolve({
-            won: !enemyHits,
-            detail: enemyHits ? '상대가 먼저 쏘았다.' : '상대가 빗나갔다! 간신히 살았다.',
+            won: false,
+            detail: enemyHits ? '너무 늦었다. 상대가 먼저 쏘았다.' : '망설이다 쏘지 못했다. 결투 패배.',
             reactionMs: null,
             grade: '-',
             headshot: false,
@@ -425,7 +491,6 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       if (phaseRef.current !== 'draw' || playerShotAtRef.current !== null) return
 
       const now = performance.now()
-      playerShotAtRef.current = now
       const raw = now - drawAtRef.current
       const effective = raw - tuning.fastGrace
       const enemyMs = enemyShotAtRef.current - drawAtRef.current
@@ -436,34 +501,44 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       const head = dHead <= L.headR
       const body = !head && dBody <= L.bodyR
 
+      tracersRef.current.push({
+        x1: L.playerX + 24 * L.s,
+        y1: L.bodyY - 4 * L.s,
+        x2: x,
+        y2: y,
+        life: 1,
+        color: head ? '#ffe680' : '#ffb464',
+        width: head ? 3.6 : 2.4,
+      })
+
       spawnDust(x, y, 6)
 
       if (!head && !body) {
-        if (now >= enemyShotAtRef.current) {
-          const enemyHits = Math.random() < effAccuracy()
-          resolve({
-            won: !enemyHits,
-            detail: enemyHits
-              ? '허공을 쐈다. 상대의 총알이 먼저였다.'
-              : '둘 다 빗나갔다! 운이 좋았다.',
-            reactionMs: Math.round(raw),
-            grade: '-',
-            headshot: false,
-            foul: false,
-          })
-        } else {
-          resolve({
-            won: false,
-            detail: '허공을 쐈다! 조준이 빗나갔다.',
-            reactionMs: Math.round(raw),
-            grade: '-',
-            headshot: false,
-            foul: false,
-          })
+        if (has('second_chance') && !secondChanceUsedRef.current && now < enemyShotAtRef.current) {
+          secondChanceUsedRef.current = true
+          setMessage('빗맞았다! 속사 리볼버 — 즉시 다시 쏴라!')
+          sfx.grip()
+          shakeRef.current = 4
+          return
         }
+
+        playerShotAtRef.current = now
+        const enemyHits = Math.random() < effAccuracy()
+        resolve({
+          won: false,
+          detail:
+            now >= enemyShotAtRef.current && enemyHits
+              ? '허공을 쐈다. 상대의 총알에 피격.'
+              : '허공을 쐈다! 조준이 빗나갔다.',
+          reactionMs: Math.round(raw),
+          grade: '-',
+          headshot: false,
+          foul: false,
+        })
         return
       }
 
+      playerShotAtRef.current = now
       hitMarkRef.current = { x: L.enemyX, y: head ? L.headY : L.bodyY + 10 * L.s, head }
 
       if (effective < enemyMs) {
@@ -484,11 +559,11 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       resolve({
         won: !enemyHits,
         detail: enemyHits
-          ? `한발 늦었다. 상대 ${Math.round(enemyMs)}ms`
-          : '상대가 빗나갔다! 기적적인 생존.',
+          ? `한발 늦었다! 상대의 총알에 피격. (상대 ${Math.round(enemyMs)}ms)`
+          : `상대의 총알이 빗나갔다! 역전 명중 성공! (${Math.round(raw)}ms)`,
         reactionMs: Math.round(raw),
         grade: enemyHits ? '-' : gradeOf(raw),
-        headshot: false,
+        headshot: head && !enemyHits,
         foul: false,
       })
     }
@@ -502,31 +577,28 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
 
       const sx = (Math.random() - 0.5) * shakeRef.current
       const sy = (Math.random() - 0.5) * shakeRef.current
-      if (shakeRef.current > 0.05) shakeRef.current *= 0.88
+      shakeRef.current = Math.max(0, shakeRef.current * 0.9 - 0.1)
+
+      const zoom = zoomRef.current
+      zoomRef.current = Math.max(0, zoomRef.current * 0.95 - 0.002)
 
       ctx.clearRect(0, 0, w, h)
       ctx.save()
-      ctx.translate(sx, sy)
-
-      if (phaseRef.current === 'result' && winnerRef.current === 'player') {
-        zoomRef.current = Math.min(1, zoomRef.current + 0.05)
-        const z = 1 + zoomRef.current * 0.16
-        ctx.translate(L.enemyX, L.bodyY)
-        ctx.scale(z, z)
-        ctx.translate(-L.enemyX, -L.bodyY)
-      }
+      ctx.translate(sx + (w / 2) * (1 - (1 + zoom)), sy + (h / 2) * (1 - (1 + zoom)))
+      ctx.scale(1 + zoom, 1 + zoom)
 
       ctx.drawImage(getBackdrop(w, h, dpr, round), 0, 0, w, h)
 
       drawVultures(ctx, w, h, t)
       drawTumbleweed(ctx, w, h, L.horizon, t)
 
-      const holding = phaseRef.current === 'holding'
-      const tension = holding ? Math.sin(t / 180) * 1.6 : 0
-      const drawJitter = phaseRef.current === 'draw' ? Math.sin(t / 24) * 2.5 : 0
       const tellActive = now - tellFlashRef.current < 200
       const feintActive = now < feintUntilRef.current
+      const holding = phaseRef.current === 'holding'
       const armed = phaseRef.current === 'draw' || phaseRef.current === 'result'
+
+      const tension = holding ? Math.min(22, (now - drawAtRef.current) * 0.006) : 0
+      const drawJitter = armed && !resolvedRef.current ? Math.sin(t / 25) * 1.5 : 0
 
       // 조준 원. DRAW 이후에만 보여 긴장을 유지한다
       if (phaseRef.current === 'draw') {
@@ -578,17 +650,31 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
         coat: '#2e1414',
         rim: 'rgba(255, 176, 110, 0.85)',
         t,
-        twitch: tellActive ? 1 : feintActive ? 0.5 : 0,
+        twitch: tellActive ? 1.2 : feintActive ? 0.5 : 0,
       })
 
       if (tellActive && holding) {
-        ctx.fillStyle = 'rgba(255, 240, 160, 0.95)'
-        ctx.font = `900 ${Math.round(22 * s)}px ${CANVAS_LABEL_FONT}`
+        ctx.save()
+        ctx.fillStyle = 'rgba(255, 230, 80, 0.98)'
+        ctx.font = `900 ${Math.round(26 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.textAlign = 'center'
-        ctx.fillText('!', L.enemyX + 36 * s, L.bodyY - 62 * s)
+        ctx.shadowColor = '#ffaa00'
+        ctx.shadowBlur = 10
+        ctx.fillText('!', L.enemyX + 36 * s, L.bodyY - 65 * s)
+        ctx.font = `700 ${Math.round(11 * s)}px ${CANVAS_LABEL_FONT}`
+        ctx.fillStyle = '#ffe080'
+        ctx.shadowBlur = 4
+        ctx.fillText('버릇 포착!', L.enemyX, L.bodyY - 84 * s)
+        ctx.restore()
       }
 
-      drawNameplate(ctx, 'YOU', L.playerX, L.bodyY - 78 * s, s)
+      drawNameplate(
+        ctx,
+        streak >= 2 ? `${fame.badge} ${playerName || 'YOU'}` : playerName || 'YOU',
+        L.playerX,
+        L.bodyY - 78 * s,
+        s,
+      )
       drawNameplate(ctx, opponent.alias, L.enemyX, L.bodyY - 78 * s, s)
 
       // 총구 연기는 인물 위에 얹혀야 자연스럽다 (In-place zero-allocation update)
@@ -893,7 +979,23 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
             명중 <strong>{(tuning.accuracy * 100).toFixed(0)}%</strong>
           </span>
           <span className="chip-warn">경고 여유 {warningsLeft}</span>
-          {streak > 0 && <span className="chip-streak">연승 {streak}</span>}
+          {streak > 0 && (
+            <span
+              className="chip-streak"
+              style={{ borderColor: fame.color, color: fame.color }}
+              title={`현재 명성: ${fame.title} (${fame.subtitle})`}
+            >
+              {fame.badge} · {streak}연승
+            </span>
+          )}
+          {tuning.hitBonusPercent !== 0 && (
+            <span
+              className={tuning.hitBonusPercent > 0 ? 'chip-hit-bonus' : 'chip-hit-penalty'}
+              title="라운드 난이도, 심리전 결과, 환경 편차 및 전리품이 반영된 조준 판정 배율입니다."
+            >
+              조준 {tuning.hitBonusPercent > 0 ? `+${tuning.hitBonusPercent}%` : `${tuning.hitBonusPercent}%`}
+            </span>
+          )}
         </div>
       </div>
 

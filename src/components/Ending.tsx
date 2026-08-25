@@ -1,4 +1,5 @@
 import { sfx } from '../audio/sfx'
+import { getFameInfo } from '../data/fame'
 import { perkById } from '../data/perks'
 import type { CareerStats, PerkId, RunRecord } from '../types'
 import { PerkIcon } from './PerkIcon'
@@ -12,6 +13,7 @@ interface Props {
   victory: boolean
   career: CareerStats
   lastRun: RunRecord
+  playerName?: string
   onRestart: () => void
 }
 
@@ -23,12 +25,19 @@ export function Ending({
   victory,
   career,
   lastRun,
+  playerName = '이름 없는 총잡이',
   onRestart,
 }: Props) {
+  const runFame = getFameInfo(lastRun.bestStreak)
+
   return (
     <div className={`screen ending-screen ${victory ? 'is-win' : 'is-lose'}`}>
       <p className="eyebrow">{victory ? '★ LEGEND ★' : 'BOOT HILL'}</p>
-      <h1>{victory ? '마을은 당신 것이다' : '먼지가 되었다'}</h1>
+      <h1>
+        {victory
+          ? `${playerName}, 마을의 전설이 되다`
+          : `${playerName}, 먼지가 되었다`}
+      </h1>
 
       <div className="ending-stats">
         <div>
@@ -42,6 +51,10 @@ export function Ending({
         <div>
           <span>누적 현상금</span>
           <strong>${bounty.toLocaleString()}</strong>
+        </div>
+        <div>
+          <span>최고 명성</span>
+          <strong style={{ color: runFame.color }}>{runFame.badge}</strong>
         </div>
       </div>
 

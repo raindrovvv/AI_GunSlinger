@@ -35,41 +35,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'too many requests' })
   }
 
-  const { opponent, history = [], playerMessage, turn = 1, round = 1 } = req.body ?? {}
+  const {
+    opponent,
+    history = [],
+    playerMessage,
+    turn = 1,
+    round = 1,
+    streak = 0,
+    fameTitle,
+  } = req.body ?? {}
   if (!opponent?.name || typeof playerMessage !== 'string') {
     return res.status(400).json({ error: 'missing fields' })
   }
 
-  const systemPrompt = `당신은 1880년대 서부의 무법자 '${opponent.name}'(별명 ${opponent.alias})입니다.
-결투 직전, 먼지 나는 거리에서 상대와 마주 서 있습니다.
+  const fameContext =
+    streak >= 2
+      ? `- 상대 총잡이: ${fameTitle ?? '실력자'} (${streak}연승 중인 명사수. 연승이 높을수록 위압감을 느끼거나 긴장함)`
+      : ''
+
+  const systemPrompt = `당신은 1880년대 서부 무법자 '${opponent.name}'(${opponent.alias})입니다. 결투 직전 대치 중입니다.
 
 [캐릭터]
 - 죄목: ${opponent.crime ?? '알 수 없음'}
-- 성격과 약점: ${opponent.personality}
-- 겉모습: ${opponent.appearance}
-- 총을 뽑기 직전 나오는 버릇: ${opponent.tell}
-  → 이 버릇을 먼저 입에 올리지 않는다. 상대가 정확히 짚으면 동요한다.
-- 결투 전 첫 도발(반복 금지): ${opponent.taunt}
+- 성격/약점: ${opponent.personality}
+- 드로우 직전 버릇: ${opponent.tell} (상대가 정확히 짚으면 동요/부정)
+- 도발 원문(재사용 금지): ${opponent.taunt}
+${fameContext}
 
 ${PERSONA_LOCK}
-
 ${DIALOGUE_RULES}
-
-[대화 연속성 예시]
-- 상대 "꺼져라" → "비켜? 여긴 내가 먼저 잡은 자리다."
-- 상대 "뭐래" → "못 알아들었나. 귀 막혔어?"
-- 상대 "그 버릇 다 봤어" → 버릇에 직접 반응. 부정하거나 동요한다.
-
 ${KOREAN_RULES}
-
 ${WORLD_RULES}
 
-[심리 판정]
-상대의 말이 당신에게 어떤 영향을 줬는지 판단해 mood를 하나 고르고, 아래 범위에서 수치를 정한다.
+[심리/수치 판정]
+상대 대사의 영향에 따라 mood를 고르고 수치를 결정하세요.
 ${moodGuideText()}
-
-지금은 ${turn}번째 말이고 최대 3번이다. ${turn >= 3 ? '이번이 마지막 말이다.' : ''}
-peaceEnding은 마지막 턴에, 상대의 설득이 당신 성격에 정말로 닿았을 때만 true. 단순히 '평화'라는 단어만으로는 안 된다.
+- 턴: ${turn}/3 ${turn >= 3 ? '(마지막 턴)' : ''}
+- peaceEnding: 3턴째에 상대 설득이 성격에 깊이 닿았을 때만 true
 
 ${OUTPUT_RULES}
 
@@ -80,20 +82,17 @@ ${OUTPUT_RULES}
     const completion = await getClient().chat.completions.create({
       model: MODEL,
       temperature: 0.9,
-      max_tokens: 220,
+      max_tokens: 130,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: systemPrompt },
         ...(Array.isArray(history) ? history : [])
-          .slice(-6)
+          .slice(-4)
           .map((h: { role: string; text: string }) => ({
             role: h.role === 'player' ? ('user' as const) : ('assistant' as const),
-            content:
-              h.role === 'player'
-                ? `[거리의 상대] ${String(h.text).slice(0, 200)}`
-                : `[${opponent.alias}] ${String(h.text).slice(0, 200)}`,
+            content: String(h.text).slice(0, 120),
           })),
-        { role: 'user', content: `[거리의 상대] ${playerMessage.slice(0, 200)}` },
+        { role: 'user', content: playerMessage.slice(0, 120) },
       ],
     })
 

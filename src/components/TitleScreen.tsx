@@ -7,7 +7,7 @@ import { skyFxEnabled } from '../gl/flags'
 import { RecordBoard } from './RecordBoard'
 
 interface Props {
-  onStart: () => void
+  onStart: (playerName?: string) => void
 }
 
 export function TitleScreen({ onStart }: Props) {
@@ -15,6 +15,29 @@ export function TitleScreen({ onStart }: Props) {
   const [career, setCareer] = useState<CareerStats>(EMPTY_CAREER)
   const [glSky] = useState(skyFxEnabled)
   const [fxOn, setFxOn] = useState(false)
+  const [playerName, setPlayerName] = useState(() => {
+    try {
+      return localStorage.getItem('ai-gunslinger.player-name') ?? ''
+    } catch {
+      return ''
+    }
+  })
+
+  const handleBegin = (skip = false) => {
+    sfx.unlock()
+    sfx.click()
+    sfx.gunLoad(0.7)
+    const trimmed = playerName.trim()
+    const finalName = skip || !trimmed ? '이름 없는 총잡이' : trimmed
+    try {
+      if (!skip && trimmed) {
+        localStorage.setItem('ai-gunslinger.player-name', trimmed)
+      }
+    } catch {
+      // ignore
+    }
+    onStart(finalName)
+  }
 
   return (
     <div className={`title-page${fxOn ? ' fx-on' : ''}`}>
@@ -45,17 +68,33 @@ export function TitleScreen({ onStart }: Props) {
           <br />
           드로우 전 심리전으로 상대를 흔들거나 — 총 없이 설득하라.
         </p>
+
+        <div className="player-setup">
+          <label htmlFor="player-name-input" className="player-name-label">
+            당신의 총잡이 이름
+          </label>
+          <div className="player-name-box">
+            <input
+              id="player-name-input"
+              type="text"
+              className="player-name-input"
+              placeholder="이름 없는 총잡이"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleBegin(false)
+              }}
+              maxLength={12}
+            />
+          </div>
+        </div>
+
         <div className="title-actions">
-          <button
-            className="btn primary pulse"
-            onClick={() => {
-              sfx.unlock()
-              sfx.click()
-              sfx.gunLoad(0.7)
-              onStart()
-            }}
-          >
-            결투 시작
+          <button className="btn primary pulse" onClick={() => handleBegin(false)}>
+            {playerName.trim() ? `${playerName.trim()}로 결투 시작` : '결투 시작'}
+          </button>
+          <button className="btn outline" onClick={() => handleBegin(true)}>
+            이름 없이 시작 (스킵)
           </button>
           <button
             className="btn"

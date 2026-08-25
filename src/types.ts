@@ -87,7 +87,15 @@ export interface DuelOutcome {
   foul: boolean
 }
 
-export type PerkId = 'steady' | 'keen' | 'fast' | 'silver' | 'charm'
+export type PerkId =
+  | 'steady'
+  | 'keen'
+  | 'fast'
+  | 'silver'
+  | 'charm'
+  | 'second_chance'
+  | 'golden_spur'
+  | 'poker_face'
 
 export interface Perk {
   id: PerkId
