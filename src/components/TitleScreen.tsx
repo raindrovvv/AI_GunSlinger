@@ -66,7 +66,7 @@ export function TitleScreen({ onStart }: Props) {
         <p className="blurb">
           매 판 살아 숨 쉬는 <strong>생성형 AI 무법자</strong>와의 숨 막히는 심리전!
           <br />
-          손버릇을 찔러 멘탈을 붕괴시키거나, 번개 같은 <strong>0.2초 드로우</strong>로 제압하라.
+          약점을 찔러 멘탈을 흔들거나, 번개 같은 <strong>0.2초 드로우</strong>로 제압하라.
         </p>
 
         <div className="player-setup">
