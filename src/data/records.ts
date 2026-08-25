@@ -32,7 +32,10 @@ function isPerkId(v: unknown): v is PerkId {
     v === 'keen' ||
     v === 'fast' ||
     v === 'silver' ||
-    v === 'charm'
+    v === 'charm' ||
+    v === 'second_chance' ||
+    v === 'golden_spur' ||
+    v === 'poker_face'
   )
 }
 

@@ -132,4 +132,65 @@ const ART: Record<PerkId, ReactNode> = {
       </g>
     </>
   ),
+
+  // 속사 리볼버 — 연달아 날아가는 2발의 탄환
+  second_chance: (
+    <>
+      <g fill="currentColor">
+        {/* 첫 번째 탄환 */}
+        <path d="M16 28 h12 v8 h-12 a4 4 0 0 1 0 -8 z" />
+        <rect x="28" y="29.5" width="4" height="5" rx="1" />
+        {/* 두 번째 탄환 (앞서 나감) */}
+        <path d="M34 20 h14 v8 h-14 a4 4 0 0 1 0 -8 z" />
+        <rect x="48" y="21.5" width="4" height="5" rx="1" />
+      </g>
+      <g stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" opacity="0.65">
+        <path d="M12 40 H28" />
+        <path d="M22 45 H42" />
+      </g>
+    </>
+  ),
+
+  // 황금 박차 — 톱니바퀴형 카우보이 부츠 스퍼(Spur)
+  golden_spur: (
+    <>
+      <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none">
+        <path d="M18 42 Q28 42 36 32 Q28 22 18 22" />
+        <path d="M36 32 H44" />
+      </g>
+      {/* 박차 회전별 */}
+      <g fill="currentColor">
+        <circle cx="46" cy="32" r="3" />
+        <path d="M46 22 L47.5 30 L46 32 L44.5 30 Z" />
+        <path d="M46 42 L47.5 34 L46 32 L44.5 34 Z" />
+        <path d="M36 32 L44 30.5 L46 32 L44 33.5 Z" />
+        <path d="M56 32 L48 30.5 L46 32 L48 33.5 Z" />
+        <path d="M39 25 L45 31 L46 32 L44 30 Z" />
+        <path d="M53 39 L47 33 L46 32 L48 34 Z" />
+      </g>
+    </>
+  ),
+
+  // 포커페이스 — 흔들림 없는 카드와 무표정 실루엣
+  poker_face: (
+    <>
+      <rect
+        x="20"
+        y="16"
+        width="24"
+        height="32"
+        rx="3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+      {/* 무표정 눈과 입 */}
+      <g stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+        <path d="M26 27 H30" />
+        <path d="M34 27 H38" />
+        <path d="M27 38 H37" />
+      </g>
+      <circle cx="32" cy="20" r="1.5" fill="currentColor" />
+    </>
+  ),
 }
