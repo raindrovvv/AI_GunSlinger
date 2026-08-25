@@ -8,6 +8,7 @@ import { Duel } from './components/Duel'
 import { Newspaper } from './components/Newspaper'
 import { Standoff } from './components/Standoff'
 import { Store } from './components/Store'
+import { VictoryCutscene } from './components/VictoryCutscene'
 import { TitleScreen } from './components/TitleScreen'
 import { WantedPoster } from './components/WantedPoster'
 import { Sandstorm } from './components/Sandstorm'
@@ -58,30 +59,80 @@ export default function App() {
       return '이름 없는 총잡이'
     }
   })
-  const [phase, setPhase] = useState<GamePhase>('title')
-  const [round, setRound] = useState(1)
+
+  const previewParam = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('preview') ||
+      (window.location.search.includes('cutscene')
+        ? 'cutscene'
+        : window.location.search.includes('ending')
+          ? 'victory'
+          : null)
+    : null
+
+  const isPreviewCutscene = previewParam === 'cutscene'
+  const isPreviewVictory = previewParam === 'victory'
+  const isPreviewDefeat = previewParam === 'defeat'
+  const isPreview = isPreviewCutscene || isPreviewVictory || isPreviewDefeat
+
+  const [phase, setPhase] = useState<GamePhase>(
+    isPreview
+      ? isPreviewCutscene
+        ? 'cutscene'
+        : isPreviewVictory
+          ? 'victory'
+          : 'gameover'
+      : 'title',
+  )
+  const [round, setRound] = useState(isPreview ? 9 : 1)
   const [opponent, setOpponent] = useState<Opponent | null>(null)
   const [mods, setMods] = useState<DuelMods>(EMPTY_MODS)
   const [article, setArticle] = useState<NewspaperArticle | null>(null)
-  const [playerWon, setPlayerWon] = useState(false)
+  const [playerWon, setPlayerWon] = useState(isPreviewVictory || isPreviewCutscene)
   const [peace, setPeace] = useState(false)
-  const [wins, setWins] = useState(0)
-  const [peaces, setPeaces] = useState(0)
+  const [wins, setWins] = useState(isPreview ? (isPreviewDefeat ? 4 : 8) : 0)
+  const [peaces, setPeaces] = useState(isPreview ? 1 : 0)
   const [prevNames, setPrevNames] = useState<string[]>([])
   const [aiFlags, setAiFlags] = useState({ opponent: false, chat: false, paper: false })
   const [aiReachable, setAiReachable] = useState<boolean | null>(null)
   const [loadingText, setLoadingText] = useState('수배서를 인쇄하는 중…')
 
-  const [perks, setPerks] = useState<PerkId[]>([])
+  const [perks, setPerks] = useState<PerkId[]>(isPreview ? ['fast', 'keen', 'silver', 'golden_spur'] : [])
   const [perkChoices, setPerkChoices] = useState<PerkId[]>([])
   const [pickedPerk, setPickedPerk] = useState<PerkId | null>(null)
   const [activeBuffs, setActiveBuffs] = useState<ActiveBuffs>({})
-  const [streak, setStreak] = useState(0)
-  const [bounty, setBounty] = useState(0)
+  const [streak, setStreak] = useState(isPreview ? (isPreviewDefeat ? 0 : 9) : 0)
+  const [bounty, setBounty] = useState(isPreview ? 248500 : 0)
   const [lastReward, setLastReward] = useState(0)
   const [lastOutcome, setLastOutcome] = useState<DuelOutcome | null>(null)
-  const [endingCareer, setEndingCareer] = useState<CareerStats | null>(null)
-  const [endingRun, setEndingRun] = useState<RunRecord | null>(null)
+  const [endingCareer, setEndingCareer] = useState<CareerStats | null>(() => {
+    if (!isPreview) return null
+    return {
+      runs: 5,
+      victories: 2,
+      defeats: 3,
+      totalWins: 28,
+      totalPeaces: 4,
+      bestBounty: 248500,
+      bestReactionMs: 214,
+      bestStreak: 9,
+      recent: [],
+    }
+  })
+  const [endingRun, setEndingRun] = useState<RunRecord | null>(() => {
+    if (!isPreview) return null
+    return {
+      id: 'preview-run',
+      at: Date.now(),
+      victory: !isPreviewDefeat,
+      wins: isPreviewDefeat ? 4 : 8,
+      peaces: 1,
+      bounty: 248500,
+      bestReactionMs: 214,
+      bestStreak: isPreviewDefeat ? 4 : 9,
+      roundsReached: isPreviewDefeat ? 5 : 9,
+      perks: ['fast', 'keen', 'silver', 'golden_spur'],
+    }
+  })
   const [bgmMuted, setBgmMuted] = useState(() => bgm.isMuted())
   const [bgmVolume, setBgmVolumeState] = useState(() => bgm.getVolume())
 
@@ -199,7 +250,7 @@ export default function App() {
     })
     setEndingCareer(career)
     setEndingRun(run)
-    setPhase(victory ? 'victory' : 'gameover')
+    setPhase(victory ? 'cutscene' : 'gameover')
   }
 
   async function finishEncounter(
@@ -332,7 +383,7 @@ export default function App() {
   const aiLive = usedAiAny || aiReachable === true
   const aiStatus =
     aiReachable === null ? '… AI 확인 중' : aiLive ? '● LIVE AI' : '○ OFFLINE FALLBACK'
-  const inRun = phase !== 'title' && phase !== 'victory' && phase !== 'gameover'
+  const inRun = phase !== 'title' && phase !== 'cutscene' && phase !== 'victory' && phase !== 'gameover'
 
   return (
     <div className="app">
@@ -412,6 +463,16 @@ export default function App() {
         />
       )}
 
+      {phase === 'cutscene' && (
+        <VictoryCutscene
+          playerName={playerName}
+          streak={streak}
+          bounty={bounty}
+          perks={perks}
+          onComplete={() => setPhase('victory')}
+        />
+      )}
+
       {(phase === 'victory' || phase === 'gameover') && endingCareer && endingRun && (
         <Ending
           wins={wins}
@@ -423,6 +484,7 @@ export default function App() {
           lastRun={endingRun}
           playerName={playerName}
           onRestart={handleStart}
+          onReplayCutscene={() => setPhase('cutscene')}
         />
       )}
 

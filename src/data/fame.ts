@@ -8,6 +8,16 @@ export interface FameInfo {
 }
 
 export function getFameInfo(streak: number): FameInfo {
+  if (streak >= 9) {
+    return {
+      grade: 6,
+      title: '불멸의 전설',
+      subtitle: '서부의 유일한 지배자',
+      badge: '🌟 불멸의 전설',
+      color: '#ffd700',
+      promptDesc: '9연승으로 전 서부의 무법자를 모두 평정한 불멸의 전설',
+    }
+  }
   if (streak >= 7) {
     return {
       grade: 5,

@@ -6,6 +6,7 @@ export type GamePhase =
   | 'duel'
   | 'newspaper'
   | 'store'
+  | 'cutscene'
   | 'victory'
   | 'gameover'
 
