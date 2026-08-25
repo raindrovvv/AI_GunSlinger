@@ -1,10 +1,11 @@
 /** Lightweight Web Audio SFX — procedural + recorded gunshot sample */
 
+import gunshotUrl from '../assets/gunshot.wav?url'
+
 let ctx: AudioContext | null = null
 let gunshotBuffer: AudioBuffer | null = null
-let gunshotLoad: Promise<AudioBuffer | null> | null = null
-
-const GUNSHOT_URL = '/sounds/gunshot.wav'
+let gunshotBytes: ArrayBuffer | null = null
+let gunshotFetch: Promise<ArrayBuffer | null> | null = null
 
 function ac(): AudioContext {
   if (!ctx) ctx = new AudioContext()
@@ -105,28 +106,44 @@ function makeWhiteNoise(dur: number, decaySec: number, decayPow = 1) {
   return buf
 }
 
-/** CC0 실촬 샘플 프리로드 (OpenGameArt — 22 Magnum, mono trim) */
-export function preloadGunshot(): Promise<AudioBuffer | null> {
-  return loadGunshotSample()
+/** 바이트만 미리 받아 둔다. AudioContext는 사용자 제스처 뒤에 연다. */
+export function preloadGunshot(): Promise<ArrayBuffer | null> {
+  return fetchGunshotBytes()
 }
 
-function loadGunshotSample(): Promise<AudioBuffer | null> {
-  if (gunshotBuffer) return Promise.resolve(gunshotBuffer)
-  if (gunshotLoad) return gunshotLoad
+function fetchGunshotBytes(): Promise<ArrayBuffer | null> {
+  if (gunshotBytes) return Promise.resolve(gunshotBytes)
+  if (gunshotFetch) return gunshotFetch
 
-  gunshotLoad = fetch(GUNSHOT_URL)
-    .then((res) => (res.ok ? res.arrayBuffer() : null))
-    .then((raw) => {
-      if (!raw) return null
-      return ac().decodeAudioData(raw.slice(0))
+  gunshotFetch = fetch(gunshotUrl)
+    .then(async (res) => {
+      if (!res.ok) return null
+      const type = res.headers.get('content-type') ?? ''
+      if (type.includes('text/html')) return null
+      const raw = await res.arrayBuffer()
+      if (raw.byteLength < 44) return null
+      gunshotBytes = raw
+      return raw
     })
-    .then((buf) => {
-      gunshotBuffer = buf
-      return buf
+    .catch(() => {
+      gunshotFetch = null
+      return null
     })
-    .catch(() => null)
 
-  return gunshotLoad
+  return gunshotFetch
+}
+
+async function decodeGunshot(): Promise<AudioBuffer | null> {
+  if (gunshotBuffer) return gunshotBuffer
+  const raw = await fetchGunshotBytes()
+  if (!raw) return null
+  try {
+    const buf = await ac().decodeAudioData(raw.slice(0))
+    gunshotBuffer = buf
+    return buf
+  } catch {
+    return null
+  }
 }
 
 /** 녹음 샘플 + 서브 + 야외 메아리 */
@@ -287,7 +304,7 @@ export const sfx = {
   unlock() {
     try {
       ac()
-      void loadGunshotSample()
+      void decodeGunshot()
     } catch {
       /* ignore */
     }
@@ -330,7 +347,7 @@ export const sfx = {
     try {
       ac()
       if (sampleGunshot()) return
-      void loadGunshotSample().then((buf) => {
+      void decodeGunshot().then((buf) => {
         if (buf && sampleGunshot()) return
         proceduralGunshot()
       })

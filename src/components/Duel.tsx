@@ -113,6 +113,7 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
   }, [])
 
   useEffect(() => {
+    sfx.unlock()
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
