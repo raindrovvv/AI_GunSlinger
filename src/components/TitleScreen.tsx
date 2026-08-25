@@ -29,8 +29,15 @@ export function TitleScreen({ onStart }: Props) {
       <div className="screen title-screen">
         <div className="title-badge">OPENAI GAME BUILDERS SEOUL · 2026</div>
         <h1 className="logo">
-          <span className="logo-ai">AI</span>
-          <span className="logo-gun">GUNSLINGER</span>
+          <img
+            className="logo-mark"
+            src="/logo.webp"
+            alt="AI GUNSLINGER"
+            width={1190}
+            height={371}
+            decoding="async"
+            fetchPriority="high"
+          />
         </h1>
         <p className="tagline">말로 흔들고, 총으로 끝낸다.</p>
         <p className="blurb">

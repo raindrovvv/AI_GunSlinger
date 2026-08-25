@@ -303,28 +303,19 @@ input {
 
 .logo {
   margin: 8px 0 4px;
-  line-height: 0.92;
+  line-height: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
-.logo-ai {
+/* 원본 이미지는 여백이 비대칭이라 내용에 딱 맞게 잘라 두었다.
+   그래서 가운데 정렬만 하면 시각 중심이 맞는다. */
+.logo-mark {
   display: block;
-  font-family: var(--display);
-  font-size: clamp(56px, 14vw, 108px);
-  letter-spacing: 0.02em;
-  background: linear-gradient(180deg, #fff3d0, var(--accent));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.4));
-}
-
-.logo-gun {
-  display: block;
-  font-family: var(--display);
-  font-size: clamp(36px, 9vw, 72px);
-  letter-spacing: 0.08em;
-  color: var(--paper);
-  text-shadow: 0 3px 0 #000;
+  width: clamp(280px, 62vw, 620px);
+  height: auto;
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.55));
 }
 
 .tagline {
@@ -574,8 +565,6 @@ input {
   font-size: 30px;
 }
 
-.logo-ai,
-.logo-gun,
 .wanted-poster header,
 .newspaper header h1,
 .bounty strong,
@@ -1823,11 +1812,11 @@ input {
   opacity: 0;
 }
 
-/* 배경이 밝아지므로 글자를 역광에서 떼어낸다 */
-.title-page.fx-on .logo-gun {
-  text-shadow:
-    0 2px 0 rgba(0, 0, 0, 0.55),
-    0 0 34px rgba(255, 176, 74, 0.45);
+/* 배경이 밝아지므로 로고를 역광에서 떼어낸다 */
+.title-page.fx-on .logo-mark {
+  filter:
+    drop-shadow(0 6px 20px rgba(0, 0, 0, 0.7))
+    drop-shadow(0 0 34px rgba(255, 176, 74, 0.35));
 }
 
 .title-page.fx-on .tagline,
@@ -1919,4 +1908,10 @@ input {
     animation: none;
     opacity: 0;
   }
+}
+
+/* 수배서의 WANTED는 타자기로 찍어낸 결이라야 한다.
+   Paperlogy 통일 이전 서체로 되돌린다. */
+.wanted-poster header {
+  font-family: "Special Elite", var(--display-en);
 }

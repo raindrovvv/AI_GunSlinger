@@ -90,26 +90,6 @@ void main() {
   col = mix(col, vec3(0.42, 0.24, 0.22), cloud * 0.55);
   col += vec3(1.0, 0.66, 0.34) * cloud * exp(-d * 1.5) * 0.40;
 
-  // 역광에 반짝이는 먼지
-  float motes = 0.0;
-  for (int i = 0; i < 3; i++) {
-    float fi = float(i);
-    vec2 gp = vec2(uv.x * asp, uv.y) * (13.0 + fi * 8.0)
-            + vec2(t * (0.05 + fi * 0.022), -t * 0.016 - fi * 3.0);
-    vec2 gi = floor(gp), gf = fract(gp);
-    float h = hash21(gi + fi * 31.0);
-    if (h > 0.930) {
-      vec2 c2 = vec2(hash21(gi + 5.0), hash21(gi + 11.0));
-      float dd = length(gf - c2);
-      // 반짝임이 음수로 내려가면 검은 점이 찍힌다
-      float tw = 0.5 + 0.5 * sin(t * 2.2 + h * 40.0);
-      motes += smoothstep(0.11, 0.0, dd) * tw;
-    }
-  }
-  // 태양 근처 역광에서만 보이는 먼지. 하늘 높이 뜨면 눈처럼 보인다.
-  float moteFade = smoothstep(0.0, 0.04, y) * smoothstep(0.90, 0.22, y);
-  col += vec3(1.0, 0.84, 0.58) * motes * 0.46 * moteFade;
-
   vec2 q = vUv - 0.5;
   col *= 1.0 - dot(q, q) * 0.85;
 
