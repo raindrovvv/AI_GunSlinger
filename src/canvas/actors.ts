@@ -253,173 +253,286 @@ export function drawHolster(ctx: CanvasRenderingContext2D, o: HolsterOpts) {
     ctx.fillRect(-104, -40, 208, 196)
   }
 
-  const belt = ctx.createLinearGradient(0, 0, 0, 24)
-  belt.addColorStop(0, '#7a4a26')
-  belt.addColorStop(0.45, '#4a2c14')
-  belt.addColorStop(1, '#1b0f06')
-  ctx.fillStyle = belt
-  ctx.fillRect(-spanHalf, 0, spanHalf * 2, 24)
-
-  // 가죽 위로 스치는 반사광
-  ctx.fillStyle = 'rgba(255, 190, 110, 0.22)'
-  ctx.fillRect(-spanHalf, 0, spanHalf * 2, 2)
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'
-  ctx.fillRect(-spanHalf, 22, spanHalf * 2, 2)
-
-  ctx.fillStyle = 'rgba(226, 196, 140, 0.4)'
-  for (let x = -spanHalf + 6; x < spanHalf; x += 12) {
-    ctx.fillRect(x, 4, 5, 1.6)
-    ctx.fillRect(x, 18, 5, 1.6)
-  }
-
-  // 버클
-  const buckle = ctx.createLinearGradient(-78, 0, -54, 24)
-  buckle.addColorStop(0, '#f0d27a')
-  buckle.addColorStop(1, '#8a6a12')
-  ctx.fillStyle = buckle
-  ctx.fillRect(-78, -2, 24, 26)
-  ctx.fillStyle = '#3a2a08'
-  ctx.fillRect(-72, 4, 12, 14)
-
-  // 탄약 고리
-  for (let i = 0; i < 5; i++) {
-    const bx = 44 + i * 15
-    ctx.fillStyle = '#2e1a0c'
-    ctx.fillRect(bx - 5, 2, 10, 18)
-    ctx.fillStyle = '#d8ae3a'
-    ctx.beginPath()
-    ctx.ellipse(bx, 5, 4, 3.4, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.fillStyle = '#8a6a12'
-    ctx.fillRect(bx - 3.4, 6, 6.8, 11)
-    ctx.fillStyle = 'rgba(255, 225, 150, 0.5)'
-    ctx.fillRect(bx - 3.4, 6, 1.4, 11)
-  }
+  drawGunBelt(ctx, spanHalf)
 
   const shake = state === 'grip' ? Math.sin(t / 55) * 1.2 : 0
   ctx.save()
   ctx.translate(shake, 0)
 
-  const pt = 20
-  const pouch = ctx.createLinearGradient(-32, 0, 32, 0)
-  pouch.addColorStop(0, '#2e1809')
-  pouch.addColorStop(0.4, '#6b3c1c')
-  pouch.addColorStop(0.85, '#8f5527')
-  pouch.addColorStop(1, '#c07c38')
-  ctx.fillStyle = pouch
-  ctx.beginPath()
-  ctx.moveTo(-32, pt)
-  ctx.lineTo(32, pt)
-  ctx.lineTo(25, pt + 52)
-  ctx.quadraticCurveTo(22, pt + 76, 0, pt + 78)
-  ctx.quadraticCurveTo(-22, pt + 76, -25, pt + 52)
-  ctx.closePath()
-  ctx.fill()
-  ctx.strokeStyle = '#180d04'
-  ctx.lineWidth = 2
-  ctx.stroke()
-
-  ctx.fillStyle = 'rgba(232, 206, 150, 0.5)'
-  for (let i = 0; i < 9; i++) {
-    const p = i / 8
-    const ly = pt + 8 + p * 60
-    const inset = 5 + p * 2
-    ctx.fillRect(-32 + inset + p * 5, ly, 4, 1.6)
-    ctx.fillRect(28 - inset - p * 5, ly, 4, 1.6)
-  }
-
-  // 총이 홀스터에 꽂힌 것으로 보이려면 입구 그림자가 총 위에 얹혀야 한다
-  if (state !== 'empty') drawRevolverGrip(ctx, pt)
-
-  ctx.fillStyle = 'rgba(14, 7, 2, 0.85)'
-  ctx.beginPath()
-  ctx.ellipse(0, pt + 4, 30, 7, 0, 0, Math.PI * 2)
-  ctx.fill()
-
-  if (state === 'empty') {
-    ctx.fillStyle = 'rgba(6, 3, 1, 0.92)'
-    ctx.beginPath()
-    ctx.ellipse(0, pt + 10, 24, 9, 0, 0, Math.PI * 2)
-    ctx.fill()
-  }
-
-  ctx.fillStyle = '#4d2b13'
-  ctx.fillRect(-34, pt + 30, 68, 12)
-  ctx.strokeStyle = '#180d04'
-  ctx.lineWidth = 1.4
-  ctx.strokeRect(-34, pt + 30, 68, 12)
-  ctx.fillStyle = 'rgba(255, 190, 110, 0.18)'
-  ctx.fillRect(-34, pt + 30, 68, 1.6)
-  ctx.fillStyle = '#d8ae3a'
-  ctx.beginPath()
-  ctx.arc(20, pt + 36, 4, 0, Math.PI * 2)
-  ctx.fill()
+  const mouth = 18
+  fillHolsterPouch(ctx, mouth, 'back')
+  if (state !== 'empty') drawHolsteredRevolver(ctx, mouth, 'barrel')
+  fillHolsterPouch(ctx, mouth, 'front')
+  drawHolsterLeather(ctx, mouth, state === 'empty')
+  if (state !== 'empty') drawHolsteredRevolver(ctx, mouth, 'exposed')
 
   if (state === 'grip') {
-    drawGrippingHand(ctx, pt, t)
+    drawGrippingHand(ctx, mouth - 6, t)
   }
 
   ctx.restore()
   ctx.restore()
 }
 
-function drawRevolverGrip(ctx: CanvasRenderingContext2D, pt: number) {
-  ctx.save()
-  // 대부분은 파우치에 잠기고 손잡이와 해머만 밖으로 나온다
-  ctx.translate(-2, pt + 12)
-  ctx.rotate(-0.26)
-
-  ctx.fillStyle = '#232329'
-  ctx.fillRect(-9, -24, 22, 15)
-  ctx.fillStyle = '#33333b'
-  ctx.beginPath()
-  ctx.arc(2, -17, 7, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(214, 190, 150, 0.35)'
-  ctx.lineWidth = 1
-  ctx.beginPath()
-  ctx.arc(2, -17, 7, 0, Math.PI * 2)
-  ctx.stroke()
-
-  // 해머
-  ctx.fillStyle = '#191920'
-  ctx.beginPath()
-  ctx.moveTo(-9, -24)
-  ctx.lineTo(-16, -31)
-  ctx.lineTo(-7, -28)
-  ctx.closePath()
+function drawGunBelt(ctx: CanvasRenderingContext2D, spanHalf: number) {
+  const belt = ctx.createLinearGradient(0, -2, 0, 26)
+  belt.addColorStop(0, '#8a5530')
+  belt.addColorStop(0.18, '#6a3c1c')
+  belt.addColorStop(0.55, '#3d2410')
+  belt.addColorStop(1, '#160c05')
+  ctx.fillStyle = belt
+  roundedPath(ctx, -spanHalf, 0, spanHalf * 2, 24, 3)
   ctx.fill()
 
-  const grip = ctx.createLinearGradient(-10, -10, 8, 24)
-  grip.addColorStop(0, '#c2843a')
-  grip.addColorStop(1, '#5e3a16')
-  ctx.fillStyle = grip
+  ctx.fillStyle = 'rgba(255, 200, 130, 0.28)'
+  ctx.fillRect(-spanHalf, 1, spanHalf * 2, 2)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)'
+  ctx.fillRect(-spanHalf, 21, spanHalf * 2, 3)
+
+  ctx.strokeStyle = 'rgba(226, 196, 140, 0.38)'
+  ctx.lineWidth = 1.1
   ctx.beginPath()
-  ctx.moveTo(-10, -10)
-  ctx.quadraticCurveTo(-14, 12, -6, 22)
-  ctx.quadraticCurveTo(4, 26, 8, 14)
-  ctx.lineTo(10, -10)
-  ctx.closePath()
+  ctx.moveTo(-spanHalf + 4, 5)
+  ctx.lineTo(spanHalf - 4, 5)
+  ctx.moveTo(-spanHalf + 4, 18)
+  ctx.lineTo(spanHalf - 4, 18)
+  ctx.stroke()
+
+  const buckle = ctx.createLinearGradient(-82, -2, -50, 28)
+  buckle.addColorStop(0, '#f6e08a')
+  buckle.addColorStop(0.45, '#c9a23a')
+  buckle.addColorStop(1, '#6a4e0c')
+  ctx.fillStyle = buckle
+  roundedPath(ctx, -80, -3, 28, 28, 4)
   ctx.fill()
-  ctx.strokeStyle = '#2a1a08'
-  ctx.lineWidth = 1.4
+  ctx.strokeStyle = '#3a2a08'
+  ctx.lineWidth = 1.6
   ctx.stroke()
+  ctx.fillStyle = '#2a1c08'
+  roundedPath(ctx, -72, 5, 12, 12, 2)
+  ctx.fill()
+  ctx.fillStyle = 'rgba(255, 236, 170, 0.45)'
+  ctx.fillRect(-78, -1, 22, 2)
 
-  ctx.strokeStyle = 'rgba(255, 215, 150, 0.35)'
-  ctx.lineWidth = 1.2
-  ctx.beginPath()
-  ctx.moveTo(9, -9)
-  ctx.lineTo(7, 13)
-  ctx.stroke()
-
-  ctx.strokeStyle = 'rgba(50, 28, 10, 0.45)'
-  ctx.lineWidth = 0.9
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 6; i++) {
+    const bx = 42 + i * 14
+    ctx.fillStyle = '#24140a'
+    roundedPath(ctx, bx - 5, 1, 10, 20, 2)
+    ctx.fill()
+    const brass = ctx.createLinearGradient(bx - 3, 2, bx + 3, 20)
+    brass.addColorStop(0, '#f0d060')
+    brass.addColorStop(0.4, '#c9a028')
+    brass.addColorStop(1, '#6a4a10')
+    ctx.fillStyle = brass
     ctx.beginPath()
-    ctx.moveTo(-9 + i * 2, i)
-    ctx.lineTo(6, 8 + i * 2)
+    ctx.ellipse(bx, 5, 3.6, 3.1, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillRect(bx - 3.1, 6, 6.2, 12)
+    ctx.fillStyle = 'rgba(255, 230, 150, 0.45)'
+    ctx.fillRect(bx - 3.1, 6, 1.3, 12)
+  }
+}
+
+function holsterPouchPath(ctx: CanvasRenderingContext2D, mouth: number) {
+  ctx.beginPath()
+  ctx.moveTo(-30, mouth)
+  ctx.lineTo(28, mouth + 6)
+  ctx.quadraticCurveTo(34, mouth + 18, 29, mouth + 40)
+  ctx.quadraticCurveTo(24, mouth + 78, 4, mouth + 90)
+  ctx.quadraticCurveTo(-16, mouth + 88, -24, mouth + 58)
+  ctx.quadraticCurveTo(-34, mouth + 28, -30, mouth)
+  ctx.closePath()
+}
+
+function fillHolsterPouch(
+  ctx: CanvasRenderingContext2D,
+  mouth: number,
+  layer: 'back' | 'front',
+) {
+  const pouch = ctx.createLinearGradient(-34, mouth, 30, mouth + 40)
+  if (layer === 'back') {
+    pouch.addColorStop(0, '#1a0d06')
+    pouch.addColorStop(1, '#3a2010')
+  } else {
+    pouch.addColorStop(0, '#2a160a')
+    pouch.addColorStop(0.35, '#5a3216')
+    pouch.addColorStop(0.7, '#8a4e22')
+    pouch.addColorStop(1, '#c07834')
+  }
+  ctx.fillStyle = pouch
+  holsterPouchPath(ctx, mouth)
+  ctx.fill()
+}
+
+function drawHolsterLeather(ctx: CanvasRenderingContext2D, mouth: number, empty: boolean) {
+  ctx.strokeStyle = '#120804'
+  ctx.lineWidth = 2.2
+  holsterPouchPath(ctx, mouth)
+  ctx.stroke()
+
+  ctx.strokeStyle = 'rgba(232, 200, 140, 0.42)'
+  ctx.lineWidth = 1.15
+  ctx.setLineDash([2.2, 3.4])
+  ctx.beginPath()
+  ctx.moveTo(-24, mouth + 10)
+  ctx.quadraticCurveTo(-26, mouth + 40, -16, mouth + 72)
+  ctx.moveTo(22, mouth + 14)
+  ctx.quadraticCurveTo(22, mouth + 44, 8, mouth + 78)
+  ctx.stroke()
+  ctx.setLineDash([])
+
+  ctx.fillStyle = 'rgba(255, 190, 110, 0.1)'
+  ctx.beginPath()
+  ctx.moveTo(8, mouth + 12)
+  ctx.quadraticCurveTo(22, mouth + 30, 16, mouth + 62)
+  ctx.quadraticCurveTo(10, mouth + 40, 8, mouth + 12)
+  ctx.fill()
+
+  ctx.fillStyle = empty ? 'rgba(6, 3, 1, 0.92)' : 'rgba(10, 5, 2, 0.22)'
+  ctx.beginPath()
+  ctx.ellipse(-1, mouth + 5, 26, 6, 0.12, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.fillStyle = '#4a2812'
+  ctx.beginPath()
+  ctx.moveTo(-32, mouth + 34)
+  ctx.lineTo(30, mouth + 40)
+  ctx.lineTo(29, mouth + 52)
+  ctx.lineTo(-31, mouth + 46)
+  ctx.closePath()
+  ctx.fill()
+  ctx.strokeStyle = '#140804'
+  ctx.lineWidth = 1.3
+  ctx.stroke()
+  ctx.fillStyle = 'rgba(255, 200, 120, 0.2)'
+  ctx.fillRect(-30, mouth + 35, 58, 1.5)
+
+  const snap = ctx.createRadialGradient(18, mouth + 44, 1, 18, mouth + 44, 5)
+  snap.addColorStop(0, '#f0d070')
+  snap.addColorStop(0.55, '#b88820')
+  snap.addColorStop(1, '#4a3408')
+  ctx.fillStyle = snap
+  ctx.beginPath()
+  ctx.arc(18, mouth + 44, 4.4, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.fillStyle = '#c9a028'
+  ctx.beginPath()
+  ctx.arc(-22, mouth + 16, 2.4, 0, Math.PI * 2)
+  ctx.arc(20, mouth + 20, 2.4, 0, Math.PI * 2)
+  ctx.arc(-8, mouth + 78, 2.2, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+/** 피스키퍼 — barrel은 가죽 아래, exposed는 입구 위로 */
+function drawHolsteredRevolver(
+  ctx: CanvasRenderingContext2D,
+  mouth: number,
+  layer: 'barrel' | 'exposed',
+) {
+  ctx.save()
+  ctx.translate(2, mouth + 1)
+  ctx.rotate(0.42)
+
+  if (layer === 'barrel') {
+    const barrel = ctx.createLinearGradient(-5, 8, 6, 8)
+    barrel.addColorStop(0, '#4a4a54')
+    barrel.addColorStop(0.5, '#1c1c24')
+    barrel.addColorStop(1, '#08080c')
+    ctx.fillStyle = barrel
+    roundedPath(ctx, -5, 10, 10, 50, 2)
+    ctx.fill()
+    ctx.fillStyle = 'rgba(220, 220, 230, 0.3)'
+    ctx.fillRect(-4, 12, 1.5, 46)
+    ctx.restore()
+    return
+  }
+
+  const cyl = ctx.createLinearGradient(-12, 6, 12, 22)
+  cyl.addColorStop(0, '#7a7a84')
+  cyl.addColorStop(0.45, '#303038')
+  cyl.addColorStop(1, '#101014')
+  ctx.fillStyle = cyl
+  ctx.beginPath()
+  ctx.ellipse(0, 12, 12, 10, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(210, 200, 170, 0.55)'
+  ctx.lineWidth = 1.3
+  ctx.stroke()
+  ctx.fillStyle = '#07070a'
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 - 0.5
+    ctx.beginPath()
+    ctx.arc(Math.cos(a) * 6.6, 12 + Math.sin(a) * 5.6, 1.85, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  ctx.fillStyle = '#2a2a32'
+  ctx.beginPath()
+  ctx.moveTo(-10, 0)
+  ctx.lineTo(10, -2)
+  ctx.lineTo(9, 6)
+  ctx.lineTo(-11, 8)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = 'rgba(235, 215, 165, 0.4)'
+  ctx.fillRect(-9, -1, 18, 1.5)
+
+  ctx.fillStyle = '#1a1a22'
+  ctx.beginPath()
+  ctx.moveTo(-8, -2)
+  ctx.lineTo(-14, -14)
+  ctx.lineTo(-6, -16)
+  ctx.lineTo(2, -4)
+  ctx.closePath()
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(210, 200, 180, 0.45)'
+  ctx.lineWidth = 1
+  ctx.stroke()
+
+  ctx.strokeStyle = '#1a1a20'
+  ctx.lineWidth = 2.4
+  ctx.beginPath()
+  ctx.arc(-2, 18, 7, 0.2, Math.PI - 0.15)
+  ctx.stroke()
+
+  const wood = ctx.createLinearGradient(-8, -4, -22, -32)
+  wood.addColorStop(0, '#e8a858')
+  wood.addColorStop(0.4, '#9a5420')
+  wood.addColorStop(1, '#3c1c08')
+  ctx.fillStyle = wood
+  ctx.beginPath()
+  ctx.moveTo(-8, 4)
+  ctx.quadraticCurveTo(-6, -8, -10, -20)
+  ctx.quadraticCurveTo(-16, -38, -26, -36)
+  ctx.quadraticCurveTo(-32, -24, -22, -10)
+  ctx.quadraticCurveTo(-14, 6, -4, 8)
+  ctx.closePath()
+  ctx.fill()
+  ctx.strokeStyle = '#2a1408'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  ctx.strokeStyle = 'rgba(50, 24, 8, 0.5)'
+  ctx.lineWidth = 0.85
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath()
+    ctx.moveTo(-10 - i, -4 - i * 4)
+    ctx.quadraticCurveTo(-16 - i, -14 - i * 3, -24, -22 - i * 2)
     ctx.stroke()
   }
+  ctx.strokeStyle = 'rgba(255, 220, 150, 0.45)'
+  ctx.lineWidth = 1.25
+  ctx.beginPath()
+  ctx.moveTo(-8, 0)
+  ctx.quadraticCurveTo(-12, -16, -24, -32)
+  ctx.stroke()
+
+  ctx.fillStyle = '#2c2c34'
+  ctx.beginPath()
+  ctx.arc(-8, 2, 2.3, 0, Math.PI * 2)
+  ctx.fill()
+
   ctx.restore()
 }
 

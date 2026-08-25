@@ -61,7 +61,9 @@ html,
 body,
 #root {
   margin: 0;
-  min-height: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
 }
 
 body {
@@ -82,10 +84,13 @@ input {
 }
 
 .app {
-  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
 .app::before {
@@ -106,17 +111,19 @@ input {
 }
 
 .screen {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   width: min(920px, 100%);
   margin: 0 auto;
-  padding: 28px 18px 80px;
+  padding: 16px 18px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
   animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
   z-index: 1;
+  overflow: auto;
 }
 
 @keyframes fadeIn {
@@ -201,11 +208,11 @@ input {
 /* Title */
 .title-page {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  overflow: hidden;
 }
 
 .title-backdrop {
@@ -223,10 +230,11 @@ input {
 .title-screen {
   text-align: center;
   justify-content: center;
-  min-height: calc(100vh - 48px);
-  min-height: calc(100dvh - 48px);
-  padding-bottom: clamp(120px, 18vh, 220px);
+  min-height: 0;
+  flex: 1 1 auto;
+  padding-bottom: clamp(72px, 12vh, 160px);
   z-index: 1;
+  overflow: auto;
 }
 
 /* 스카이라인 지붕선 뒤에서 타오르는 석양. 건물을 역광 실루엣으로 만든다. */
@@ -552,6 +560,8 @@ input {
 .mugshot-svg {
   position: relative;
   z-index: 1;
+  width: 86%;
+  height: auto;
 }
 
 .wanted-poster h2,
@@ -628,6 +638,26 @@ input {
   border-top: 1px dashed #1a120c;
   padding-top: 12px;
   font-size: 14px;
+}
+
+.wanted-screen {
+  overflow: hidden;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 10px;
+  padding-bottom: 8px;
+}
+
+.wanted-screen .eyebrow,
+.wanted-screen .btn {
+  flex-shrink: 0;
+}
+
+.wanted-screen .wanted-poster {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: min(400px, 100%);
+  overflow: auto;
 }
 
 /* Standoff */
@@ -1004,6 +1034,13 @@ input {
   }
 }
 
+.newspaper-screen {
+  overflow: auto;
+  gap: 10px;
+  padding-top: 10px;
+  padding-bottom: 8px;
+}
+
 /* Newspaper */
 .newspaper {
   width: min(560px, 100%);
@@ -1109,7 +1146,7 @@ input {
 .ending-screen {
   justify-content: center;
   text-align: center;
-  min-height: 70vh;
+  min-height: 0;
   font-family: var(--body);
 }
 
@@ -1168,8 +1205,9 @@ input {
 }
 
 .chrome {
-  position: sticky;
-  bottom: 0;
+  position: relative;
+  flex-shrink: 0;
+  bottom: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1769,6 +1807,160 @@ input {
   }
 }
 
+@media (max-height: 900px) {
+  .wanted-screen .wanted-poster {
+    width: min(380px, 100%);
+    padding: 16px 18px 18px;
+    border-width: 7px;
+  }
+
+  .wanted-poster header {
+    font-size: 34px;
+    margin-bottom: 8px;
+  }
+
+  .mugshot {
+    width: 88px;
+    height: 88px;
+    margin-bottom: 8px;
+  }
+
+  .wanted-stamp {
+    top: 70px;
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .wanted-poster h2 {
+    font-size: 22px;
+  }
+
+  .alias {
+    margin: 2px 0 4px;
+    font-size: 14px;
+  }
+
+  .bounty strong {
+    font-size: 24px;
+  }
+
+  .wanted-poster dl {
+    margin: 8px 0;
+  }
+
+  .wanted-poster dl > div {
+    margin-bottom: 6px;
+  }
+
+  .wanted-poster dd {
+    font-size: 13px;
+  }
+
+  .wanted-poster .tell-note {
+    margin: 4px 0 0;
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .wanted-poster blockquote {
+    padding-top: 8px;
+    font-size: 13px;
+  }
+}
+
+@media (max-height: 760px) {
+  .wanted-screen .wanted-poster {
+    animation: posterDrop 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .mugshot {
+    width: 68px;
+    height: 68px;
+  }
+
+  .wanted-poster header {
+    font-size: 28px;
+  }
+
+  .wanted-stamp {
+    top: 56px;
+  }
+
+  .wanted-poster .tell-note {
+    display: none;
+  }
+
+  .wanted-screen .btn {
+    padding: 8px 20px;
+    font-size: 13px;
+  }
+}
+
+/* 가로로 넓고 세로가 낮은 모니터: 수배서를 2열로 접어 한 화면에 담는다 */
+@media (max-height: 860px) and (min-width: 700px) {
+  .wanted-screen .wanted-poster {
+    width: min(680px, 96%);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "title title"
+      "face name"
+      "face alias"
+      "face bounty"
+      "info info"
+      "quote quote";
+    column-gap: 18px;
+    align-items: start;
+    text-align: left;
+    transform: rotate(-0.6deg);
+  }
+
+  .wanted-poster header {
+    grid-area: title;
+    text-align: center;
+  }
+
+  .mugshot {
+    grid-area: face;
+    margin: 0;
+    width: 96px;
+    height: 110px;
+  }
+
+  .wanted-poster h2 {
+    grid-area: name;
+  }
+
+  .wanted-poster .alias {
+    grid-area: alias;
+  }
+
+  .wanted-poster .bounty {
+    grid-area: bounty;
+  }
+
+  .wanted-poster dl {
+    grid-area: info;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    margin: 10px 0 0;
+  }
+
+  .wanted-poster dl > .tell {
+    grid-column: 1 / -1;
+  }
+
+  .wanted-poster blockquote {
+    grid-area: quote;
+  }
+
+  .wanted-stamp {
+    top: 52px;
+    right: 12px;
+  }
+}
+
 @media (max-width: 600px) {
   .wanted-poster {
     transform: none;
@@ -1780,9 +1972,8 @@ input {
     font-size: 16px;
   }
   .title-screen {
-    min-height: calc(100vh - 40px);
-    min-height: calc(100dvh - 40px);
-    padding-bottom: clamp(96px, 14vh, 140px);
+    min-height: 0;
+    padding-bottom: clamp(72px, 12vh, 120px);
   }
 
   .title-sky {
