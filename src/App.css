@@ -2243,3 +2243,311 @@ input {
 .wanted-poster header {
   font-family: "Special Elite", var(--display-en);
 }
+
+/* ==========================================================================
+   더스트 타운 잡화점 & 살룬 (Dust Town General Store)
+   ========================================================================== */
+
+.store-screen {
+  width: min(940px, 100%);
+  gap: 16px;
+  padding-bottom: 28px;
+}
+
+.store-meta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.store-header-box {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background:
+    radial-gradient(ellipse at top left, rgba(140, 90, 40, 0.25), transparent 70%),
+    linear-gradient(180deg, rgba(34, 20, 12, 0.95), rgba(18, 10, 6, 0.95));
+  border: 1px solid var(--line);
+  padding: 16px 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.store-title {
+  margin: 0;
+  font-family: var(--korean-display), var(--display);
+  font-size: clamp(20px, 3.5vw, 26px);
+  color: #fff;
+  letter-spacing: 0.04em;
+}
+
+.store-sub {
+  margin: 4px 0 0;
+  font-family: var(--western);
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.store-wallet {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  background: rgba(10, 5, 2, 0.85);
+  border: 1px solid var(--accent);
+  padding: 8px 16px;
+  border-radius: 4px;
+  box-shadow: 0 0 16px rgba(232, 168, 56, 0.2);
+}
+
+.wallet-label {
+  font-size: 11px;
+  font-family: var(--western);
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.wallet-amount {
+  font-family: var(--korean-display), var(--display);
+  font-size: 24px;
+  color: var(--accent-hot);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 10px rgba(255, 184, 77, 0.4);
+}
+
+.store-toast {
+  width: 100%;
+  text-align: center;
+  background: linear-gradient(90deg, transparent, rgba(232, 168, 56, 0.2), transparent);
+  border-top: 1px solid var(--accent);
+  border-bottom: 1px solid var(--accent);
+  color: #ffe494;
+  padding: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease;
+}
+
+.store-sections {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.store-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(168, 144, 112, 0.25);
+  padding-bottom: 6px;
+}
+
+.section-title-row h3 {
+  margin: 0;
+  font-family: var(--western);
+  font-size: 15px;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+}
+
+.section-badge {
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+
+.btn-reroll {
+  font-size: 12px;
+  padding: 5px 12px;
+  background: rgba(30, 18, 10, 0.9);
+  border: 1px dashed var(--accent);
+  color: #ffe090;
+}
+
+.btn-reroll:hover {
+  background: rgba(60, 36, 20, 0.9);
+  border-color: #ffd880;
+}
+
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.store-item-card {
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at top right, rgba(140, 80, 20, 0.15), transparent 70%),
+    linear-gradient(180deg, #24140c 0%, #160c06 100%);
+  border: 1px solid var(--line);
+  padding: 14px 14px 12px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.store-item-card:hover:not(.owned):not(.locked) {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 12px rgba(232, 168, 56, 0.2);
+}
+
+.store-item-card.owned {
+  border-color: #5a8a4e;
+  background: linear-gradient(180deg, #182614 0%, #0e180c 100%);
+}
+
+.store-item-card.locked {
+  opacity: 0.65;
+}
+
+.item-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.item-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.item-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+.tag-대치 {
+  background: rgba(78, 120, 180, 0.25);
+  border: 1px solid #5a8ec9;
+  color: #9ac2f4;
+}
+
+.tag-결투 {
+  background: rgba(180, 60, 40, 0.25);
+  border: 1px solid #c95a4a;
+  color: #f49a8c;
+}
+
+.tag-정보 {
+  background: rgba(180, 140, 40, 0.25);
+  border: 1px solid #c9a84a;
+  color: #f4dc8c;
+}
+
+.tag-패시브 {
+  background: rgba(120, 70, 180, 0.25);
+  border: 1px solid #9a6ac9;
+  color: #caa8f4;
+}
+
+.item-name {
+  font-family: var(--korean-display), var(--display);
+  font-size: 15px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.item-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 0 0 12px;
+  flex: 1 1 auto;
+}
+
+.item-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.item-price {
+  font-family: var(--western);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+.item-buy-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  border-radius: 3px;
+}
+
+.item-buy-btn.active {
+  background: #3e6834;
+  border-color: #6fb25e;
+  color: #d4f8cb;
+  cursor: default;
+}
+
+.store-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.store-next-btn {
+  padding: 13px 36px;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+
+/* 결투 HUD 소모품 칩 */
+.chip-buff {
+  background: rgba(232, 168, 56, 0.15);
+  border: 1px solid var(--accent);
+  color: #ffd880;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 3px;
+  animation: pulse 2.5s infinite;
+}
+
+.chip-smoke {
+  background: rgba(140, 140, 160, 0.2);
+  border-color: #9a9ab0;
+  color: #d0d0e0;
+}
+
+.chip-powder {
+  background: rgba(220, 90, 40, 0.2);
+  border-color: #e06030;
+  color: #ffaa80;
+}
+
+.chip-bible {
+  background: rgba(70, 140, 220, 0.2);
+  border-color: #4a9ae0;
+  color: #90d0ff;
+}
+

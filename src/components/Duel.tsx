@@ -26,6 +26,7 @@ interface Props {
   mods: DuelMods
   round: number
   perks: PerkId[]
+  activeBuffs?: { smoke?: boolean; powder?: boolean; bible?: boolean }
   streak: number
   playerName?: string
   onResult: (outcome: DuelOutcome) => void
@@ -73,6 +74,7 @@ export function Duel({
   mods,
   round,
   perks,
+  activeBuffs = {},
   streak,
   playerName = 'YOU',
   onResult,
@@ -106,15 +108,18 @@ export function Duel({
     // 3. 사막 거리감 & 바람에 따른 고유 편차 (±8% 미세 편차)
     const envJitter = (((opponent.name.length * 13 + round * 37) % 17) - 8) * 0.01
 
-    // 4. 전리품 보너스
+    // 4. 전리품 및 소모품(정밀화약) 보너스
     const perkHitScale = perks.includes('keen') ? 1.3 : 1.0
-    const perkHeadScale = perks.includes('silver') ? 1.2 : 1.0
+    const perkHeadScale = (perks.includes('silver') ? 1.2 : 1.0) * (activeBuffs.powder ? 1.4 : 1.0)
 
     // 최종 결투 히트박스 스케일
     const totalHitScale = roundScale * moodScale * (1 + envJitter) * perkHitScale
 
     // 결정론적 반응속도 지터
     const jitter = (((opponent.name.length * 17 + round * 23) % 41) - 20)
+
+    // 연막탄 소모품: 상대 명중률 20% 감소
+    const smokeDebuff = activeBuffs.smoke ? 0.2 : 0
 
     return {
       warnings: 1 + (perks.includes('steady') ? 1 : 0),
@@ -128,7 +133,7 @@ export function Duel({
           jitter +
           (perks.includes('charm') ? 35 : 0),
       ),
-      accuracy: Math.min(0.99, Math.max(0.2, opponent.baseAccuracy + mods.accuracyDelta)),
+      accuracy: Math.min(0.99, Math.max(0.12, opponent.baseAccuracy + mods.accuracyDelta - smokeDebuff)),
       hitBonusPercent: Math.round((totalHitScale - 1) * 100),
     }
   }, [
@@ -139,6 +144,8 @@ export function Duel({
     mods.accuracyDelta,
     mods.mood,
     perks,
+    activeBuffs.powder,
+    activeBuffs.smoke,
     round,
   ])
 
@@ -182,11 +189,17 @@ export function Duel({
     streakRef.current = streak
   }, [streak])
 
+  const activeBuffsRef = useRef(activeBuffs)
+  useEffect(() => {
+    activeBuffsRef.current = activeBuffs
+  }, [activeBuffs])
+
   const resolvedRef = useRef(false)
   const dustRef = useRef<Particle[]>([])
   const smokeRef = useRef<Particle[]>([])
   const tracersRef = useRef<Tracer[]>([])
   const secondChanceUsedRef = useRef(false)
+  const bibleUsedRef = useRef(false)
   const shakeRef = useRef(0)
   const resultFlashRef = useRef(0)
   const zoomRef = useRef(0)
@@ -452,6 +465,14 @@ export function Duel({
             width: 3.2,
           })
           spawnDust(enemyHits ? L.playerX : L.enemyX, L.bodyY, 16)
+          if (enemyHits && activeBuffsRef.current.bible && !bibleUsedRef.current) {
+            bibleUsedRef.current = true
+            sfx.shield()
+            shakeRef.current = 10
+            setMessage('포켓 성경이 총알을 튕겨냈다! 즉시 쏴라!')
+            return
+          }
+
           resolve({
             won: false,
             detail: enemyHits ? '너무 늦었다. 상대가 먼저 쏘았다.' : '망설이다 쏘지 못했다. 결투 패배.',
@@ -576,6 +597,25 @@ export function Duel({
       }
 
       const enemyHits = Math.random() < effAccuracy()
+
+      // 방탄 포켓 성경 버프 발동: 늦게 쐈더라도 성경이 총알을 막아내고 플레이어가 명중시킴
+      if (enemyHits && activeBuffsRef.current.bible && !bibleUsedRef.current) {
+        bibleUsedRef.current = true
+        sfx.shield()
+        shakeRef.current = 14
+        spawnDust(L.playerX, L.bodyY, 18)
+        spawnDust(L.enemyX, head ? L.headY : L.bodyY, 16)
+        resolve({
+          won: true,
+          detail: `가슴의 포켓 성경이 총알을 튕겨냈다! 기적의 역전 명중! (${Math.round(raw)}ms)`,
+          reactionMs: Math.round(raw),
+          grade: gradeOf(raw),
+          headshot: head,
+          foul: false,
+        })
+        return
+      }
+
       spawnDust(enemyHits ? L.playerX : L.enemyX, L.bodyY, 16)
       resolve({
         won: !enemyHits,
@@ -1015,6 +1055,21 @@ export function Duel({
               title="라운드 난이도, 심리전 결과, 환경 편차 및 전리품이 반영된 조준 판정 배율입니다."
             >
               조준 {tuning.hitBonusPercent > 0 ? `+${tuning.hitBonusPercent}%` : `${tuning.hitBonusPercent}%`}
+            </span>
+          )}
+          {activeBuffs.smoke && (
+            <span className="chip-buff chip-smoke" title="서부 연막탄: 상대 명중률 -20% 감소">
+              💨 연막탄
+            </span>
+          )}
+          {activeBuffs.powder && (
+            <span className="chip-buff chip-powder" title="정밀 화약: 헤드샷 판정 범위 +40% 확대">
+              🎯 정밀 화약
+            </span>
+          )}
+          {activeBuffs.bible && (
+            <span className="chip-buff chip-bible" title="방탄 포켓 성경: 치명상 피격 시 1회 총알 방어">
+              🛡️ 포켓 성경
             </span>
           )}
         </div>

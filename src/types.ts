@@ -5,6 +5,7 @@ export type GamePhase =
   | 'standoff'
   | 'duel'
   | 'newspaper'
+  | 'store'
   | 'victory'
   | 'gameover'
 
@@ -101,4 +102,23 @@ export interface Perk {
   id: PerkId
   name: string
   desc: string
+}
+
+export type ConsumableId = 'whiskey' | 'smoke' | 'powder' | 'bible' | 'intel'
+
+export interface ConsumableItem {
+  id: ConsumableId
+  name: string
+  desc: string
+  price: number
+  icon: string
+  tag: '대치' | '결투' | '정보'
+}
+
+export interface ActiveBuffs {
+  whiskey?: boolean
+  smoke?: boolean
+  powder?: boolean
+  bible?: boolean
+  intel?: boolean
 }

@@ -111,13 +111,13 @@ export function Newspaper({
       )}
 
       <button
-        className="btn primary"
+        className="btn primary pulse"
         onClick={() => {
           sfx.click()
           onNext()
         }}
       >
-        {playerWon || peace ? (isLast ? '전설이 되다' : '다음 상대') : '무덤에서 다시'}
+        {playerWon || peace ? (isLast ? '전설이 되다' : '더스트 타운 잡화점 들르기 ➔') : '무덤에서 다시'}
       </button>
     </div>
   )

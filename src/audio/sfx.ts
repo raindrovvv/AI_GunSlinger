@@ -458,4 +458,18 @@ export const sfx = {
   paper() {
     noiseBurst(0.15, 0.06)
   },
+  coin() {
+    tone(987, 0.06, 'sine', 0.07)
+    setTimeout(() => tone(1318, 0.08, 'triangle', 0.09), 45)
+    setTimeout(() => tone(1760, 0.14, 'sine', 0.08), 90)
+  },
+  drink() {
+    tone(280, 0.08, 'sine', 0.06, 180)
+    setTimeout(() => tone(220, 0.1, 'sine', 0.06, 140), 90)
+    noiseBurst(0.06, 0.04, 800)
+  },
+  shield() {
+    tone(1600, 0.12, 'sawtooth', 0.14, 500)
+    noiseBurst(0.12, 0.1, 2400)
+  },
 }

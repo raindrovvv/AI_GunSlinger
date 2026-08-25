@@ -7,13 +7,16 @@ import { Ending } from './components/Ending'
 import { Duel } from './components/Duel'
 import { Newspaper } from './components/Newspaper'
 import { Standoff } from './components/Standoff'
+import { Store } from './components/Store'
 import { TitleScreen } from './components/TitleScreen'
 import { WantedPoster } from './components/WantedPoster'
 import { Sandstorm } from './components/Sandstorm'
 import { bgm } from './audio/bgm'
 import { sfx } from './audio/sfx'
 import type {
+  ActiveBuffs,
   CareerStats,
+  ConsumableId,
   DuelMods,
   DuelOutcome,
   GamePhase,
@@ -72,6 +75,7 @@ export default function App() {
   const [perks, setPerks] = useState<PerkId[]>([])
   const [perkChoices, setPerkChoices] = useState<PerkId[]>([])
   const [pickedPerk, setPickedPerk] = useState<PerkId | null>(null)
+  const [activeBuffs, setActiveBuffs] = useState<ActiveBuffs>({})
   const [streak, setStreak] = useState(0)
   const [bounty, setBounty] = useState(0)
   const [lastReward, setLastReward] = useState(0)
@@ -159,6 +163,7 @@ export default function App() {
     setPrevNames([])
     setPerks([])
     perksRef.current = []
+    setActiveBuffs({})
     setStreak(0)
     streakRef.current = 0
     setBounty(0)
@@ -241,6 +246,9 @@ export default function App() {
     setPerkChoices(canPick ? rollPerkChoices(perksRef.current, 3) : [])
     setPickedPerk(null)
 
+    // 소모품 버프는 해당 라운드 결투 종료 시 소비됨
+    setActiveBuffs({})
+
     setPhase('loading')
     setLoadingText('신문 조판 중…')
     const fameInfo = getFameInfo(nextStreak)
@@ -274,7 +282,33 @@ export default function App() {
     perksRef.current = next
   }
 
-  function handleNext() {
+  function handleBuyConsumable(id: ConsumableId, cost: number) {
+    if (bountyRef.current < cost) return
+    const nextBounty = bountyRef.current - cost
+    setBounty(nextBounty)
+    bountyRef.current = nextBounty
+    setActiveBuffs((prev) => ({ ...prev, [id]: true }))
+  }
+
+  function handleBuyPerk(id: PerkId, cost: number) {
+    if (bountyRef.current < cost || perksRef.current.includes(id)) return
+    const nextBounty = bountyRef.current - cost
+    setBounty(nextBounty)
+    bountyRef.current = nextBounty
+    const nextPerks = [...perksRef.current, id]
+    setPerks(nextPerks)
+    perksRef.current = nextPerks
+  }
+
+  function handleSpendBounty(amount: number): boolean {
+    if (bountyRef.current < amount) return false
+    const nextBounty = bountyRef.current - amount
+    setBounty(nextBounty)
+    bountyRef.current = nextBounty
+    return true
+  }
+
+  function handleNewspaperNext() {
     if (!playerWon && !peace) {
       finishRun(false)
       return
@@ -283,6 +317,11 @@ export default function App() {
       finishRun(true)
       return
     }
+    // 결투 승리 후 더스트 타운 잡화점으로 이동
+    setPhase('store')
+  }
+
+  function handleStoreNext() {
     const next = round + 1
     setRound(next)
     roundRef.current = next
@@ -322,6 +361,7 @@ export default function App() {
           opponent={opponent}
           round={round}
           perks={perks}
+          activeBuffs={activeBuffs}
           playerName={playerName}
           streak={streak}
           onFinish={handleStandoffDone}
@@ -334,6 +374,7 @@ export default function App() {
           mods={mods}
           round={round}
           perks={perks}
+          activeBuffs={activeBuffs}
           streak={streak}
           playerName={playerName}
           onResult={handleDuelResult}
@@ -353,8 +394,21 @@ export default function App() {
           perkChoices={perkChoices}
           pickedPerk={pickedPerk}
           onPickPerk={handlePickPerk}
-          onNext={handleNext}
+          onNext={handleNewspaperNext}
           isLast={round >= TOTAL_ROUNDS}
+        />
+      )}
+
+      {phase === 'store' && (
+        <Store
+          round={round}
+          bounty={bounty}
+          perks={perks}
+          activeBuffs={activeBuffs}
+          onBuyConsumable={handleBuyConsumable}
+          onBuyPerk={handleBuyPerk}
+          onSpendBounty={handleSpendBounty}
+          onNext={handleStoreNext}
         />
       )}
 

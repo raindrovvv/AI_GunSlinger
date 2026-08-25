@@ -8,6 +8,7 @@ interface Props {
   opponent: Opponent
   round: number
   perks?: PerkId[]
+  activeBuffs?: { whiskey?: boolean; intel?: boolean }
   playerName?: string
   streak?: number
   onFinish: (mods: DuelMods, usedAi: boolean) => void
@@ -27,11 +28,19 @@ export function Standoff({
   opponent,
   round,
   perks = [],
+  activeBuffs = {},
   playerName = '나',
   streak = 0,
   onFinish,
 }: Props) {
   const fame = useMemo(() => getFameInfo(streak), [streak])
+
+  useEffect(() => {
+    if (activeBuffs.whiskey) {
+      sfx.drink()
+    }
+  }, [activeBuffs.whiskey])
+
   const tactics = useMemo(
     () => [
       {
@@ -62,13 +71,22 @@ export function Standoff({
     ],
     [opponent.tell],
   )
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: 'system',
-      text: '드로우 직전 버릇을 짚거나, 도발·존중·협박·화해로 심리를 흔들어라. 흔들린 만큼 상대의 손이 느려진다.',
-    },
-    { role: 'opponent', text: opponent.taunt },
-  ])
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    const initial: ChatMessage[] = [
+      {
+        role: 'system',
+        text: '드로우 직전 버릇을 짚거나, 도발·존중·협박·화해로 심리를 흔들어라. 흔들린 만큼 상대의 손이 느려진다.',
+      },
+    ]
+    if (activeBuffs.intel && opponent.personality) {
+      initial.push({
+        role: 'system',
+        text: `📜 [정보상 밀서]: 상대의 성격과 약점은 "${opponent.personality}" 이다. 이를 파고들어라!`,
+      })
+    }
+    initial.push({ role: 'opponent', text: opponent.taunt })
+    return initial
+  })
   const [input, setInput] = useState('')
   const [turn, setTurn] = useState(0)
   const [busy, setBusy] = useState(false)
@@ -119,6 +137,12 @@ export function Standoff({
     const hasPokerFace = perks.includes('poker_face')
     let addReaction = result.mods.reactionDeltaMs
     let addAccuracy = result.mods.accuracyDelta
+
+    // 위스키 버프: 플레이어가 상대를 흔들었을 때(reactionDelta > 0) 효과 1.5배 증폭
+    if (activeBuffs.whiskey && addReaction > 0) {
+      addReaction = Math.round(addReaction * 1.5)
+    }
+
     if (hasPokerFace && result.mods.mood === 'calm') {
       addReaction = Math.max(0, addReaction)
       addAccuracy = Math.min(0, addAccuracy)
