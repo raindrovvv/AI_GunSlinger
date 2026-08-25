@@ -354,55 +354,75 @@ input {
 
 .tagline {
   font-family: var(--western);
-  font-size: clamp(15px, 2.5vw, 20px);
-  margin: 2px 0 0;
-  color: var(--accent);
+  font-size: clamp(17px, 2.8vw, 22px);
+  margin: 4px 0 0;
+  color: #ffd700;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 12px rgba(255, 215, 0, 0.3);
   text-wrap: balance;
   word-break: keep-all;
+  font-weight: 700;
 }
 
 .blurb {
-  color: var(--muted);
-  max-width: 480px;
+  color: #f0e2d0;
+  max-width: 520px;
   text-align: center;
-  font-size: 14px;
-  line-height: 1.5;
-  margin: 4px 0 0;
+  font-size: 15.5px;
+  line-height: 1.65;
+  margin: 6px 0 2px;
   text-wrap: balance;
   word-break: keep-all;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+  font-weight: 450;
 }
 
 .howto {
-  width: min(520px, 100%);
-  border: 1px solid var(--line);
-  padding: 12px 18px;
-  margin-top: 4px;
-  background: rgba(0, 0, 0, 0.42);
+  width: min(560px, 94%);
+  border: 1.5px solid rgba(232, 168, 56, 0.45);
+  border-radius: 8px;
+  padding: 14px 22px;
+  margin-top: 10px;
+  background:
+    radial-gradient(ellipse at center top, rgba(80, 30, 15, 0.35), transparent 70%),
+    rgba(14, 7, 5, 0.92);
   text-align: left;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 18px rgba(232, 168, 56, 0.15);
   word-break: keep-all;
 }
 
 .howto h3 {
   margin: 0 0 10px;
-  color: var(--accent);
-  font-size: 12px;
+  color: #ffd700;
+  font-size: 13.5px;
   letter-spacing: 0.16em;
   font-family: var(--western);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
 }
 
 .howto ol {
   margin: 0;
-  padding-left: 20px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.65;
+  padding-left: 22px;
+  color: #f7ede2;
+  font-size: 15px;
+  line-height: 1.7;
 }
 
 .howto ol li {
   margin-bottom: 6px;
   word-break: keep-all;
   overflow-wrap: break-word;
+  color: #f3eae0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.howto ol li::marker {
+  color: #e8a838;
+  font-weight: 700;
 }
 
 .howto ol li:last-child {
@@ -410,9 +430,10 @@ input {
 }
 
 .howto em {
-  color: var(--accent-hot);
+  color: #ffe066;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(255, 224, 102, 0.45);
 }
 
 /* 실제 종이 결을 흉내내는 노이즈. 단색 배경의 밋밋함을 없앤다. */
@@ -1622,16 +1643,18 @@ input {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  margin: 4px 0 10px;
-  width: min(320px, 100%);
+  gap: 6px;
+  margin: 8px 0 12px;
+  width: min(340px, 100%);
 }
 
 .player-name-label {
-  font-size: 13px;
+  font-size: 14.5px;
   font-family: var(--western);
-  color: var(--muted);
-  letter-spacing: 0.04em;
+  color: #eedcc8;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 .player-name-box {
@@ -1641,39 +1664,40 @@ input {
 .player-name-input {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(18, 10, 6, 0.85);
-  border: 1px solid var(--accent);
+  background: rgba(14, 7, 5, 0.94);
+  border: 1.5px solid #e8a838;
   color: #fff;
   font-family: var(--korean-display), var(--display);
-  font-size: 16px;
-  padding: 9px 14px;
+  font-size: 17px;
+  padding: 10px 16px;
   text-align: center;
-  border-radius: 4px;
+  border-radius: 6px;
   outline: none;
   transition: all 0.2s ease;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 8px rgba(232, 168, 56, 0.2);
 }
 
 .player-name-input:focus {
   border-color: #ffd880;
-  box-shadow: 0 0 12px rgba(255, 190, 80, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.5), inset 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
 .player-name-input::placeholder {
-  color: rgba(220, 190, 160, 0.45);
+  color: rgba(220, 190, 160, 0.55);
   font-style: italic;
 }
 
 .btn.outline {
-  background: transparent;
-  border: 1px dashed var(--line);
-  color: var(--muted);
+  background: rgba(20, 10, 8, 0.75);
+  border: 1px solid rgba(232, 168, 56, 0.5);
+  color: #f0dec8;
+  font-weight: 600;
 }
 
 .btn.outline:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: #ffd700;
+  color: #fff;
+  background: rgba(60, 30, 15, 0.9);
 }
 
 .title-actions {
