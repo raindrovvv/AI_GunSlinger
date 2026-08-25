@@ -558,7 +558,7 @@ export function Duel({
             },
           }
 
-          later(() => onResultRef.current(finalOutcome), 2200)
+          later(() => onResultRef.current(finalOutcome), 4200)
           return
         }
 
@@ -605,12 +605,12 @@ export function Duel({
             setPhaseSafe('idle')
             setMessage('홀스터를 누른 채 버텨라')
             sfx.draw()
-          }, 2400)
-        }, 1900)
+          }, 3200)
+        }, 2500)
         return
       }
 
-      later(() => onResultRef.current(outcome), 1850)
+      later(() => onResultRef.current(outcome), 3600)
     }
 
     const breakGrip = (kind: 'release' | 'leave') => {
