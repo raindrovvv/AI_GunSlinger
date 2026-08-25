@@ -1799,3 +1799,124 @@ input {
     transform: translate3d(-15%, -5%, 0) rotate(1deg);
   }
 }
+
+/* ═══════════════════ WebGL 연출 레이어 ═══════════════════ */
+
+/* .title-backdrop이 이미 fixed·전체화면이라 그대로 채우면 된다 */
+.title-fx {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/*
+ * 셰이더가 켜지면 CSS 하늘은 감춘다. DOM에서 빼지 않는 이유는
+ * .title-horizon 위치를 재서 태양 높이를 맞추기 때문.
+ * 스카이라인은 그대로 둬서 셰이더 노을 위에 역광 실루엣으로 앉는다.
+ */
+.title-page.fx-on .title-sky,
+.title-page.fx-on .title-horizon,
+.title-page.fx-on .dust-layer {
+  opacity: 0;
+}
+
+/* 배경이 밝아지므로 글자를 역광에서 떼어낸다 */
+.title-page.fx-on .logo-gun {
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.55),
+    0 0 34px rgba(255, 176, 74, 0.45);
+}
+
+.title-page.fx-on .tagline,
+.title-page.fx-on .blurb,
+.title-page.fx-on .title-badge {
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.75);
+}
+
+.duel-canvas-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  line-height: 0;
+}
+
+/* 후처리 결과가 원본 캔버스를 정확히 덮는다. 입력은 원본이 받는다. */
+.duel-stage canvas.duel-fx {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: none;
+  pointer-events: none;
+}
+
+.duel-stage canvas.duel-fx.on {
+  display: block;
+}
+
+/* ═══════════════════ 종이 위를 지나가는 빛 ═══════════════════ */
+/* 흔들림은 paperWindFlutter가 담당한다. 여기는 ::before만 써서 겹치지 않는다. */
+
+.wanted-poster::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(255, 246, 214, 0.5) 50%,
+    transparent 58%
+  );
+  background-size: 260% 100%;
+  mix-blend-mode: soft-light;
+  animation: paperSheen 11s ease-in-out infinite;
+}
+
+@keyframes paperSheen {
+  0% {
+    background-position: 130% 0;
+  }
+  55%,
+  100% {
+    background-position: -30% 0;
+  }
+}
+
+/* 잉크가 앉는 순간 한 번 훑고 지나가는 인쇄광 */
+.newspaper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 238, 196, 0) 40%,
+    rgba(255, 238, 196, 0.6) 50%,
+    rgba(255, 238, 196, 0) 60%
+  );
+  background-size: 100% 300%;
+  mix-blend-mode: overlay;
+  animation: printSweep 1s ease-out 1 both;
+}
+
+@keyframes printSweep {
+  from {
+    background-position: 0 -120%;
+    opacity: 1;
+  }
+  to {
+    background-position: 0 220%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wanted-poster::before,
+  .newspaper::before {
+    animation: none;
+    opacity: 0;
+  }
+}

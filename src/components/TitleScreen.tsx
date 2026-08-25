@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { sfx } from '../audio/sfx'
 import { EMPTY_CAREER, loadCareer } from '../data/records'
 import type { CareerStats } from '../types'
+import { TitleFx } from '../gl/TitleFx'
+import { skyFxEnabled } from '../gl/flags'
 import { RecordBoard } from './RecordBoard'
 
 interface Props {
@@ -11,10 +13,13 @@ interface Props {
 export function TitleScreen({ onStart }: Props) {
   const [showRecords, setShowRecords] = useState(false)
   const [career, setCareer] = useState<CareerStats>(EMPTY_CAREER)
+  const [glSky] = useState(skyFxEnabled)
+  const [fxOn, setFxOn] = useState(false)
 
   return (
-    <div className="title-page">
+    <div className={`title-page${fxOn ? ' fx-on' : ''}`}>
       <div className="title-backdrop" aria-hidden>
+        {glSky && <TitleFx onReady={setFxOn} />}
         <div className="title-sky" />
         <div className="title-horizon" />
         <div className="dust-layer" />

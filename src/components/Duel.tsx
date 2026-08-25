@@ -5,6 +5,7 @@ import { CANVAS_LABEL_FONT } from '../fonts'
 import { perkById } from '../data/perks'
 import { PerkIcon } from './PerkIcon'
 import { geometryOf, getBackdrop } from '../canvas/backdrop'
+import { createDuelFx, type DuelFx } from '../gl/duelFx'
 import {
   HOLSTER_HALF_W,
   HOLSTER_REACH,
@@ -57,6 +58,7 @@ const GRADE_LABEL: Record<DrawGrade, string> = {
 
 export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const fxCanvasRef = useRef<HTMLCanvasElement>(null)
   const [phase, setPhase] = useState<Phase>('idle')
   const [message, setMessage] = useState('홀스터를 누른 채 버텨라')
   const [countdown, setCountdown] = useState<number | null>(null)
@@ -188,7 +190,9 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
 
     const resize = () => {
       const parent = canvas.parentElement
-      dpr = Math.min(window.devicePixelRatio || 1, 2)
+      // FX가 켜지면 씬을 매 프레임 텍스처로 올린다. dpr 2는 대역폭이 과해
+      // 내장 GPU에서 프레임이 밀린다.
+      dpr = Math.min(window.devicePixelRatio || 1, fx ? 1.5 : 2)
       const cssW = Math.min(920, parent?.clientWidth ?? 800)
       const cssH = Math.min(580, Math.max(420, Math.floor(cssW * 0.68)))
       canvas.style.width = `${cssW}px`
@@ -197,7 +201,14 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       canvas.height = Math.floor(cssH * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       updateLayout()
+      fx?.resize(cssW, cssH)
     }
+
+    const fx: DuelFx | null = fxCanvasRef.current
+      ? createDuelFx(fxCanvasRef.current)
+      : null
+    if (fx && fxCanvasRef.current) fxCanvasRef.current.classList.add('on')
+
     resize()
     window.addEventListener('resize', resize)
 
@@ -269,11 +280,20 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       setMessage(outcome.detail)
       setGrade(outcome.grade)
 
+      const LF = layout()
+      // 총알이 박힌 쪽으로 화면이 빨려 들어가게 초점을 옮긴다
+      fx?.focusAt(
+        outcome.won ? LF.enemyX : LF.playerX,
+        LF.bodyY - 6 * LF.s,
+        LF.w,
+        LF.h,
+      )
+      fx?.kick(outcome.won ? 'win' : 'lose')
+
       if (!outcome.foul) {
-        const L = layout()
-        const shooterX = outcome.won ? L.playerX : L.enemyX
+        const shooterX = outcome.won ? LF.playerX : LF.enemyX
         const dir = outcome.won ? 1 : -1
-        spawnSmoke(shooterX + dir * 56 * L.s, L.bodyY - 20 * L.s, dir)
+        spawnSmoke(shooterX + dir * 56 * LF.s, LF.bodyY - 20 * LF.s, dir)
         bgm.duck(0.18, 1200)
         sfx.gunshot()
       }
@@ -336,6 +356,9 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       setMessage('쏴라!')
       sfx.draw()
       shakeRef.current = 8
+      // 조준을 가리지 않도록 색수차만 짧게 튄다. 블러는 판정 후에만.
+      fx?.focusAt(layout().w * 0.5, layout().h * 0.5, layout().w, layout().h)
+      fx?.kick('draw')
       later(() => setFlash('none'), 200)
       later(() => {
         if (phaseRef.current === 'draw' && playerShotAtRef.current === null) {
@@ -527,7 +550,7 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
 
       const fallOf = (side: 'player' | 'enemy') =>
         phaseRef.current === 'result' && winnerRef.current !== side && winnerRef.current !== 'none'
-          ? Math.min(1, (now - fallStartRef.current) / 460)
+          ? Math.min(1, (now - fallStartRef.current) / 820)
           : 0
 
       drawGunslinger(ctx, {
@@ -765,6 +788,8 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       ctx.fillRect(0, h - bar, w, bar)
       drawGrain(ctx, w, h, phaseRef.current === 'result' ? 1.3 : 1)
 
+      fx?.render(canvas, t)
+
       rafRef.current = requestAnimationFrame(drawFrame)
     }
 
@@ -852,6 +877,7 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       canvas.removeEventListener('touchstart', onTouchStart)
       canvas.removeEventListener('touchmove', onTouchMove)
       canvas.removeEventListener('touchend', onTouchEnd)
+      fx?.dispose()
     }
   }, [opponent.alias, round, setPhaseSafe, tuning])
 
@@ -883,7 +909,10 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       )}
 
       <div className="duel-stage">
-        <canvas ref={canvasRef} />
+        <div className="duel-canvas-wrap">
+          <canvas ref={canvasRef} />
+          <canvas ref={fxCanvasRef} className="duel-fx" aria-hidden />
+        </div>
       </div>
 
       {warning && <p className="duel-warning">{warning}</p>}
