@@ -1,3 +1,4 @@
+import { getFameInfo } from '../data/fame'
 import { perkById } from '../data/perks'
 import { formatReaction, formatRunDate } from '../data/records'
 import type { CareerStats, RunRecord } from '../types'
@@ -19,6 +20,7 @@ function isNewBest(run: RunRecord, career: CareerStats, field: 'bounty' | 'react
 
 export function RecordBoard({ career, lastRun = null, compact = false }: Props) {
   const empty = career.runs === 0 && !lastRun
+  const careerFame = getFameInfo(career.bestStreak)
 
   return (
     <div className={`record-board ${compact ? 'is-compact' : ''}`}>
@@ -50,8 +52,10 @@ export function RecordBoard({ career, lastRun = null, compact = false }: Props) 
               <strong>{formatReaction(career.bestReactionMs)}</strong>
             </div>
             <div>
-              <span>최장 연승</span>
-              <strong>{career.bestStreak || '—'}</strong>
+              <span>최고 명성</span>
+              <strong style={{ color: careerFame.color }}>
+                {career.bestStreak ? `${careerFame.badge}` : '—'}
+              </strong>
             </div>
           </div>
 

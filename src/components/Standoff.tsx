@@ -1,43 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { standoffChat } from '../api/client'
 import { sfx } from '../audio/sfx'
-import type { ChatMessage, DuelMods, MoodShift, Opponent } from '../types'
+import { getFameInfo } from '../data/fame'
+import type { ChatMessage, DuelMods, MoodShift, Opponent, PerkId } from '../types'
 
 interface Props {
   opponent: Opponent
   round: number
+  perks?: PerkId[]
+  playerName?: string
+  streak?: number
   onFinish: (mods: DuelMods, usedAi: boolean) => void
 }
 
 const MAX_TURNS = 3
-
-const TACTICS = [
-  {
-    label: '도발',
-    line: '소문보다 손이 느려 보이는군.',
-    effect: '분노 — 드로우는 빨라지지만 조준이 크게 흔들린다',
-  },
-  {
-    label: '존중',
-    line: '실력은 인정한다. 그래도 물러설 순 없어.',
-    effect: '위축 — 상대의 손이 무거워진다',
-  },
-  {
-    label: '협박',
-    line: '오늘 관에 들어갈 사람은 내가 아니야.',
-    effect: '공포 — 크게 흔들린다',
-  },
-  {
-    label: '간파',
-    line: '그 버릇, 아까부터 다 보였다.',
-    effect: '경계 — 버릇을 들켜 동요한다',
-  },
-  {
-    label: '화해',
-    line: '총 내려놓고 술이나 한잔 하자고.',
-    effect: '설득 — 3턴째라면 결투를 피할 수도 있다',
-  },
-]
 
 const MOOD_LABEL: Record<MoodShift, string> = {
   calm: '평정',
@@ -47,7 +23,45 @@ const MOOD_LABEL: Record<MoodShift, string> = {
   suspicious: '경계',
 }
 
-export function Standoff({ opponent, round, onFinish }: Props) {
+export function Standoff({
+  opponent,
+  round,
+  perks = [],
+  playerName = '나',
+  streak = 0,
+  onFinish,
+}: Props) {
+  const fame = useMemo(() => getFameInfo(streak), [streak])
+  const tactics = useMemo(
+    () => [
+      {
+        label: '도발',
+        line: '소문보다 손이 느려 보이는군.',
+        effect: '분노 — 드로우는 빨라지지만 조준이 크게 흔들린다',
+      },
+      {
+        label: '존중',
+        line: '실력은 인정한다. 그래도 물러설 순 없어.',
+        effect: '위축 — 상대의 손이 무거워진다',
+      },
+      {
+        label: '협박',
+        line: '오늘 관에 들어갈 사람은 내가 아니야.',
+        effect: '공포 — 크게 흔들린다',
+      },
+      {
+        label: '간파',
+        line: `${opponent.tell}… 다 보인다.`,
+        effect: '경계 — 수배서의 버릇을 짚어 크게 동요시킨다',
+      },
+      {
+        label: '화해',
+        line: '총 내려놓고 술이나 한잔 하자고.',
+        effect: '설득 — 3턴째라면 결투를 피할 수도 있다',
+      },
+    ],
+    [opponent.tell],
+  )
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'system',
@@ -95,15 +109,25 @@ export function Standoff({ opponent, round, onFinish }: Props) {
       playerMessage: text,
       turn: nextTurn,
       round,
+      streak,
+      fameTitle: fame.title,
     })
 
     sfx.message()
     setMessages((m) => [...m, { role: 'opponent', text: result.reply }])
 
+    const hasPokerFace = perks.includes('poker_face')
+    let addReaction = result.mods.reactionDeltaMs
+    let addAccuracy = result.mods.accuracyDelta
+    if (hasPokerFace && result.mods.mood === 'calm') {
+      addReaction = Math.max(0, addReaction)
+      addAccuracy = Math.min(0, addAccuracy)
+    }
+
     const merged: DuelMods = {
       mood: result.mods.mood,
-      reactionDeltaMs: modsRef.current.reactionDeltaMs + result.mods.reactionDeltaMs,
-      accuracyDelta: modsRef.current.accuracyDelta + result.mods.accuracyDelta,
+      reactionDeltaMs: modsRef.current.reactionDeltaMs + addReaction,
+      accuracyDelta: modsRef.current.accuracyDelta + addAccuracy,
       peaceEnding: result.mods.peaceEnding || modsRef.current.peaceEnding,
     }
     setMods(merged)
@@ -138,6 +162,11 @@ export function Standoff({ opponent, round, onFinish }: Props) {
         <div>
           <p className="eyebrow">
             대치 · {turn}/{MAX_TURNS}턴
+            {streak >= 2 && (
+              <span className="standoff-fame-chip" style={{ borderColor: fame.color, color: fame.color }}>
+                {fame.badge}
+              </span>
+            )}
           </p>
           <h2>{opponent.alias}</h2>
           <p className="tell-reminder">
@@ -147,7 +176,10 @@ export function Standoff({ opponent, round, onFinish }: Props) {
         </div>
         <div className="mood-meter">
           <span>상대 심리</span>
-          <strong data-mood={mods.mood}>{MOOD_LABEL[mods.mood]}</strong>
+          <strong data-mood={mods.mood}>
+            {MOOD_LABEL[mods.mood]}
+            {mods.mood === 'suspicious' && <em className="weakness-tag">약점 간파!</em>}
+          </strong>
           <small>
             지금은 <b>{advantage}</b> · 상대 반응 {mods.reactionDeltaMs >= 0 ? '+' : ''}
             {Math.round(mods.reactionDeltaMs)}ms · 명중{' '}
@@ -159,7 +191,12 @@ export function Standoff({ opponent, round, onFinish }: Props) {
       <div className="chat-log">
         {messages.map((m, i) => (
           <div key={i} className={`bubble ${m.role}`}>
-            {m.role === 'player' && <span className="who">나</span>}
+            {m.role === 'player' && (
+              <span className="who">
+                {playerName}
+                {streak >= 2 && <span className="bubble-fame-tag">[{fame.title}]</span>}
+              </span>
+            )}
             {m.role === 'opponent' && <span className="who">{opponent.alias}</span>}
             <p>{m.text}</p>
           </div>
@@ -171,7 +208,7 @@ export function Standoff({ opponent, round, onFinish }: Props) {
       {!done ? (
         <>
           <div className="tactics">
-            {TACTICS.map((t) => (
+            {tactics.map((t) => (
               <button
                 key={t.label}
                 type="button"

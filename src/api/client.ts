@@ -50,6 +50,8 @@ export async function standoffChat(params: {
   playerMessage: string
   turn: number
   round: number
+  streak?: number
+  fameTitle?: string
 }): Promise<{
   reply: string
   mood: MoodShift
@@ -242,6 +244,12 @@ export async function generateNewspaper(params: {
   peace: boolean
   mood: MoodShift
   round: number
+  reactionMs?: number | null
+  headshot?: boolean
+  detail?: string
+  playerName?: string
+  streak?: number
+  fameTitle?: string
 }): Promise<{ article: NewspaperArticle; usedAi: boolean }> {
   const data = await postJson<NewspaperArticle>('/api/newspaper', params)
   if (data?.headline) {
@@ -255,27 +263,57 @@ function fallbackNewspaper(params: {
   playerWon: boolean
   peace: boolean
   round: number
+  reactionMs?: number | null
+  headshot?: boolean
+  detail?: string
+  playerName?: string
+  streak?: number
+  fameTitle?: string
 }): NewspaperArticle {
-  const { opponent, playerWon, peace, round } = params
+  const { opponent, playerWon, peace, round, reactionMs, headshot, playerName, detail, streak = 0, fameTitle } = params
+  const fameTag = streak >= 2 && fameTitle ? `${streak}연승의 '${fameTitle}' ` : ''
+  const hero = playerName?.trim() || '이름 없는 총잡이'
 
   if (peace) {
     return {
       headline: `총성 없는 정오, ${opponent.alias} 물러서다`,
-      body: `모두가 총성을 기다렸다. 그러나 ${opponent.name}은 손을 멈췄고, 이름 없는 방랑자도 총을 뽑지 않았다. 마을 사람들은 아직 그 침묵을 이야기한다.`,
+      body: `모두가 총성을 기다렸다. 그러나 ${opponent.name}은 손을 멈췄고, ${hero}도 총을 뽑지 않았다. 마을 사람들은 아직 그 침묵을 이야기한다.`,
       quote: `"오늘은 피가 아깝다." — ${opponent.alias}`,
     }
   }
 
   if (playerWon) {
+    if (headshot) {
+      return {
+        headline: `전광석화 헤드샷! ${fameTag}${hero} 완승`,
+        body: `제${round}차 결투. 단 한 발의 총성이 정적을 깼다. ${fameTag}${hero}는 ${reactionMs ? `${reactionMs}ms만에 ` : ''}${opponent.name}의 모자를 꿰뚫는 결정타를 날렸다.`,
+        quote: '"눈 깜빡할 틈도 없었소." — 목격자',
+      }
+    }
+    if (detail?.includes('역전')) {
+      return {
+        headline: `기적의 역전승! ${opponent.alias} 쓰러지다`,
+        body: `제${round}차 결투. ${opponent.name}의 총알이 아슬아슬하게 빗나간 찰나, ${fameTag}${hero}의 반격이 상대를 정확히 쓰러뜨렸다.`,
+        quote: '"간발의 차이로 목숨을 건졌소." — 목격자',
+      }
+    }
     return {
-      headline: `${opponent.alias} 쓰러지다, 현상금 $${opponent.bounty.toLocaleString()}`,
-      body: `제${round}차 결투. 이름 없는 총잡이는 ${opponent.name}이 숨기지 못한 버릇을 읽고 반 박자 앞섰다. 소문은 이미 다음 마을까지 갔다.`,
+      headline: `${fameTag}${hero}, ${opponent.alias} 격파 ($${opponent.bounty.toLocaleString()})`,
+      body: `제${round}차 결투. ${hero}는 ${opponent.name}이 숨기지 못한 버릇(${opponent.tell.slice(0, 12)}…)을 읽고 반 박자 앞섰다. ${streak >= 2 ? `${streak}연승의 소문은 이미 서부 전역으로 퍼졌다.` : '소문은 이미 다음 마을까지 갔다.'}`,
       quote: '"방아쇠는 거짓말을 못 한다." — 목격자',
     }
   }
 
+  if (detail?.includes('허공')) {
+    return {
+      headline: `조준 실패, ${hero} 쓰러지다`,
+      body: `제${round}차 결투. ${hero}의 총알이 허공을 가르는 사이, ${opponent.name}의 냉혹한 사격이 결투를 끝냈다.`,
+      quote: '"총을 쏠 땐 상대를 봐야지." — ' + opponent.alias,
+    }
+  }
+
   return {
-    headline: `이름 없는 총잡이, ${opponent.alias}에게 지다`,
+    headline: `${hero}, ${opponent.alias}에게 지다`,
     body: `너무 빨랐거나, 너무 늦었다. ${opponent.name}의 총구가 먼저 불을 뿜었고 거리에는 먼지만 남았다. 관 짜는 목수만 바빴다.`,
     quote: opponent.taunt,
   }

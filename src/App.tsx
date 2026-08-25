@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { checkAiHealth, generateNewspaper, generateOpponent } from './api/client'
+import { getFameInfo } from './data/fame'
 import { rollPerkChoices } from './data/perks'
 import { recordRun } from './data/records'
 import { Ending } from './components/Ending'
@@ -39,13 +40,21 @@ function rewardFor(
   streak: number,
   perks: PerkId[],
 ) {
-  if (isPeace) return Math.round(opponent.bounty * 0.6)
+  const spurMult = perks.includes('golden_spur') ? 1.3 : 1
+  if (isPeace) return Math.round(opponent.bounty * 0.6 * spurMult)
   const headMult = outcome?.headshot ? (perks.includes('silver') ? 2 : 1.5) : 1
   const streakMult = 1 + Math.min(streak, 5) * 0.1
-  return Math.round(opponent.bounty * headMult * streakMult)
+  return Math.round(opponent.bounty * headMult * streakMult * spurMult)
 }
 
 export default function App() {
+  const [playerName, setPlayerName] = useState<string>(() => {
+    try {
+      return localStorage.getItem('ai-gunslinger.player-name') || '이름 없는 총잡이'
+    } catch {
+      return '이름 없는 총잡이'
+    }
+  })
   const [phase, setPhase] = useState<GamePhase>('title')
   const [round, setRound] = useState(1)
   const [opponent, setOpponent] = useState<Opponent | null>(null)
@@ -137,7 +146,10 @@ export default function App() {
     setPhase('wanted')
   }, [])
 
-  function handleStart() {
+  function handleStart(customName?: string) {
+    if (customName && customName.trim()) {
+      setPlayerName(customName.trim())
+    }
     setRound(1)
     roundRef.current = 1
     setWins(0)
@@ -231,12 +243,19 @@ export default function App() {
 
     setPhase('loading')
     setLoadingText('신문 조판 중…')
+    const fameInfo = getFameInfo(nextStreak)
     const { article: paper, usedAi } = await generateNewspaper({
       opponent,
       playerWon: won,
       peace: isPeace,
       mood: m.mood,
       round,
+      reactionMs: outcome?.reactionMs ?? null,
+      headshot: outcome?.headshot ?? false,
+      detail: outcome?.detail,
+      playerName,
+      streak: nextStreak,
+      fameTitle: fameInfo.title,
     })
     setArticle(paper)
     setAiFlags((f) => ({ ...f, paper: usedAi }))
@@ -299,7 +318,14 @@ export default function App() {
       )}
 
       {phase === 'standoff' && opponent && (
-        <Standoff opponent={opponent} round={round} onFinish={handleStandoffDone} />
+        <Standoff
+          opponent={opponent}
+          round={round}
+          perks={perks}
+          playerName={playerName}
+          streak={streak}
+          onFinish={handleStandoffDone}
+        />
       )}
 
       {phase === 'duel' && opponent && (
@@ -309,6 +335,7 @@ export default function App() {
           round={round}
           perks={perks}
           streak={streak}
+          playerName={playerName}
           onResult={handleDuelResult}
         />
       )}
@@ -340,6 +367,7 @@ export default function App() {
           victory={phase === 'victory'}
           career={endingCareer}
           lastRun={endingRun}
+          playerName={playerName}
           onRestart={handleStart}
         />
       )}
@@ -384,7 +412,11 @@ export default function App() {
         {inRun && (
           <span className="chrome-run">
             R{round}/{TOTAL_ROUNDS} · 현상금 ${bounty.toLocaleString()}
-            {streak > 1 && ` · ${streak}연승`}
+            {streak > 0 && (
+              <span style={{ color: getFameInfo(streak).color, marginLeft: 6 }}>
+                · {getFameInfo(streak).badge} ({streak}연승)
+              </span>
+            )}
           </span>
         )}
         <span>{aiStatus}</span>

@@ -28,30 +28,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'too many requests' })
   }
 
-  const { opponent, playerWon, peace, mood, round } = req.body ?? {}
+  const {
+    opponent,
+    playerWon,
+    peace,
+    mood,
+    round,
+    reactionMs,
+    headshot,
+    detail,
+    playerName,
+    streak = 0,
+    fameTitle,
+  } = req.body ?? {}
   if (!opponent?.name) {
     return res.status(400).json({ error: 'missing opponent' })
   }
 
-  const outcome = peace
-    ? '총 한 발 쏘지 않고 결투가 무산됨'
-    : playerWon
-      ? '이름 없는 총잡이가 승리'
-      : '이름 없는 총잡이가 패배'
+  const fameTag = streak >= 2 && fameTitle ? `${streak}연승의 '${fameTitle}' ` : ''
+  const hero = typeof playerName === 'string' && playerName.trim() ? playerName.trim() : '이름 없는 총잡이'
 
-  const systemPrompt = `당신은 1880년대 서부 신문 '더스트 타운 가제트'의 기자입니다. 결투 기사를 씁니다.
+  const outcome = peace
+    ? '총 한 발 쏘지 않고 결투가 무산됨 (평화적 해결)'
+    : playerWon
+      ? headshot
+        ? `${fameTag}${hero}가 전광석화 헤드샷으로 완승`
+        : `${fameTag}${hero}가 선제 사격으로 승리`
+      : `${hero}가 패배`
+
+  const duelDetails = [
+    streak >= 2 && fameTitle ? `플레이어 명성: ${streak}연승 '${fameTitle}'` : null,
+    `결투 직전 상대 심리: ${mood ?? '알 수 없음'}`,
+    opponent.tell ? `상대의 드로우 버릇: ${opponent.tell}` : null,
+    reactionMs ? `반응 시간: ${reactionMs}ms` : null,
+    headshot ? `명중 부위: 이마/머리 (헤드샷)` : null,
+    detail ? `결투 정황: ${detail}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  const systemPrompt = `당신은 1880년대 서부 신문 기자입니다. 결투 기사를 작성하세요.
 
 [기사 규칙]
-- headline: 24자 이내. 결과가 한눈에 보이게. 본문을 그대로 반복하지 않는다.
-- body: 2~3문장, 160자 이내. 현장 묘사와 결정적 순간을 담는다.
-- quote: 목격자나 당사자의 한마디. 끝에 ' — 말한 사람'을 붙인다.
-- 과장된 옛 신문 문체 + 건조한 유머 한 방울.
-- 결과를 뒤집거나 없는 사실을 만들지 않는다.
+- headline: 24자 이내(결과 요약)
+- body: 2~3문장(140자 이내, 헤드샷/버릇/속도 등 결정적 순간 묘사)
+- quote: 목격자/당사자 한마디(' — 화자' 형식)
 
 ${KOREAN_RULES}
-
 ${WORLD_RULES}
-
 ${OUTPUT_RULES}
 
 [출력 스키마]
@@ -61,16 +85,16 @@ ${OUTPUT_RULES}
     const completion = await getClient().chat.completions.create({
       model: MODEL,
       temperature: 1.0,
-      max_tokens: 320,
+      max_tokens: 160,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: systemPrompt },
         {
           role: 'user',
           content: `제${round}차 결투
-상대: ${opponent.name} (${opponent.alias}), 현상금 ${opponent.bounty}달러
+상대: ${opponent.name} (${opponent.alias}), $${opponent.bounty}
 죄목: ${opponent.crime}
-결투 직전 상대의 심리: ${mood}
+${duelDetails}
 결과: ${outcome}`,
         },
       ],
