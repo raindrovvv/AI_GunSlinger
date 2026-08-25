@@ -140,6 +140,7 @@ input {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
@@ -725,6 +726,9 @@ input {
 /* Standoff */
 .standoff-screen {
   align-items: stretch;
+  justify-content: center;
+  margin-top: auto;
+  margin-bottom: auto;
   position: relative;
   border-radius: 8px;
   padding: 16px;
@@ -1059,6 +1063,13 @@ input {
 }
 
 /* Duel */
+.duel-screen {
+  justify-content: center;
+  margin-top: auto;
+  margin-bottom: auto;
+  width: min(960px, 100%);
+}
+
 .duel-meta {
   width: 100%;
   display: flex;
