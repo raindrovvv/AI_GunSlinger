@@ -275,72 +275,109 @@ export function drawHolster(ctx: CanvasRenderingContext2D, o: HolsterOpts) {
 }
 
 function drawGunBelt(ctx: CanvasRenderingContext2D, spanHalf: number) {
+  // 베이스 탄띠 (고급 브라이들 새들 레더)
   const belt = ctx.createLinearGradient(0, -2, 0, 26)
-  belt.addColorStop(0, '#8a5530')
-  belt.addColorStop(0.18, '#6a3c1c')
-  belt.addColorStop(0.55, '#3d2410')
-  belt.addColorStop(1, '#160c05')
+  belt.addColorStop(0, '#784620')
+  belt.addColorStop(0.2, '#542e14')
+  belt.addColorStop(0.65, '#2e180a')
+  belt.addColorStop(1, '#140804')
   ctx.fillStyle = belt
   roundedPath(ctx, -spanHalf, 0, spanHalf * 2, 24, 3)
   ctx.fill()
 
-  ctx.fillStyle = 'rgba(255, 200, 130, 0.28)'
-  ctx.fillRect(-spanHalf, 1, spanHalf * 2, 2)
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)'
-  ctx.fillRect(-spanHalf, 21, spanHalf * 2, 3)
+  // 가죽 상/하단 베벨 및 엣지 하이라이트
+  ctx.fillStyle = 'rgba(255, 210, 140, 0.32)'
+  ctx.fillRect(-spanHalf, 1, spanHalf * 2, 1.8)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
+  ctx.fillRect(-spanHalf, 22, spanHalf * 2, 2)
 
-  ctx.strokeStyle = 'rgba(226, 196, 140, 0.38)'
+  // 상하단 듀얼 새들 스티칭 (아이보리 굵은 실밥)
+  ctx.strokeStyle = 'rgba(240, 220, 180, 0.48)'
   ctx.lineWidth = 1.1
+  ctx.setLineDash([2.5, 3.2])
   ctx.beginPath()
-  ctx.moveTo(-spanHalf + 4, 5)
-  ctx.lineTo(spanHalf - 4, 5)
-  ctx.moveTo(-spanHalf + 4, 18)
-  ctx.lineTo(spanHalf - 4, 18)
+  ctx.moveTo(-spanHalf + 4, 4.5)
+  ctx.lineTo(spanHalf - 4, 4.5)
+  ctx.moveTo(-spanHalf + 4, 19.5)
+  ctx.lineTo(spanHalf - 4, 19.5)
   ctx.stroke()
+  ctx.setLineDash([])
 
-  const buckle = ctx.createLinearGradient(-82, -2, -50, 28)
-  buckle.addColorStop(0, '#f6e08a')
-  buckle.addColorStop(0.45, '#c9a23a')
-  buckle.addColorStop(1, '#6a4e0c')
+  // 서부식 인그레이빙 황동 버클
+  const buckle = ctx.createLinearGradient(-84, -4, -48, 28)
+  buckle.addColorStop(0, '#fbeaa0')
+  buckle.addColorStop(0.35, '#d4a838')
+  buckle.addColorStop(0.7, '#8c5c14')
+  buckle.addColorStop(1, '#422806')
   ctx.fillStyle = buckle
-  roundedPath(ctx, -80, -3, 28, 28, 4)
+  roundedPath(ctx, -82, -3.5, 32, 31, 4)
   ctx.fill()
-  ctx.strokeStyle = '#3a2a08'
-  ctx.lineWidth = 1.6
+  ctx.strokeStyle = '#281604'
+  ctx.lineWidth = 1.8
   ctx.stroke()
-  ctx.fillStyle = '#2a1c08'
-  roundedPath(ctx, -72, 5, 12, 12, 2)
-  ctx.fill()
-  ctx.fillStyle = 'rgba(255, 236, 170, 0.45)'
-  ctx.fillRect(-78, -1, 22, 2)
 
+  // 버클 내부 구멍 & 핀
+  ctx.fillStyle = '#1c1006'
+  roundedPath(ctx, -73, 4.5, 14, 15, 2.5)
+  ctx.fill()
+  ctx.strokeStyle = '#d4a838'
+  ctx.lineWidth = 1
+  ctx.stroke()
+  // 버클 프롱(핀)
+  ctx.fillStyle = '#fbeaa0'
+  ctx.fillRect(-67, 1, 3, 22)
+
+  // .45 Long Colt 황동 탄환 6발 (탄띠 루프 + 탄두/뇌관 디테일)
   for (let i = 0; i < 6; i++) {
-    const bx = 42 + i * 14
-    ctx.fillStyle = '#24140a'
-    roundedPath(ctx, bx - 5, 1, 10, 20, 2)
+    const bx = 38 + i * 15.5
+
+    // 가죽 탄환 홀더 루프
+    ctx.fillStyle = '#221206'
+    roundedPath(ctx, bx - 6, 0.5, 12, 22, 2.5)
     ctx.fill()
-    const brass = ctx.createLinearGradient(bx - 3, 2, bx + 3, 20)
-    brass.addColorStop(0, '#f0d060')
-    brass.addColorStop(0.4, '#c9a028')
-    brass.addColorStop(1, '#6a4a10')
+    ctx.strokeStyle = '#442410'
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+    // 황동 탄피 몸체 그라디언트
+    const brass = ctx.createLinearGradient(bx - 3.5, 2, bx + 3.5, 20)
+    brass.addColorStop(0, '#faea98')
+    brass.addColorStop(0.3, '#d8ac28')
+    brass.addColorStop(0.75, '#8c6214')
+    brass.addColorStop(1, '#4a3206')
     ctx.fillStyle = brass
-    ctx.beginPath()
-    ctx.ellipse(bx, 5, 3.6, 3.1, 0, 0, Math.PI * 2)
+    roundedPath(ctx, bx - 3.5, 5, 7, 14, 1.5)
     ctx.fill()
-    ctx.fillRect(bx - 3.1, 6, 6.2, 12)
-    ctx.fillStyle = 'rgba(255, 230, 150, 0.45)'
-    ctx.fillRect(bx - 3.1, 6, 1.3, 12)
+
+    // 탄피 림(Rim) & 구리 뇌관(Primer)
+    ctx.fillStyle = '#e8be34'
+    ctx.beginPath()
+    ctx.ellipse(bx, 4.5, 3.8, 2.2, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.strokeStyle = '#6a480a'
+    ctx.lineWidth = 0.8
+    ctx.stroke()
+
+    // 중앙 구리 뇌관
+    ctx.fillStyle = '#b85828'
+    ctx.beginPath()
+    ctx.arc(bx, 4.5, 1.3, 0, Math.PI * 2)
+    ctx.fill()
+
+    // 탄피 금속 반사광
+    ctx.fillStyle = 'rgba(255, 255, 220, 0.65)'
+    ctx.fillRect(bx - 2.4, 5.5, 1.2, 13)
   }
 }
 
 function holsterPouchPath(ctx: CanvasRenderingContext2D, mouth: number) {
   ctx.beginPath()
-  ctx.moveTo(-30, mouth)
-  ctx.lineTo(28, mouth + 6)
-  ctx.quadraticCurveTo(34, mouth + 18, 29, mouth + 40)
-  ctx.quadraticCurveTo(24, mouth + 78, 4, mouth + 90)
-  ctx.quadraticCurveTo(-16, mouth + 88, -24, mouth + 58)
-  ctx.quadraticCurveTo(-34, mouth + 28, -30, mouth)
+  ctx.moveTo(-32, mouth)
+  ctx.quadraticCurveTo(0, mouth + 2, 28, mouth + 6)
+  ctx.quadraticCurveTo(34, mouth + 20, 30, mouth + 44)
+  ctx.quadraticCurveTo(24, mouth + 82, 3, mouth + 96)
+  ctx.quadraticCurveTo(-16, mouth + 94, -25, mouth + 62)
+  ctx.quadraticCurveTo(-36, mouth + 28, -32, mouth)
   ctx.closePath()
 }
 
@@ -351,13 +388,13 @@ function fillHolsterPouch(
 ) {
   const pouch = ctx.createLinearGradient(-34, mouth, 30, mouth + 40)
   if (layer === 'back') {
-    pouch.addColorStop(0, '#1a0d06')
-    pouch.addColorStop(1, '#3a2010')
+    pouch.addColorStop(0, '#140a04')
+    pouch.addColorStop(1, '#2c1408')
   } else {
-    pouch.addColorStop(0, '#2a160a')
-    pouch.addColorStop(0.35, '#5a3216')
-    pouch.addColorStop(0.7, '#8a4e22')
-    pouch.addColorStop(1, '#c07834')
+    pouch.addColorStop(0, '#2e1408')
+    pouch.addColorStop(0.3, '#5c2d12')
+    pouch.addColorStop(0.7, '#8e4a1e')
+    pouch.addColorStop(1, '#b86628')
   }
   ctx.fillStyle = pouch
   holsterPouchPath(ctx, mouth)
@@ -365,195 +402,296 @@ function fillHolsterPouch(
 }
 
 function drawHolsterLeather(ctx: CanvasRenderingContext2D, mouth: number, empty: boolean) {
-  ctx.strokeStyle = '#120804'
-  ctx.lineWidth = 2.2
+  // 홀스터 외곽 가죽 번 피니시
+  ctx.strokeStyle = '#180a04'
+  ctx.lineWidth = 2.4
   holsterPouchPath(ctx, mouth)
   ctx.stroke()
 
-  ctx.strokeStyle = 'rgba(232, 200, 140, 0.42)'
-  ctx.lineWidth = 1.15
-  ctx.setLineDash([2.2, 3.4])
+  // 홀스터 가장자리 더블 스티칭
+  ctx.strokeStyle = 'rgba(242, 218, 172, 0.55)'
+  ctx.lineWidth = 1.2
+  ctx.setLineDash([2.6, 3.4])
   ctx.beginPath()
-  ctx.moveTo(-24, mouth + 10)
-  ctx.quadraticCurveTo(-26, mouth + 40, -16, mouth + 72)
+  ctx.moveTo(-26, mouth + 10)
+  ctx.quadraticCurveTo(-28, mouth + 42, -16, mouth + 76)
   ctx.moveTo(22, mouth + 14)
-  ctx.quadraticCurveTo(22, mouth + 44, 8, mouth + 78)
+  ctx.quadraticCurveTo(22, mouth + 46, 7, mouth + 82)
   ctx.stroke()
   ctx.setLineDash([])
 
-  ctx.fillStyle = 'rgba(255, 190, 110, 0.1)'
+  // 홀스터 전면 엠보싱 툴링 라인 (웨스턴 장식 음각)
+  ctx.strokeStyle = 'rgba(40, 18, 6, 0.6)'
+  ctx.lineWidth = 1.5
   ctx.beginPath()
-  ctx.moveTo(8, mouth + 12)
-  ctx.quadraticCurveTo(22, mouth + 30, 16, mouth + 62)
-  ctx.quadraticCurveTo(10, mouth + 40, 8, mouth + 12)
+  ctx.moveTo(-16, mouth + 22)
+  ctx.quadraticCurveTo(-2, mouth + 38, 12, mouth + 26)
+  ctx.quadraticCurveTo(16, mouth + 54, -2, mouth + 68)
+  ctx.stroke()
+  ctx.strokeStyle = 'rgba(255, 200, 130, 0.25)'
+  ctx.lineWidth = 1
+  ctx.stroke()
+
+  // 홀스터 입구 깊이 그림자
+  ctx.fillStyle = empty ? 'rgba(4, 2, 1, 0.95)' : 'rgba(8, 4, 1, 0.35)'
+  ctx.beginPath()
+  ctx.ellipse(-2, mouth + 4, 27, 7, 0.08, 0, Math.PI * 2)
   ctx.fill()
 
-  ctx.fillStyle = empty ? 'rgba(6, 3, 1, 0.92)' : 'rgba(10, 5, 2, 0.22)'
+  // 홀스터 고정 가죽 스트랩 (멕시칸 루프 밴드)
+  const strapGrad = ctx.createLinearGradient(-32, mouth + 34, 30, mouth + 48)
+  strapGrad.addColorStop(0, '#3a1a0a')
+  strapGrad.addColorStop(0.5, '#6a3416')
+  strapGrad.addColorStop(1, '#341608')
+  ctx.fillStyle = strapGrad
   ctx.beginPath()
-  ctx.ellipse(-1, mouth + 5, 26, 6, 0.12, 0, Math.PI * 2)
-  ctx.fill()
-
-  ctx.fillStyle = '#4a2812'
-  ctx.beginPath()
-  ctx.moveTo(-32, mouth + 34)
+  ctx.moveTo(-33, mouth + 34)
   ctx.lineTo(30, mouth + 40)
-  ctx.lineTo(29, mouth + 52)
-  ctx.lineTo(-31, mouth + 46)
+  ctx.lineTo(29, mouth + 53)
+  ctx.lineTo(-32, mouth + 47)
   ctx.closePath()
   ctx.fill()
-  ctx.strokeStyle = '#140804'
-  ctx.lineWidth = 1.3
+  ctx.strokeStyle = '#180802'
+  ctx.lineWidth = 1.4
   ctx.stroke()
-  ctx.fillStyle = 'rgba(255, 200, 120, 0.2)'
-  ctx.fillRect(-30, mouth + 35, 58, 1.5)
 
-  const snap = ctx.createRadialGradient(18, mouth + 44, 1, 18, mouth + 44, 5)
-  snap.addColorStop(0, '#f0d070')
-  snap.addColorStop(0.55, '#b88820')
-  snap.addColorStop(1, '#4a3408')
-  ctx.fillStyle = snap
+  // 스트랩 스티치 & 하이라이트
+  ctx.fillStyle = 'rgba(255, 210, 140, 0.28)'
+  ctx.fillRect(-31, mouth + 35, 59, 1.4)
+
+  // 황동 리벳 / 콘초 장식
+  const concho = ctx.createRadialGradient(16, mouth + 44, 0.5, 16, mouth + 44, 5.5)
+  concho.addColorStop(0, '#fff0a8')
+  concho.addColorStop(0.35, '#d4a028')
+  concho.addColorStop(0.8, '#7a5210')
+  concho.addColorStop(1, '#321e04')
+  ctx.fillStyle = concho
   ctx.beginPath()
-  ctx.arc(18, mouth + 44, 4.4, 0, Math.PI * 2)
+  ctx.arc(16, mouth + 44, 4.8, 0, Math.PI * 2)
   ctx.fill()
+  ctx.strokeStyle = '#241402'
+  ctx.lineWidth = 0.9
+  ctx.stroke()
 
-  ctx.fillStyle = '#c9a028'
+  // 황동 징(Studs)
+  ctx.fillStyle = '#d4a838'
   ctx.beginPath()
-  ctx.arc(-22, mouth + 16, 2.4, 0, Math.PI * 2)
-  ctx.arc(20, mouth + 20, 2.4, 0, Math.PI * 2)
-  ctx.arc(-8, mouth + 78, 2.2, 0, Math.PI * 2)
+  ctx.arc(-22, mouth + 16, 2.2, 0, Math.PI * 2)
+  ctx.arc(20, mouth + 20, 2.2, 0, Math.PI * 2)
+  ctx.arc(-8, mouth + 82, 2.2, 0, Math.PI * 2)
   ctx.fill()
 }
 
-/** 피스키퍼 — barrel은 가죽 아래, exposed는 입구 위로 */
+/** 콜트 싱글 액션 아미 .45 (피스메이커) — 정밀 건메탈 & 월넛 목재 그립 */
 function drawHolsteredRevolver(
   ctx: CanvasRenderingContext2D,
   mouth: number,
   layer: 'barrel' | 'exposed',
 ) {
   ctx.save()
-  ctx.translate(2, mouth + 1)
-  ctx.rotate(0.42)
+  ctx.translate(0, mouth + 1)
+  ctx.rotate(0.38) // 홀스터에 자연스럽게 사선으로 꽂힌 각도
 
   if (layer === 'barrel') {
-    const barrel = ctx.createLinearGradient(-5, 8, 6, 8)
-    barrel.addColorStop(0, '#4a4a54')
-    barrel.addColorStop(0.5, '#1c1c24')
-    barrel.addColorStop(1, '#08080c')
+    // 5.5인치 블루드 스틸 배럴 (총열)
+    const barrel = ctx.createLinearGradient(-6, 8, 6, 8)
+    barrel.addColorStop(0, '#5a5a68')
+    barrel.addColorStop(0.35, '#2c2c36')
+    barrel.addColorStop(0.7, '#14141c')
+    barrel.addColorStop(1, '#06060a')
     ctx.fillStyle = barrel
-    roundedPath(ctx, -5, 10, 10, 50, 2)
+    roundedPath(ctx, -5.5, 10, 11, 56, 2.5)
     ctx.fill()
-    ctx.fillStyle = 'rgba(220, 220, 230, 0.3)'
-    ctx.fillRect(-4, 12, 1.5, 46)
+
+    // 총열 측면 금속 반사광
+    ctx.fillStyle = 'rgba(230, 235, 255, 0.38)'
+    ctx.fillRect(-4.2, 12, 1.8, 52)
     ctx.restore()
     return
   }
 
-  const cyl = ctx.createLinearGradient(-12, 6, 12, 22)
-  cyl.addColorStop(0, '#7a7a84')
-  cyl.addColorStop(0.45, '#303038')
-  cyl.addColorStop(1, '#101014')
-  ctx.fillStyle = cyl
-  ctx.beginPath()
-  ctx.ellipse(0, 12, 12, 10, 0, 0, Math.PI * 2)
+  // ===================== 1. 실린더 & 프레임 (Cylinder & Frame) =====================
+
+  // 실린더 본체 (Fluted Cylinder)
+  const cylGrad = ctx.createLinearGradient(-13, 0, 13, 20)
+  cylGrad.addColorStop(0, '#828292')
+  cylGrad.addColorStop(0.35, '#444450')
+  cylGrad.addColorStop(0.75, '#1e1e26')
+  cylGrad.addColorStop(1, '#0a0a10')
+  ctx.fillStyle = cylGrad
+  roundedPath(ctx, -13, 4, 26, 17, 3.5)
   ctx.fill()
-  ctx.strokeStyle = 'rgba(210, 200, 170, 0.55)'
-  ctx.lineWidth = 1.3
+  ctx.strokeStyle = 'rgba(220, 225, 240, 0.45)'
+  ctx.lineWidth = 1.2
   ctx.stroke()
-  ctx.fillStyle = '#07070a'
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2 - 0.5
-    ctx.beginPath()
-    ctx.arc(Math.cos(a) * 6.6, 12 + Math.sin(a) * 5.6, 1.85, 0, Math.PI * 2)
+
+  // 실린더 홈(Flutes - 입체적인 3D 홈 파임)
+  for (let i = -1; i <= 1; i++) {
+    const fx = i * 8
+    const flute = ctx.createLinearGradient(fx - 2.5, 6, fx + 2.5, 6)
+    flute.addColorStop(0, '#0a0a0e')
+    flute.addColorStop(0.5, '#16161e')
+    flute.addColorStop(1, '#08080c')
+    ctx.fillStyle = flute
+    roundedPath(ctx, fx - 2.5, 6.5, 5, 12, 2)
     ctx.fill()
+
+    // 홈 경계 금속 하이라이트
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
+    ctx.fillRect(fx - 2.5, 7, 0.8, 11)
   }
 
-  ctx.fillStyle = '#2a2a32'
+  // 탑 스트랩 & 리코일 쉴드 (총몸 프레임)
+  const frameGrad = ctx.createLinearGradient(-12, -4, 12, 4)
+  frameGrad.addColorStop(0, '#666676')
+  frameGrad.addColorStop(0.4, '#32323e')
+  frameGrad.addColorStop(1, '#121218')
+  ctx.fillStyle = frameGrad
   ctx.beginPath()
-  ctx.moveTo(-10, 0)
-  ctx.lineTo(10, -2)
-  ctx.lineTo(9, 6)
-  ctx.lineTo(-11, 8)
+  ctx.moveTo(-13, 4)
+  ctx.lineTo(13, 4)
+  ctx.lineTo(11, -3)
+  ctx.lineTo(-11, -3)
   ctx.closePath()
   ctx.fill()
-  ctx.fillStyle = 'rgba(235, 215, 165, 0.4)'
-  ctx.fillRect(-9, -1, 18, 1.5)
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.45)'
+  ctx.fillRect(-10, -2.5, 20, 1.2)
 
-  ctx.fillStyle = '#1a1a22'
+  // ===================== 2. 해머 (Hammer / 공이) =====================
+  const hammerGrad = ctx.createLinearGradient(-10, -16, 0, -2)
+  hammerGrad.addColorStop(0, '#888898')
+  hammerGrad.addColorStop(0.5, '#3c3c48')
+  hammerGrad.addColorStop(1, '#16161e')
+  ctx.fillStyle = hammerGrad
   ctx.beginPath()
-  ctx.moveTo(-8, -2)
-  ctx.lineTo(-14, -14)
-  ctx.lineTo(-6, -16)
-  ctx.lineTo(2, -4)
+  ctx.moveTo(-4, -1)
+  ctx.lineTo(-9, -15)
+  ctx.quadraticCurveTo(-14, -18, -12, -22) // 해머 스퍼 엄지 곡선
+  ctx.lineTo(-6, -18)
+  ctx.lineTo(2, -2)
   ctx.closePath()
   ctx.fill()
-  ctx.strokeStyle = 'rgba(210, 200, 180, 0.45)'
-  ctx.lineWidth = 1
+  ctx.strokeStyle = '#181822'
+  ctx.lineWidth = 1.1
   ctx.stroke()
 
-  ctx.strokeStyle = '#1a1a20'
+  // 해머 체커링 (미끄럼 방지 요철)
+  ctx.fillStyle = 'rgba(255, 240, 200, 0.55)'
+  ctx.fillRect(-11, -20, 4, 1)
+  ctx.fillRect(-10, -18.5, 4, 1)
+  ctx.fillRect(-9, -17, 4, 1)
+
+  // ===================== 3. 방아쇠울 & 방아쇠 (Trigger Guard) =====================
+  ctx.strokeStyle = '#c49a34' // 황동 방아쇠울 (Brass Trigger Guard)
   ctx.lineWidth = 2.4
   ctx.beginPath()
-  ctx.arc(-2, 18, 7, 0.2, Math.PI - 0.15)
+  ctx.arc(0, 20, 8, 0.3, Math.PI - 0.2)
+  ctx.stroke()
+  // 방아쇠
+  ctx.strokeStyle = '#22222a'
+  ctx.lineWidth = 1.8
+  ctx.beginPath()
+  ctx.moveTo(-1, 18)
+  ctx.quadraticCurveTo(2, 22, -1, 24)
   ctx.stroke()
 
-  const wood = ctx.createLinearGradient(-8, -4, -22, -32)
-  wood.addColorStop(0, '#e8a858')
-  wood.addColorStop(0.4, '#9a5420')
-  wood.addColorStop(1, '#3c1c08')
+  // ===================== 4. 월넛 목재 그립 (Walnut Hardwood Grip) =====================
+  // 클래식 콜트 플라우핸들(Plowhandle) 우아한 곡선 손잡이
+  const wood = ctx.createLinearGradient(-10, 2, -32, -38)
+  wood.addColorStop(0, '#e89e4c') // 밝은 광택 호두나무
+  wood.addColorStop(0.25, '#ab561e')
+  wood.addColorStop(0.65, '#5e260a')
+  wood.addColorStop(1, '#2c0e04') // 짙은 에지
   ctx.fillStyle = wood
   ctx.beginPath()
-  ctx.moveTo(-8, 4)
-  ctx.quadraticCurveTo(-6, -8, -10, -20)
-  ctx.quadraticCurveTo(-16, -38, -26, -36)
-  ctx.quadraticCurveTo(-32, -24, -22, -10)
-  ctx.quadraticCurveTo(-14, 6, -4, 8)
+  ctx.moveTo(-6, 2)
+  ctx.quadraticCurveTo(-6, -10, -12, -22)
+  ctx.quadraticCurveTo(-18, -42, -30, -38) // 그립 꼭대기 둥근 숄더
+  ctx.quadraticCurveTo(-38, -26, -26, -10) // 그립 후면 팜스웰(Palm swell)
+  ctx.quadraticCurveTo(-16, 8, -4, 8)
   ctx.closePath()
   ctx.fill()
-  ctx.strokeStyle = '#2a1408'
-  ctx.lineWidth = 1.5
+
+  // 그립 테두리 번 피니시
+  ctx.strokeStyle = '#1e0802'
+  ctx.lineWidth = 1.6
   ctx.stroke()
 
-  ctx.strokeStyle = 'rgba(50, 24, 8, 0.5)'
-  ctx.lineWidth = 0.85
-  for (let i = 0; i < 5; i++) {
+  // 정교한 목재 나뭇결 (Hardwood Grain)
+  ctx.strokeStyle = 'rgba(46, 16, 6, 0.55)'
+  ctx.lineWidth = 0.9
+  for (let i = 0; i < 6; i++) {
     ctx.beginPath()
-    ctx.moveTo(-10 - i, -4 - i * 4)
-    ctx.quadraticCurveTo(-16 - i, -14 - i * 3, -24, -22 - i * 2)
+    ctx.moveTo(-8 - i * 1.5, -2 - i * 4.5)
+    ctx.quadraticCurveTo(-16 - i * 1.8, -16 - i * 3.5, -26 - i * 0.8, -26 - i * 1.5)
     ctx.stroke()
   }
-  ctx.strokeStyle = 'rgba(255, 220, 150, 0.45)'
-  ctx.lineWidth = 1.25
+
+  // 그립 전면 하이라이트 (빛에 반사된 래커 왁스 광택)
+  ctx.strokeStyle = 'rgba(255, 225, 170, 0.55)'
+  ctx.lineWidth = 1.5
   ctx.beginPath()
-  ctx.moveTo(-8, 0)
-  ctx.quadraticCurveTo(-12, -16, -24, -32)
+  ctx.moveTo(-7, -2)
+  ctx.quadraticCurveTo(-11, -18, -25, -34)
   ctx.stroke()
 
-  ctx.fillStyle = '#2c2c34'
+  // 콜트 황동 메달리온 (Grip Medallion Inset)
+  const med = ctx.createRadialGradient(-18, -18, 0.5, -18, -18, 3.2)
+  med.addColorStop(0, '#fff4b8')
+  med.addColorStop(0.4, '#d8ac32')
+  med.addColorStop(1, '#5a3808')
+  ctx.fillStyle = med
   ctx.beginPath()
-  ctx.arc(-8, 2, 2.3, 0, Math.PI * 2)
+  ctx.arc(-18, -18, 3, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.strokeStyle = '#2a1604'
+  ctx.lineWidth = 0.7
+  ctx.stroke()
+
+  // 하단 황동 백스트랩 스크류
+  ctx.fillStyle = '#22222a'
+  ctx.beginPath()
+  ctx.arc(-8, 3, 1.8, 0, Math.PI * 2)
   ctx.fill()
 
   ctx.restore()
 }
 
 function drawGrippingHand(ctx: CanvasRenderingContext2D, pt: number, t: number) {
-  const hx = -6 + Math.sin(t / 50) * 1.4
+  const hx = -8 + Math.sin(t / 50) * 1.4
   const hy = pt + 2
-  ctx.fillStyle = '#3a2414'
-  roundedPath(ctx, hx - 16, hy - 6, 32, 26, 8)
+
+  // 가죽 장갑 손등 (Gunslinger Leather Glove)
+  const glove = ctx.createLinearGradient(hx - 16, hy - 8, hx + 16, hy + 20)
+  glove.addColorStop(0, '#5a3418')
+  glove.addColorStop(0.5, '#381e0c')
+  glove.addColorStop(1, '#180c04')
+  ctx.fillStyle = glove
+  roundedPath(ctx, hx - 16, hy - 6, 32, 28, 7)
   ctx.fill()
-  ctx.strokeStyle = 'rgba(255, 200, 130, 0.5)'
+  ctx.strokeStyle = 'rgba(255, 210, 140, 0.5)'
   ctx.lineWidth = 1.4
   ctx.stroke()
-  ctx.fillStyle = '#31200f'
+
+  // 손가락 관절 (4개 손가락으로 그립을 꽉 쥔 형상)
   for (let i = 0; i < 4; i++) {
-    roundedPath(ctx, hx - 14 + i * 8, hy + 12, 7, 10, 3)
+    const fingerGrad = ctx.createLinearGradient(hx - 14 + i * 8, hy + 10, hx - 14 + i * 8, hy + 22)
+    fingerGrad.addColorStop(0, '#4a2810')
+    fingerGrad.addColorStop(1, '#200e04')
+    ctx.fillStyle = fingerGrad
+    roundedPath(ctx, hx - 14 + i * 8, hy + 12, 7.5, 11, 3.5)
     ctx.fill()
+    ctx.strokeStyle = '#140602'
+    ctx.lineWidth = 0.8
+    ctx.stroke()
   }
-  ctx.fillStyle = '#2a1b0c'
-  ctx.fillRect(hx - 10, hy - 18, 20, 14)
-  ctx.fillStyle = 'rgba(255, 190, 120, 0.3)'
-  ctx.fillRect(hx + 8, hy - 18, 2, 14)
+
+  // 엄지손가락 & 손목 가죽 밴드
+  ctx.fillStyle = '#2c1608'
+  roundedPath(ctx, hx - 12, hy - 18, 24, 15, 4)
+  ctx.fill()
+  ctx.fillStyle = 'rgba(255, 200, 130, 0.35)'
+  ctx.fillRect(hx + 8, hy - 18, 2, 15)
 }
 
 /* --------------------------------- 분위기 --------------------------------- */
