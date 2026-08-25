@@ -115,31 +115,31 @@ export function Duel({
   const fame = useMemo(() => getFameInfo(streak), [streak])
 
   const tuning = useMemo(() => {
-    // 1. 라운드 난이도 & 상대 민첩성: 초반(1~3R)은 둔해서 +14%, 후반(7~9R)은 날렵해서 -12%
-    const roundScale = round <= 3 ? 1.14 : round <= 6 ? 1.0 : 0.88
+    // 1. 라운드 난이도 & 판정 너그러움: 초반(1~3R)은 +28%, 중반(4~6R)은 +15%, 후반(7~9R)은 +5%
+    const roundScale = round <= 3 ? 1.28 : round <= 6 ? 1.15 : 1.05
 
-    // 2. 대치(심리전) 결과: 공포/위축/경계 상태면 자세가 무너져 +14%, 평정이면 정자세 -8%
+    // 2. 대치(심리전) 결과: 공포/위축/경계 상태면 자세가 무너져 +18%, 평정이면 정자세 -5%
     const moodScale =
       mods.mood === 'scared' || mods.mood === 'intimidated' || mods.mood === 'suspicious'
-        ? 1.14
+        ? 1.18
         : mods.mood === 'angered'
-          ? 1.08
+          ? 1.10
           : mods.mood === 'calm'
-            ? 0.92
+            ? 0.95
             : 1.0
 
-    // 3. 사막 거리감 & 바람에 따른 고유 편차 (±8% 미세 편차)
-    const envJitter = (((opponent.name.length * 13 + round * 37) % 17) - 8) * 0.01
+    // 3. 사막 거리감 & 바람에 따른 고유 편차 (±5% 미세 편차)
+    const envJitter = (((opponent.name.length * 13 + round * 37) % 11) - 5) * 0.01
 
     // 4. 전리품 및 소모품(정밀화약) 보너스
-    const perkHitScale = perks.includes('keen') ? 1.3 : 1.0
-    const perkHeadScale = (perks.includes('silver') ? 1.2 : 1.0) * (activeBuffs.powder ? 1.4 : 1.0)
+    const perkHitScale = perks.includes('keen') ? 1.35 : 1.0
+    const perkHeadScale = (perks.includes('silver') ? 1.25 : 1.0) * (activeBuffs.powder ? 1.45 : 1.0)
 
     // 최종 결투 히트박스 스케일
     const totalHitScale = roundScale * moodScale * (1 + envJitter) * perkHitScale
 
     // 결정론적 반응속도 지터
-    const jitter = (((opponent.name.length * 17 + round * 23) % 41) - 20)
+    const jitter = (((opponent.name.length * 17 + round * 23) % 25) - 12)
 
     // 연막탄 소모품: 상대 명중률 20% 감소
     const smokeDebuff = activeBuffs.smoke ? 0.2 : 0
@@ -148,13 +148,13 @@ export function Duel({
       warnings: 1 + (perks.includes('steady') ? 1 : 0),
       hitScale: totalHitScale,
       headScale: perkHeadScale,
-      fastGrace: perks.includes('fast') ? 60 : 0,
+      fastGrace: perks.includes('fast') ? 65 : 0,
       enemyReaction: Math.max(
-        170,
+        190,
         opponent.baseReactionMs +
           mods.reactionDeltaMs +
           jitter +
-          (perks.includes('charm') ? 35 : 0),
+          (perks.includes('charm') ? 40 : 0),
       ),
       accuracy: Math.min(0.99, Math.max(0.12, opponent.baseAccuracy + mods.accuracyDelta - smokeDebuff)),
       hitBonusPercent: Math.round((totalHitScale - 1) * 100),
@@ -295,8 +295,8 @@ export function Duel({
         enemyX: w * 0.82,
         bodyY,
         headY: bodyY - 30 * s,
-        bodyR: 48 * s * tuning.hitScale,
-        headR: 19 * s * tuning.hitScale * tuning.headScale,
+        bodyR: 66 * s * tuning.hitScale,
+        headR: 26 * s * tuning.hitScale * tuning.headScale,
         holsterX: w * 0.5,
         holsterY: h - bar - 6 - 98 * hs,
       }
@@ -670,7 +670,12 @@ export function Duel({
       const dHead = Math.hypot(x - L.enemyX, y - L.headY)
       const dBody = Math.hypot(x - L.enemyX, y - (L.bodyY + 10 * L.s))
       const head = dHead <= L.headR
-      const body = !head && dBody <= L.bodyR
+      // 캡슐 히트박스 판정: 캐릭터 주변 실루엣에 맞으면 너그럽게 몸통 명중 인정
+      const inBodyCapsule =
+        Math.abs(x - L.enemyX) <= L.bodyR * 1.12 &&
+        y >= L.headY - L.headR &&
+        y <= L.bodyY + 68 * L.s
+      const body = !head && (dBody <= L.bodyR || inBodyCapsule)
 
       tracersRef.current.push({
         x1: L.playerX + 24 * L.s,
@@ -725,7 +730,11 @@ export function Duel({
         return
       }
 
-      const enemyHits = Math.random() < effAccuracy()
+      const diffMs = effective - enemyMs
+      // 근소한 차이(50ms 이내)로 늦었을 때 적 탄환이 빗나갈 확률 45% 보정 (극적인 역전 찬스)
+      const isCloseCall = diffMs <= 50
+      const enemyHitChance = isCloseCall ? effAccuracy() * 0.55 : effAccuracy()
+      const enemyHits = Math.random() < enemyHitChance
 
       // 방탄 포켓 성경 버프 발동: 늦게 쐈더라도 성경이 총알을 막아내고 플레이어가 명중시킴
       if (enemyHits && activeBuffsRef.current.bible && !bibleUsedRef.current) {

@@ -70,8 +70,11 @@ export const PERSONA_LOCK = `[페르소나/가드레일]
 /** 라운드별 난이도 기준표 (generate + 검증 공용) */
 export function difficultySpec(round: number) {
   const r = clamp(Math.round(round), 1, 9)
-  const reaction = Math.round(520 - (r - 1) * 31) // 1:520 … 9:272
-  const accuracy = Number((0.5 + (r - 1) * 0.055).toFixed(3)) // 1:0.50 … 9:0.94
+  // R1: 580ms … R2: 520ms … R5: 395ms … R9: 285ms
+  const reactionTable = [580, 520, 470, 430, 395, 365, 335, 310, 285]
+  const accuracyTable = [0.42, 0.48, 0.54, 0.60, 0.66, 0.72, 0.78, 0.84, 0.88]
+  const reaction = reactionTable[r - 1] ?? 380
+  const accuracy = accuracyTable[r - 1] ?? 0.65
   const bounty = r <= 1 ? 1200 : Math.round(1200 * Math.pow(1.62, r - 1))
   return { round: r, reaction, accuracy, bounty }
 }
