@@ -18,11 +18,13 @@
   --ok: #6fbf73;
   --muted: #a89070;
   --line: #5a3d24;
-  --display: "Special Elite", "Black Han Sans", Impact, sans-serif;
-  --western: "Special Elite", "Courier New", monospace;
+  --display-en: "Special Elite", Impact, "Arial Black", sans-serif;
+  --western-en: "Special Elite", "Courier New", monospace;
+  --display: "Black Han Sans", "Paperlogy", var(--display-en);
+  --western: "IBM Plex Sans KR", var(--western-en);
   --body: "IBM Plex Sans KR", "Noto Sans KR", system-ui, sans-serif;
-  --korean-display: "Black Han Sans", "IBM Plex Sans KR", sans-serif;
-  --newspaper-headline: "Paperlogy", "IBM Plex Sans KR", sans-serif;
+  --korean-display: "Black Han Sans", "Paperlogy", "IBM Plex Sans KR", sans-serif;
+  --newspaper-headline: "Paperlogy", "Black Han Sans", "IBM Plex Sans KR", sans-serif;
   font-family: var(--body);
   line-height: 1.5;
   background: var(--bg);
@@ -471,8 +473,9 @@ input {
 .logo-gun,
 .wanted-poster header,
 .newspaper header h1,
-.bounty strong {
-  font-family: var(--display);
+.bounty strong,
+.title-badge {
+  font-family: var(--display-en);
 }
 
 .alias {

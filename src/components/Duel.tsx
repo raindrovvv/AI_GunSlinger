@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { sfx } from '../audio/sfx'
+import { CANVAS_LABEL_FONT } from '../fonts'
 import { perkById } from '../data/perks'
 import { PerkIcon } from './PerkIcon'
 import { geometryOf, getBackdrop } from '../canvas/backdrop'
@@ -850,7 +851,7 @@ function drawNameplate(
   y: number,
   s: number,
 ) {
-  ctx.font = `700 ${Math.round(13 * s)}px "Special Elite", monospace`
+  ctx.font = `700 ${Math.round(13 * s)}px ${CANVAS_LABEL_FONT}`
   ctx.textAlign = 'center'
   const pad = 7 * s
   const tw = ctx.measureText(text).width
