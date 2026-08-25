@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { sfx } from '../audio/sfx'
 import { getFameInfo } from '../data/fame'
+import { formatRank, submitRun, type RankResult } from '../data/ranking'
 import { perkById } from '../data/perks'
 import type { CareerStats, PerkId, RunRecord } from '../types'
 import { PerkIcon } from './PerkIcon'
@@ -32,6 +33,24 @@ export function Ending({
   onReplayCutscene,
 }: Props) {
   const runFame = getFameInfo(lastRun.bestStreak)
+
+  // 서부 명부: 런이 끝나면 커리어 최고 기록을 올리고 순위를 받아온다.
+  // 서버가 없거나 느리면 board가 null로 남고, 순위 영역은 그냥 나타나지 않는다.
+  const [board, setBoard] = useState<RankResult | null>(null)
+  useEffect(() => {
+    let alive = true
+    submitRun({
+      name: playerName,
+      drawMs: career.bestReactionMs,
+      bounty: career.bestBounty,
+    }).then((r) => {
+      if (alive && r) setBoard(r)
+    })
+    return () => {
+      alive = false
+    }
+  }, [playerName, career.bestReactionMs, career.bestBounty])
+
   const [displayedBounty, setDisplayedBounty] = useState(() => (victory ? 0 : bounty))
 
   // Count-up animation for bounty
@@ -89,6 +108,28 @@ export function Ending({
       <div className="ending-main-grid">
         {/* Left Column: Stats & Perks & Quote */}
         <div className="ending-left-panel">
+          {board && (board.draw || board.bounty) && (
+            <div className="registry-board">
+              <span className="registry-board-label">서부 명부 · 세계 순위</span>
+              <div className="registry-cols">
+                {board.draw && (
+                  <div className="registry-col">
+                    <span className="registry-col-name">최속 드로우</span>
+                    <strong className="registry-col-rank">{formatRank(board.draw.rank)}</strong>
+                    <span className="registry-col-val">{board.draw.value}ms</span>
+                  </div>
+                )}
+                {board.bounty && (
+                  <div className="registry-col">
+                    <span className="registry-col-name">최고 현상금</span>
+                    <strong className="registry-col-rank">{formatRank(board.bounty.rank)}</strong>
+                    <span className="registry-col-val">${board.bounty.value.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="ending-stats-compact">
             <div className="stat-card">
               <span className="stat-label">결투 승리</span>
