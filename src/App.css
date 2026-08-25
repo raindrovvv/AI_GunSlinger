@@ -85,6 +85,7 @@ body,
   height: 100%;
   max-height: 100dvh;
   overflow: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -93,7 +94,7 @@ body {
     radial-gradient(ellipse at bottom, rgba(40, 20, 8, 0.8), transparent 50%),
     linear-gradient(180deg, #1a0e08 0%, #0a0604 100%);
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   word-break: keep-all;
   overflow-wrap: break-word;
   text-wrap: pretty;
@@ -112,6 +113,9 @@ input {
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  overflow-x: clip;
+  width: 100%;
+  max-width: 100%;
 }
 
 .app::before {
@@ -134,7 +138,9 @@ input {
 .screen {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   width: min(920px, 100%);
+  max-width: 100%;
   margin: 0 auto;
   padding: 16px 18px 12px;
   display: flex;
@@ -145,8 +151,15 @@ input {
   animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
   z-index: 1;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/* 세로 스크롤만 허용 — 가로 스크롤바가 푸터 위에 뜨는 현상 방지 */
+.screen::-webkit-scrollbar:horizontal {
+  display: none;
+  height: 0;
 }
 
 @keyframes fadeIn {
@@ -234,11 +247,19 @@ input {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   width: 100%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.title-page::-webkit-scrollbar:horizontal {
+  display: none;
+  height: 0;
 }
 
 .title-backdrop {
@@ -719,8 +740,17 @@ input {
 .wanted-screen .wanted-poster {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   width: min(400px, 100%);
-  overflow: auto;
+  max-width: 100%;
+  overflow-x: clip;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.wanted-screen .wanted-poster::-webkit-scrollbar:horizontal {
+  display: none;
+  height: 0;
 }
 
 /* Standoff */
@@ -1068,10 +1098,18 @@ input {
   margin-top: auto;
   margin-bottom: auto;
   width: min(960px, 100%);
+  max-width: 100%;
+}
+
+.duel-screen > * {
+  max-width: 100%;
+  min-width: 0;
 }
 
 .duel-meta {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   display: flex;
   justify-content: space-between;
   align-items: end;
@@ -1102,6 +1140,8 @@ input {
 
 .duel-stage {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border: 1px solid #6b4a26;
   background: #000;
   padding: 5px;
@@ -1172,10 +1212,17 @@ input {
 }
 
 .newspaper-screen {
-  overflow: auto;
+  overflow-x: clip;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   gap: 10px;
   padding-top: 10px;
   padding-bottom: 8px;
+}
+
+.newspaper-screen::-webkit-scrollbar:horizontal {
+  display: none;
+  height: 0;
 }
 
 /* Newspaper */
@@ -1411,6 +1458,11 @@ input {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 8px 18px;
   font-size: 12px;
   letter-spacing: 0.08em;
@@ -1421,12 +1473,16 @@ input {
   font-family: var(--western);
   font-weight: 500;
   z-index: 20;
+  overflow-x: clip;
 }
 
 .chrome-left {
   display: flex;
   align-items: center;
   gap: 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .chrome-bgm-ctrl {
@@ -1784,6 +1840,12 @@ input {
   color: var(--accent);
   font-weight: 700;
   letter-spacing: 0.06em;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Title actions + Record board */
@@ -3213,7 +3275,9 @@ input {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  width: min(640px, 94%);
+  width: min(640px, 100%);
+  max-width: 100%;
+  min-width: 0;
   margin: -4px auto 6px;
   background:
     radial-gradient(ellipse at center, rgba(140, 20, 20, 0.3), transparent 70%),
@@ -3228,7 +3292,11 @@ input {
 .boss-hud-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 6px;
+  text-align: center;
+  max-width: 100%;
 }
 
 .boss-crown {
@@ -3242,6 +3310,8 @@ input {
   color: #ffd700;
   font-weight: 700;
   text-transform: uppercase;
+  text-align: center;
+  line-height: 1.35;
 }
 
 .boss-score-board {
