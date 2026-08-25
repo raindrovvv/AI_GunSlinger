@@ -527,12 +527,15 @@ input {
 }
 
 .wanted-poster header {
-  font-family: var(--display);
+  font-family: "Special Elite", var(--display-en);
   font-size: 48px;
   letter-spacing: 0.12em;
+  text-indent: 0.12em;
+  text-align: center;
   border-bottom: 4px double #1a120c;
   margin-bottom: 14px;
   line-height: 1;
+  width: 100%;
 }
 
 .mugshot {
