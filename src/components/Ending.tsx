@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { sfx } from '../audio/sfx'
 import { getFameInfo } from '../data/fame'
-import { formatRank, submitRun, type RankResult } from '../data/ranking'
+import { formatRank, getPlayerId, submitRun, type RankResult, type TopBoardEntry } from '../data/ranking'
 import { perkById } from '../data/perks'
 import type { CareerStats, PerkId, RunRecord } from '../types'
 import { PerkIcon } from './PerkIcon'
@@ -18,6 +18,38 @@ interface Props {
   playerName?: string
   onRestart: () => void
   onReplayCutscene?: () => void
+}
+
+function TopList({
+  title,
+  entries,
+  formatValue,
+  myId,
+}: {
+  title: string
+  entries: TopBoardEntry[]
+  formatValue: (value: number) => string
+  myId: string
+}) {
+  if (!entries.length) return null
+
+  return (
+    <div className="registry-toplist">
+      <span className="registry-toplist-title">{title}</span>
+      <ol className="registry-toplist-rows">
+        {entries.map((entry) => (
+          <li
+            key={entry.id}
+            className={`registry-row${entry.id === myId ? ' is-me' : ''}`}
+          >
+            <span className="registry-row-rank">{entry.rank}</span>
+            <span className="registry-row-name">{entry.name}</span>
+            <span className="registry-row-val">{formatValue(entry.value)}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
 }
 
 export function Ending({
@@ -79,6 +111,11 @@ export function Ending({
     return () => cancelAnimationFrame(frameId)
   }, [bounty, victory])
 
+  const myId = getPlayerId()
+  const hasPersonalRank = !!(board && (board.draw || board.bounty))
+  const hasTopLists =
+    !!(board && ((board.topDraw?.length ?? 0) > 0 || (board.topBounty?.length ?? 0) > 0))
+
   return (
     <div className={`screen ending-screen ${victory ? 'is-win' : 'is-lose'}`}>
       {/* Header */}
@@ -108,25 +145,43 @@ export function Ending({
       <div className="ending-main-grid">
         {/* Left Column: Stats & Perks & Quote */}
         <div className="ending-left-panel">
-          {board && (board.draw || board.bounty) && (
+          {board && (hasPersonalRank || hasTopLists) && (
             <div className="registry-board">
               <span className="registry-board-label">서부 명부 · 세계 순위</span>
-              <div className="registry-cols">
-                {board.draw && (
-                  <div className="registry-col">
-                    <span className="registry-col-name">최속 드로우</span>
-                    <strong className="registry-col-rank">{formatRank(board.draw.rank)}</strong>
-                    <span className="registry-col-val">{board.draw.value}ms</span>
-                  </div>
-                )}
-                {board.bounty && (
-                  <div className="registry-col">
-                    <span className="registry-col-name">최고 현상금</span>
-                    <strong className="registry-col-rank">{formatRank(board.bounty.rank)}</strong>
-                    <span className="registry-col-val">${board.bounty.value.toLocaleString()}</span>
-                  </div>
-                )}
-              </div>
+              {hasPersonalRank && (
+                <div className="registry-cols">
+                  {board.draw && (
+                    <div className="registry-col">
+                      <span className="registry-col-name">내 최속 드로우</span>
+                      <strong className="registry-col-rank">{formatRank(board.draw.rank)}</strong>
+                      <span className="registry-col-val">{board.draw.value}ms</span>
+                    </div>
+                  )}
+                  {board.bounty && (
+                    <div className="registry-col">
+                      <span className="registry-col-name">내 최고 현상금</span>
+                      <strong className="registry-col-rank">{formatRank(board.bounty.rank)}</strong>
+                      <span className="registry-col-val">${board.bounty.value.toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {hasTopLists && (
+                <div className="registry-toplists">
+                  <TopList
+                    title="최속 드로우 TOP 10"
+                    entries={board.topDraw ?? []}
+                    formatValue={(v) => `${v}ms`}
+                    myId={myId}
+                  />
+                  <TopList
+                    title="최고 현상금 TOP 10"
+                    entries={board.topBounty ?? []}
+                    formatValue={(v) => `$${v.toLocaleString()}`}
+                    myId={myId}
+                  />
+                </div>
+              )}
             </div>
           )}
 

@@ -57,6 +57,15 @@ interface Entry {
   value: number
 }
 
+interface TopEntry {
+  rank: number
+  id: string
+  name: string
+  value: number
+}
+
+const TOP_N = 10
+
 /** ZRANK는 0-based. 드로우는 오름차순(빠른 게 앞), 현상금은 내림차순. */
 async function readRank(
   db: Redis,
@@ -69,6 +78,30 @@ async function readRank(
   const idx = desc ? await db.zrevrank(key, id) : await db.zrank(key, id)
   if (idx == null) return null
   return { rank: idx + 1, value: Number(score) }
+}
+
+/** 상위 N명 — 드로우는 rev:false, 현상금은 rev:true */
+async function readTopN(db: Redis, key: string, desc: boolean): Promise<TopEntry[]> {
+  const rows = await db.zrange(key, 0, TOP_N - 1, { rev: desc, withScores: true })
+  if (!rows?.length) return []
+
+  const items: { id: string; value: number }[] = []
+  for (const row of rows) {
+    if (typeof row === 'object' && row !== null && 'member' in row && 'score' in row) {
+      const r = row as { member: string; score: number }
+      items.push({ id: String(r.member), value: Number(r.score) })
+    }
+  }
+  if (!items.length) return []
+
+  const names = await Promise.all(items.map((item) => db.hget<string>(`player:${item.id}`, 'name')))
+
+  return items.map((item, i) => {
+    const raw = names[i]
+    const name =
+      typeof raw === 'string' && raw.trim() ? raw.trim().slice(0, 24) : '이름 없는 총잡이'
+    return { rank: i + 1, id: item.id, name, value: item.value }
+  })
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -104,12 +137,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await db.zadd(KEY_BOUNTY, { gt: true }, { score: Math.round(money), member: id })
     }
 
-    const [draw, money2] = await Promise.all([
+    const [draw, money2, topDraw, topBounty] = await Promise.all([
       readRank(db, KEY_DRAW, id, false),
       readRank(db, KEY_BOUNTY, id, true),
+      readTopN(db, KEY_DRAW, false),
+      readTopN(db, KEY_BOUNTY, true),
     ])
 
-    return res.status(200).json({ draw, bounty: money2 })
+    return res.status(200).json({ draw, bounty: money2, topDraw, topBounty })
   } catch (err) {
     console.error('[leaderboard]', err)
     return res.status(500).json({ error: 'leaderboard failed' })

@@ -33,9 +33,16 @@ export interface BoardEntry {
   value: number
 }
 
+export interface TopBoardEntry extends BoardEntry {
+  id: string
+  name: string
+}
+
 export interface RankResult {
   draw: BoardEntry | null
   bounty: BoardEntry | null
+  topDraw?: TopBoardEntry[]
+  topBounty?: TopBoardEntry[]
 }
 
 export interface SubmitPayload {
