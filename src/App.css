@@ -365,15 +365,20 @@ input {
 
 .blurb {
   color: #f0e2d0;
-  max-width: 520px;
+  max-width: 540px;
   text-align: center;
-  font-size: 15.5px;
+  font-size: 15px;
   line-height: 1.65;
   margin: 6px 0 2px;
   text-wrap: balance;
   word-break: keep-all;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
   font-weight: 450;
+}
+
+.blurb strong {
+  color: #ffd700;
+  font-weight: 700;
 }
 
 .howto {

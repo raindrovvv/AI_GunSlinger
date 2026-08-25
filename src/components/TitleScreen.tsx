@@ -62,11 +62,11 @@ export function TitleScreen({ onStart }: Props) {
             fetchPriority="high"
           />
         </h1>
-        <p className="tagline">말로 흔들고, 총으로 끝낸다.</p>
+        <p className="tagline">말빨로 멘탈 흔들고, 0.2초 만에 쏴라!</p>
         <p className="blurb">
-          매 결투마다 AI가 새로운 무법자를 만든다.
+          매 판 살아 숨 쉬는 <strong>생성형 AI 무법자</strong>와의 숨 막히는 심리전!
           <br />
-          드로우 전 심리전으로 상대를 흔들거나 — 총 없이 설득하라.
+          손버릇을 찔러 멘탈을 붕괴시키거나, 번개 같은 <strong>0.2초 드로우</strong>로 제압하라.
         </p>
 
         <div className="player-setup">
