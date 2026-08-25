@@ -77,6 +77,11 @@ export function getBackdrop(w: number, h: number, dpr: number, round: number) {
   const existing = cache.get(key)
   if (existing) return existing
 
+  if (cache.size > 16) {
+    const oldestKey = cache.keys().next().value
+    if (oldestKey) cache.delete(oldestKey)
+  }
+
   const canvas = document.createElement('canvas')
   canvas.width = Math.floor(w * dpr)
   canvas.height = Math.floor(h * dpr)

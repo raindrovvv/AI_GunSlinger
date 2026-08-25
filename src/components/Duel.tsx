@@ -279,6 +279,7 @@ export function Duel({
 
   useEffect(() => {
     sfx.unlock()
+    sfx.startWind(0.28)
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -624,6 +625,8 @@ export function Duel({
           ? '홀스터에서 손이 벗어났다!'
           : '성급하게 손을 뗐다!'
 
+      sfx.crow()
+
       if (warningsRef.current > 0) {
         warningsRef.current -= 1
         setWarningsLeft(warningsRef.current)
@@ -712,14 +715,14 @@ export function Duel({
       setMessage('버텨라 — 손을 떼지 마라')
       sfx.grip()
       setCountdown(3)
-      sfx.tick(0)
+      sfx.heartbeat(1)
       later(() => {
         setCountdown(2)
-        sfx.tick(1)
+        sfx.heartbeat(2)
       }, HOLD_STEPS[0])
       later(() => {
         setCountdown(1)
-        sfx.tick(2)
+        sfx.heartbeat(3)
       }, HOLD_STEPS[1])
 
       const extra = 300 + Math.random() * 1700
@@ -1010,12 +1013,12 @@ export function Duel({
         ctx.font = `800 ${Math.round(13.5 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.textAlign = 'center'
         const label = '👇 홀스터를 꾹 누르고 있어라 (HOLD)'
-        const tw = ctx.measureText(label).width
+        const boxW = Math.round(256 * s)
         ctx.fillStyle = 'rgba(10, 5, 2, 0.85)'
-        ctx.fillRect(L.holsterX - tw / 2 - 12, hintY - 14 * s, tw + 24, 20 * s)
+        ctx.fillRect(L.holsterX - boxW / 2, hintY - 14 * s, boxW, 20 * s)
         ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)'
         ctx.lineWidth = 1
-        ctx.strokeRect(L.holsterX - tw / 2 - 12, hintY - 14 * s, tw + 24, 20 * s)
+        ctx.strokeRect(L.holsterX - boxW / 2, hintY - 14 * s, boxW, 20 * s)
         ctx.globalAlpha = blink
         ctx.fillStyle = '#ffd700'
         ctx.fillText(label, L.holsterX, hintY)
@@ -1343,6 +1346,7 @@ export function Duel({
     canvas.addEventListener('touchend', onTouchEnd, { passive: false })
 
     return () => {
+      sfx.stopWind(600)
       cancelAnimationFrame(rafRef.current)
       clearTimers()
       smokeRef.current = []

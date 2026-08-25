@@ -9,6 +9,8 @@
 import gunshotUrl from '../assets/GunshotRevolver_shot.wav?url'
 import gunLoadedUrl from '../assets/GunFoleyRevolver_loaded.wav?url'
 import gunFallingUrl from '../assets/GunFoleyRevolver_falling.wav?url'
+import crowUrl from '../assets/Foley_crow.wav?url'
+import windUrl from '../assets/Foley_wind_loop.mp3?url'
 
 let ctx: AudioContext | null = null
 let masterGainNode: GainNode | null = null
@@ -17,6 +19,10 @@ let masterCompressorNode: DynamicsCompressorNode | null = null
 let gunshotBuffer: AudioBuffer | null = null
 let gunLoadedBuffer: AudioBuffer | null = null
 let gunFallingBuffer: AudioBuffer | null = null
+let crowBuffer: AudioBuffer | null = null
+let windBuffer: AudioBuffer | null = null
+let windSourceNode: AudioBufferSourceNode | null = null
+let windGainNode: GainNode | null = null
 
 // Pre-cached procedural buffers for zero-allocation procedural sounds
 let pinkNoiseCache: AudioBuffer | null = null
@@ -204,6 +210,8 @@ export function preloadGunshot(): Promise<void> {
     decodeGunshot(),
     decodeGunLoaded(),
     decodeGunFalling(),
+    decodeCrow(),
+    decodeWind(),
   ]).then(() => {})
 }
 
@@ -223,6 +231,18 @@ async function decodeGunFalling(): Promise<AudioBuffer | null> {
   if (gunFallingBuffer) return gunFallingBuffer
   gunFallingBuffer = await loadSampleBuffer(gunFallingUrl)
   return gunFallingBuffer
+}
+
+async function decodeCrow(): Promise<AudioBuffer | null> {
+  if (crowBuffer) return crowBuffer
+  crowBuffer = await loadSampleBuffer(crowUrl)
+  return crowBuffer
+}
+
+async function decodeWind(): Promise<AudioBuffer | null> {
+  if (windBuffer) return windBuffer
+  windBuffer = await loadSampleBuffer(windUrl)
+  return windBuffer
 }
 
 function playBuffer(buf: AudioBuffer, gain = 1, rate = 1) {
@@ -379,6 +399,72 @@ export const sfx = {
   tick(step: number) {
     tone(300 + step * 90, 0.07, 'square', 0.14)
   },
+  heartbeat(step = 1) {
+    try {
+      const c = ac()
+      const t = c.currentTime
+      const master = getMaster()
+
+      // step에 따라 3 -> 2 -> 1로 갈수록 묵직한 서브우퍼 타격음 강화 (Chest Thumping)
+      const gainMult = 0.95 + step * 0.25
+
+      // [1차 타격 - 쿵 (Heavy Sub Kick)]
+      const sub1 = c.createOscillator()
+      const g1 = c.createGain()
+      sub1.type = 'sine'
+      sub1.frequency.setValueAtTime(68 + step * 4, t)
+      sub1.frequency.exponentialRampToValueAtTime(18, t + 0.14)
+      g1.gain.setValueAtTime(gainMult * 1.35, t)
+      g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.16)
+      sub1.connect(g1)
+      g1.connect(master)
+      sub1.start(t)
+      sub1.stop(t + 0.17)
+
+      // [1차 저역 펀치 레이어 (Chest Punch Body)]
+      const punch1 = c.createOscillator()
+      const punchG1 = c.createGain()
+      punch1.type = 'triangle'
+      punch1.frequency.setValueAtTime(85 + step * 6, t)
+      punch1.frequency.exponentialRampToValueAtTime(24, t + 0.09)
+      punchG1.gain.setValueAtTime(gainMult * 0.7, t)
+      punchG1.gain.exponentialRampToValueAtTime(0.0001, t + 0.11)
+      punch1.connect(punchG1)
+      punchG1.connect(master)
+      punch1.start(t)
+      punch1.stop(t + 0.12)
+
+      // [2차 타격 - 쾅 (Heavy S2 Thud, 110ms 후)]
+      const t2 = t + 0.11
+      const sub2 = c.createOscillator()
+      const g2 = c.createGain()
+      sub2.type = 'sine'
+      sub2.frequency.setValueAtTime(58 + step * 4, t2)
+      sub2.frequency.exponentialRampToValueAtTime(16, t2 + 0.16)
+      g2.gain.setValueAtTime(gainMult * 1.1, t2)
+      g2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.18)
+      sub2.connect(g2)
+      g2.connect(master)
+      sub2.start(t2)
+      sub2.stop(t2 + 0.19)
+
+      // [묵직한 룸 저음 럼블 (Sub Lowpass Pink Noise)]
+      const filter = c.createBiquadFilter()
+      filter.type = 'lowpass'
+      filter.frequency.value = 110
+      const noise = c.createBufferSource()
+      noise.buffer = getPinkNoiseBuffer(c)
+      const ng = c.createGain()
+      ng.gain.setValueAtTime(gainMult * 0.85, t)
+      ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.22)
+      noise.connect(filter)
+      filter.connect(ng)
+      ng.connect(master)
+      noise.start(t)
+    } catch {
+      /* ignore */
+    }
+  },
   draw() {
     tone(660, 0.08, 'sawtooth', 0.24)
     tone(990, 0.15, 'square', 0.16)
@@ -471,5 +557,75 @@ export const sfx = {
   shield() {
     tone(1600, 0.12, 'sawtooth', 0.26, 500)
     noiseBurst(0.12, 0.22, 2400)
+  },
+  crow(gain = 0.65) {
+    try {
+      ac()
+      if (crowBuffer) {
+        playBuffer(crowBuffer, gain, 0.96 + Math.random() * 0.08)
+      } else {
+        void decodeCrow().then((buf) => {
+          if (buf) playBuffer(buf, gain, 0.96 + Math.random() * 0.08)
+        })
+      }
+    } catch {
+      /* fallback */
+    }
+  },
+  startWind(gain = 0.28) {
+    try {
+      const c = ac()
+      if (windSourceNode) return // already playing
+
+      const playWindLoop = (buf: AudioBuffer) => {
+        if (windSourceNode) return
+        const src = c.createBufferSource()
+        src.buffer = buf
+        src.loop = true
+
+        const g = c.createGain()
+        g.gain.setValueAtTime(0.001, c.currentTime)
+        g.gain.linearRampToValueAtTime(gain, c.currentTime + 1.5)
+
+        src.connect(g)
+        g.connect(getMaster())
+        src.start()
+
+        windSourceNode = src
+        windGainNode = g
+      }
+
+      if (windBuffer) {
+        playWindLoop(windBuffer)
+      } else {
+        void decodeWind().then((buf) => {
+          if (buf) playWindLoop(buf)
+        })
+      }
+    } catch {
+      /* ignore */
+    }
+  },
+  stopWind(fadeMs = 800) {
+    try {
+      if (!windSourceNode || !windGainNode || !ctx) return
+      const c = ctx
+      const g = windGainNode
+      const src = windSourceNode
+      windSourceNode = null
+      windGainNode = null
+
+      g.gain.setValueAtTime(g.gain.value, c.currentTime)
+      g.gain.linearRampToValueAtTime(0.0001, c.currentTime + fadeMs / 1000)
+      setTimeout(() => {
+        try {
+          src.stop()
+          src.disconnect()
+          g.disconnect()
+        } catch {}
+      }, fadeMs + 60)
+    } catch {
+      /* ignore */
+    }
   },
 }
