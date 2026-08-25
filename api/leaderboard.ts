@@ -86,10 +86,14 @@ async function readTopN(db: Redis, key: string, desc: boolean): Promise<TopEntry
   if (!rows?.length) return []
 
   const items: { id: string; value: number }[] = []
-  for (const row of rows) {
-    if (typeof row === 'object' && row !== null && 'member' in row && 'score' in row) {
+  if (typeof rows[0] === 'object' && rows[0] !== null && 'member' in rows[0]) {
+    for (const row of rows) {
       const r = row as { member: string; score: number }
       items.push({ id: String(r.member), value: Number(r.score) })
+    }
+  } else {
+    for (let i = 0; i + 1 < rows.length; i += 2) {
+      items.push({ id: String(rows[i]), value: Number(rows[i + 1]) })
     }
   }
   if (!items.length) return []
