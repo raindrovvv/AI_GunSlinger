@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { bgm } from '../audio/bgm'
 import { sfx } from '../audio/sfx'
 import { CANVAS_LABEL_FONT } from '../fonts'
 import { perkById } from '../data/perks'
@@ -65,34 +66,44 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
 
   const has = useCallback((id: PerkId) => perks.includes(id), [perks])
 
-  const tuning = useRef({
-    warnings: 1 + (perks.includes('steady') ? 1 : 0),
-    hitScale: perks.includes('keen') ? 1.3 : 1,
-    headScale: perks.includes('silver') ? 1.2 : 1,
-    fastGrace: perks.includes('fast') ? 60 : 0,
-    enemyReaction: Math.max(
-      170,
-      opponent.baseReactionMs +
-        mods.reactionDeltaMs +
-        (Math.random() * 40 - 20) +
-        (perks.includes('charm') ? 35 : 0),
-    ),
-    accuracy: Math.min(0.99, Math.max(0.2, opponent.baseAccuracy + mods.accuracyDelta)),
-  }).current
+  const tuning = useMemo(() => {
+    // Deterministic jitter per opponent/round to maintain purity
+    const jitter = (((opponent.name.length * 17 + round * 23) % 41) - 20)
+    return {
+      warnings: 1 + (perks.includes('steady') ? 1 : 0),
+      hitScale: perks.includes('keen') ? 1.3 : 1,
+      headScale: perks.includes('silver') ? 1.2 : 1,
+      fastGrace: perks.includes('fast') ? 60 : 0,
+      enemyReaction: Math.max(
+        170,
+        opponent.baseReactionMs +
+          mods.reactionDeltaMs +
+          jitter +
+          (perks.includes('charm') ? 35 : 0),
+      ),
+      accuracy: Math.min(0.99, Math.max(0.2, opponent.baseAccuracy + mods.accuracyDelta)),
+    }
+  }, [opponent.name, opponent.baseReactionMs, opponent.baseAccuracy, mods.reactionDeltaMs, mods.accuracyDelta, perks, round])
 
-  const [warningsLeft, setWarningsLeft] = useState(tuning.warnings)
+  const [warningsLeft, setWarningsLeft] = useState(() => tuning.warnings)
 
   const phaseRef = useRef<Phase>('idle')
   const countdownRef = useRef<number | null>(null)
-  countdownRef.current = countdown
   const onResultRef = useRef(onResult)
-  onResultRef.current = onResult
   const drawAtRef = useRef(0)
   const enemyShotAtRef = useRef(0)
   const playerShotAtRef = useRef<number | null>(null)
   const pointerRef = useRef({ x: 0, y: 0, down: false, inHolster: false })
   const rafRef = useRef(0)
   const timersRef = useRef<number[]>([])
+
+  useEffect(() => {
+    countdownRef.current = countdown
+  }, [countdown])
+
+  useEffect(() => {
+    onResultRef.current = onResult
+  }, [onResult])
   const resolvedRef = useRef(false)
   const dustRef = useRef<Particle[]>([])
   const smokeRef = useRef<Particle[]>([])
@@ -101,11 +112,15 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
   const zoomRef = useRef(0)
   const winnerRef = useRef<'player' | 'enemy' | 'none'>('none')
   const fallStartRef = useRef(0)
-  const warningsRef = useRef(tuning.warnings)
+  const warningsRef = useRef(0)
   const enemyAccBonusRef = useRef(0)
   const feintUntilRef = useRef(0)
   const tellFlashRef = useRef(0)
   const hitMarkRef = useRef<{ x: number; y: number; head: boolean } | null>(null)
+
+  useEffect(() => {
+    warningsRef.current = tuning.warnings
+  }, [tuning.warnings])
 
   const setPhaseSafe = useCallback((p: Phase) => {
     phaseRef.current = p
@@ -218,6 +233,10 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       }
     }
 
+    later(() => {
+      sfx.gunLoad(0.7)
+    }, 280)
+
     const effAccuracy = () => Math.min(0.99, tuning.accuracy + enemyAccBonusRef.current)
 
     const resolve = (outcome: DuelOutcome) => {
@@ -239,6 +258,7 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
         const shooterX = outcome.won ? L.playerX : L.enemyX
         const dir = outcome.won ? 1 : -1
         spawnSmoke(shooterX + dir * 56 * L.s, L.bodyY - 20 * L.s, dir)
+        bgm.duck(0.18, 1200)
         sfx.gunshot()
       }
 
@@ -247,6 +267,14 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
         else if (outcome.won) sfx.win()
         else sfx.lose()
       }, 130)
+
+      // 총을 맞고 쓰러지면서 바닥에 떨어지는 리볼버 소리
+      if (!outcome.foul) {
+        later(() => {
+          sfx.gunFall(0.75)
+        }, 420)
+      }
+
       later(() => onResultRef.current(outcome), 1850)
     }
 
@@ -516,7 +544,7 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
 
       if (tellActive && holding) {
         ctx.fillStyle = 'rgba(255, 240, 160, 0.95)'
-        ctx.font = `900 ${Math.round(22 * s)}px monospace`
+        ctx.font = `900 ${Math.round(22 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.textAlign = 'center'
         ctx.fillText('!', L.enemyX + 36 * s, L.bodyY - 62 * s)
       }
@@ -524,20 +552,27 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       drawNameplate(ctx, 'YOU', L.playerX, L.bodyY - 78 * s, s)
       drawNameplate(ctx, opponent.alias, L.enemyX, L.bodyY - 78 * s, s)
 
-      // 총구 연기는 인물 위에 얹혀야 자연스럽다
-      smokeRef.current = smokeRef.current.filter((p) => p.life > 0)
-      for (const p of smokeRef.current) {
-        p.x += p.vx
-        p.y += p.vy
-        p.vy -= 0.006
-        p.vx *= 0.985
+      // 총구 연기는 인물 위에 얹혀야 자연스럽다 (In-place zero-allocation update)
+      const smokes = smokeRef.current
+      let smokeWriteIdx = 0
+      for (let i = 0; i < smokes.length; i++) {
+        const p = smokes[i]
         p.life -= p.decay
-        p.size += 0.5
-        ctx.fillStyle = `rgba(226, 214, 196, ${p.life * 0.3})`
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size * s, 0, Math.PI * 2)
-        ctx.fill()
+        if (p.life > 0) {
+          p.x += p.vx
+          p.y += p.vy
+          p.vy -= 0.006
+          p.vx *= 0.985
+          p.size += 0.5
+          ctx.fillStyle = `rgba(226, 214, 196, ${p.life * 0.3})`
+          ctx.beginPath()
+          ctx.arc(p.x, p.y, p.size * s, 0, Math.PI * 2)
+          ctx.fill()
+          if (smokeWriteIdx !== i) smokes[smokeWriteIdx] = p
+          smokeWriteIdx++
+        }
       }
+      smokes.length = smokeWriteIdx
 
       drawHolster(ctx, {
         cx: L.holsterX,
@@ -552,11 +587,11 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       if (phaseRef.current === 'idle') {
         const blink = 0.6 + Math.sin(t / 220) * 0.4
         const hintY = L.holsterY - 16 * L.hs
-        ctx.font = `800 ${Math.round(13 * s)}px monospace`
+        ctx.font = `700 ${Math.round(13 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.textAlign = 'center'
         const label = '여기를 누른 채 버텨라'
         const tw = ctx.measureText(label).width
-        ctx.fillStyle = 'rgba(10, 5, 2, 0.7)'
+        ctx.fillStyle = 'rgba(10, 5, 2, 0.75)'
         ctx.fillRect(L.holsterX - tw / 2 - 10, hintY - 13 * s, tw + 20, 18 * s)
         ctx.globalAlpha = blink
         ctx.fillStyle = '#ffe0a0'
@@ -569,7 +604,7 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
         ctx.save()
         ctx.translate(w / 2, h * 0.2)
         ctx.fillStyle = 'rgba(255, 242, 208, 0.94)'
-        ctx.font = `900 ${Math.round(78 * s)}px Impact, "Arial Black", sans-serif`
+        ctx.font = `900 ${Math.round(78 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.textAlign = 'center'
         ctx.shadowColor = 'rgba(0,0,0,0.8)'
         ctx.shadowBlur = 16
@@ -581,7 +616,7 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
         ctx.save()
         ctx.translate(w / 2, h * 0.28)
         ctx.fillStyle = 'rgba(196, 72, 60, 0.8)'
-        ctx.font = `900 ${Math.round(56 * s)}px Impact, "Arial Black", sans-serif`
+        ctx.font = `900 ${Math.round(56 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.textAlign = 'center'
         ctx.fillText('DRAW…?', 0, 0)
         ctx.restore()
@@ -593,7 +628,7 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
         ctx.translate(w / 2, h * 0.2)
         ctx.scale(pulse, pulse)
         ctx.fillStyle = '#ff2d2d'
-        ctx.font = `900 ${Math.round(76 * s)}px Impact, "Arial Black", sans-serif`
+        ctx.font = `900 ${Math.round(76 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.textAlign = 'center'
         ctx.shadowColor = 'rgba(0,0,0,0.9)'
         ctx.shadowBlur = 20
@@ -642,17 +677,25 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
         ctx.stroke()
       }
 
-      dustRef.current = dustRef.current.filter((d) => d.life > 0)
-      for (const d of dustRef.current) {
-        d.x += d.vx
-        d.y += d.vy
-        d.vy += 0.09
+      // 바닥 먼지 파티클 (In-place zero-allocation update)
+      const dusts = dustRef.current
+      let dustWriteIdx = 0
+      for (let i = 0; i < dusts.length; i++) {
+        const d = dusts[i]
         d.life -= d.decay
-        ctx.fillStyle = `rgba(214, 176, 116, ${d.life * 0.7})`
-        ctx.beginPath()
-        ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2)
-        ctx.fill()
+        if (d.life > 0) {
+          d.x += d.vx
+          d.y += d.vy
+          d.vy += 0.09
+          ctx.fillStyle = `rgba(214, 176, 116, ${d.life * 0.7})`
+          ctx.beginPath()
+          ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2)
+          ctx.fill()
+          if (dustWriteIdx !== i) dusts[dustWriteIdx] = d
+          dustWriteIdx++
+        }
       }
+      dusts.length = dustWriteIdx
 
       // 역광에 반짝이는 먼지
       ctx.fillStyle = 'rgba(255, 226, 170, 0.2)'
@@ -780,6 +823,8 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
     return () => {
       cancelAnimationFrame(rafRef.current)
       clearTimers()
+      smokeRef.current = []
+      dustRef.current = []
       window.removeEventListener('resize', resize)
       canvas.removeEventListener('mousedown', onMouseDown)
       canvas.removeEventListener('mousemove', onMouseMove)

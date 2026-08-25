@@ -67,7 +67,10 @@ export function Standoff({ opponent, round, onFinish }: Props) {
   const [usedAi, setUsedAi] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const modsRef = useRef(mods)
-  modsRef.current = mods
+
+  useEffect(() => {
+    modsRef.current = mods
+  }, [mods])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })

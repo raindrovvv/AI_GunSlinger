@@ -1,6 +1,9 @@
 /** Canvas/UI에서 웹폰트가 준비될 때까지 대기 */
 export function loadGameFonts(): Promise<void> {
   const samples = [
+    '700 16px "Paperlogy"',
+    '500 16px "Paperlogy"',
+    '400 16px "Paperlogy"',
     '400 16px "IBM Plex Sans KR"',
     '400 16px "Noto Sans KR"',
     '400 16px "Black Han Sans"',
@@ -15,4 +18,4 @@ export function loadGameFonts(): Promise<void> {
 }
 
 export const CANVAS_LABEL_FONT =
-  '"IBM Plex Sans KR", "Noto Sans KR", "Black Han Sans", sans-serif'
+  '"Paperlogy", "IBM Plex Sans KR", "Noto Sans KR", "Black Han Sans", sans-serif'

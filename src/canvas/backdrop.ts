@@ -294,7 +294,7 @@ function drawBuilding(
 
   if (sign) {
     ctx.fillStyle = 'rgba(240, 210, 150, 0.6)'
-    ctx.font = `700 ${Math.max(7, Math.round(bw / 9))}px "Special Elite", monospace`
+    ctx.font = `700 ${Math.max(7, Math.round(bw / 9))}px "Paperlogy", "Special Elite", monospace`
     ctx.textAlign = 'center'
     ctx.fillText(sign, x + bw / 2, top + bh * 0.14)
   }

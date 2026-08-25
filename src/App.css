@@ -1,3 +1,29 @@
+/* 페이퍼로지 (Paperlogy) 폰트 정의 */
+@font-face {
+  font-family: "Paperlogy";
+  src: url("/fonts/Paperlogy-7Bold.woff2") format("woff2"),
+       url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Paperlogy";
+  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
   --bg: #0e0906;
@@ -10,18 +36,21 @@
   --ok: #6fbf73;
   --muted: #a89070;
   --line: #5a3d24;
-  --display-en: "Special Elite", Impact, "Arial Black", sans-serif;
-  --western-en: "Special Elite", "Courier New", monospace;
-  /* 한글 폰트를 영문 전용 폰트보다 앞에 — 로드 실패 시에도 sans로 떨어지지 않게 */
-  --display: "Black Han Sans", "IBM Plex Sans KR", "Noto Sans KR", sans-serif;
-  --western: "Special Elite", "Gowun Batang", "Noto Serif KR", "IBM Plex Sans KR", serif;
-  --body: "IBM Plex Sans KR", "Noto Sans KR", system-ui, sans-serif;
-  --korean-display: "Black Han Sans", "IBM Plex Sans KR", "Noto Sans KR", sans-serif;
-  --newspaper-headline: "Gowun Batang", "Noto Serif KR", "IBM Plex Sans KR", serif;
+  --display-en: "Paperlogy", Impact, "Arial Black", sans-serif;
+  --western-en: "Paperlogy", "Special Elite", monospace;
+  /* 페이퍼로지(Paperlogy)를 모든 서체의 1순위로 통일하여 영문/한글/숫자 일관성 확보 */
+  --display: "Paperlogy", "Black Han Sans", "IBM Plex Sans KR", sans-serif;
+  --western: "Paperlogy", "Special Elite", "Gowun Batang", "Noto Serif KR", serif;
+  --body: "Paperlogy", "IBM Plex Sans KR", "Noto Sans KR", system-ui, sans-serif;
+  --korean-display: "Paperlogy", "Black Han Sans", "IBM Plex Sans KR", sans-serif;
+  --newspaper-headline: "Paperlogy", "Gowun Batang", "Noto Serif KR", serif;
   font-family: var(--body);
   line-height: 1.5;
   background: var(--bg);
   color: var(--paper);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 * {
@@ -42,6 +71,9 @@ body {
     linear-gradient(180deg, #1a0e08 0%, #0a0604 100%);
   min-height: 100vh;
   overflow-x: hidden;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
 }
 
 button,
@@ -100,11 +132,13 @@ input {
 
 .eyebrow {
   font-family: var(--western);
-  letter-spacing: 0.2em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--accent);
-  font-size: 12px;
+  font-size: 13px;
   margin: 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
 .btn {
@@ -259,11 +293,12 @@ input {
 
 .title-badge {
   font-family: var(--western);
-  font-size: 11px;
-  letter-spacing: 0.22em;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   color: var(--muted);
   border: 1px solid var(--line);
-  padding: 6px 12px;
+  padding: 6px 14px;
 }
 
 .logo {
@@ -297,26 +332,32 @@ input {
   font-size: clamp(16px, 3vw, 22px);
   margin: 4px 0 0;
   color: var(--accent);
+  text-wrap: balance;
+  word-break: keep-all;
 }
 
 .blurb {
   color: var(--muted);
-  max-width: 460px;
+  max-width: 480px;
   text-align: center;
   font-size: 15px;
+  line-height: 1.6;
+  text-wrap: balance;
+  word-break: keep-all;
 }
 
 .howto {
-  width: min(480px, 100%);
+  width: min(520px, 100%);
   border: 1px solid var(--line);
   padding: 16px 20px;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.42);
   text-align: left;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  word-break: keep-all;
 }
 
 .howto h3 {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   color: var(--accent);
   font-size: 12px;
   letter-spacing: 0.16em;
@@ -325,9 +366,20 @@ input {
 
 .howto ol {
   margin: 0;
-  padding-left: 18px;
+  padding-left: 20px;
   color: var(--muted);
   font-size: 14px;
+  line-height: 1.65;
+}
+
+.howto ol li {
+  margin-bottom: 6px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.howto ol li:last-child {
+  margin-bottom: 0;
 }
 
 .howto em {
@@ -358,10 +410,13 @@ input {
     8px 14px 0 rgba(0, 0, 0, 0.4),
     inset 0 0 40px rgba(90, 50, 20, 0.2),
     inset 0 0 90px rgba(60, 30, 8, 0.12);
-  text-align: center;
+  transform-origin: 50% 0%;
   transform: rotate(-1.2deg);
   position: relative;
-  animation: posterDrop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  animation:
+    posterDrop 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    paperWindFlutter 6s ease-in-out 0.5s infinite;
+  will-change: transform, box-shadow;
 }
 
 /* 벽에 박아둔 못 */
@@ -376,6 +431,7 @@ input {
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #b9a37a, #4a3a20 70%, #241a0c);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+  z-index: 2;
 }
 
 @keyframes posterDrop {
@@ -386,6 +442,45 @@ input {
   to {
     opacity: 1;
     transform: rotate(-1.2deg);
+  }
+}
+
+/* 종이가 서부 모래바람에 살짝 날리고 펄럭이는 애니메이션 */
+@keyframes paperWindFlutter {
+  0% {
+    transform: rotateZ(-1.2deg) rotateX(0deg) rotateY(0deg);
+    box-shadow:
+      8px 14px 0 rgba(0, 0, 0, 0.4),
+      inset 0 0 40px rgba(90, 50, 20, 0.2),
+      inset 0 0 90px rgba(60, 30, 8, 0.12);
+  }
+  22% {
+    transform: rotateZ(-0.4deg) rotateX(2.8deg) rotateY(-1.4deg) translate3d(2px, 0, 0);
+    box-shadow:
+      11px 18px 10px rgba(0, 0, 0, 0.35),
+      inset 0 0 40px rgba(90, 50, 20, 0.2),
+      inset 0 0 90px rgba(60, 30, 8, 0.12);
+  }
+  48% {
+    transform: rotateZ(-2deg) rotateX(1.2deg) rotateY(1.6deg);
+    box-shadow:
+      7px 12px 6px rgba(0, 0, 0, 0.44),
+      inset 0 0 40px rgba(90, 50, 20, 0.2),
+      inset 0 0 90px rgba(60, 30, 8, 0.12);
+  }
+  74% {
+    transform: rotateZ(-0.8deg) rotateX(3.4deg) rotateY(-0.8deg) translate3d(3px, 0, 0);
+    box-shadow:
+      13px 20px 12px rgba(0, 0, 0, 0.32),
+      inset 0 0 40px rgba(90, 50, 20, 0.2),
+      inset 0 0 90px rgba(60, 30, 8, 0.12);
+  }
+  100% {
+    transform: rotateZ(-1.2deg) rotateX(0deg) rotateY(0deg);
+    box-shadow:
+      8px 14px 0 rgba(0, 0, 0, 0.4),
+      inset 0 0 40px rgba(90, 50, 20, 0.2),
+      inset 0 0 90px rgba(60, 30, 8, 0.12);
   }
 }
 
@@ -798,17 +893,21 @@ input {
   display: flex;
   gap: 14px;
   font-size: 13px;
+  font-family: var(--western);
+  font-weight: 500;
   color: var(--muted);
   flex-wrap: wrap;
 }
 
 .duel-stats strong {
   color: var(--paper);
+  font-weight: 700;
 }
 
 .duel-stats [data-mood] {
   color: var(--accent);
   font-family: var(--western);
+  font-weight: 700;
 }
 
 .duel-stage {
@@ -833,7 +932,9 @@ input {
 
 .duel-msg {
   font-family: var(--western);
-  font-size: 18px;
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.04em;
   min-height: 28px;
   text-align: center;
   margin: 0;
@@ -842,7 +943,7 @@ input {
 .duel-msg.phase-draw {
   color: var(--danger);
   font-weight: 800;
-  font-size: 22px;
+  font-size: 24px;
   animation: pulse 0.5s infinite;
 }
 
@@ -853,8 +954,10 @@ input {
 .duel-hint {
   margin: 0;
   font-size: 13px;
+  font-family: var(--body);
   color: var(--muted);
   text-align: center;
+  letter-spacing: 0.02em;
 }
 
 .duel-screen.flash-draw {
@@ -893,8 +996,11 @@ input {
     inset 0 0 70px rgba(80, 44, 12, 0.12);
   border: 1px solid #cbb892;
   position: relative;
-  animation: posterDrop 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top center;
+  animation:
+    posterDrop 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    paperWindFlutter 7s ease-in-out 0.45s infinite;
+  will-change: transform, box-shadow;
 }
 
 .newspaper header {
@@ -1043,15 +1149,110 @@ input {
   bottom: 0;
   display: flex;
   justify-content: space-between;
-  padding: 8px 16px;
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  align-items: center;
+  padding: 8px 18px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
   color: var(--muted);
   border-top: 1px solid rgba(90, 61, 36, 0.5);
-  background: rgba(10, 7, 5, 0.88);
+  background: rgba(10, 7, 5, 0.92);
   backdrop-filter: blur(8px);
   font-family: var(--western);
+  font-weight: 500;
   z-index: 20;
+}
+
+.chrome-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.chrome-bgm-ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(232, 168, 56, 0.05);
+  border: 1px solid rgba(232, 168, 56, 0.22);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.chrome-bgm-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  padding: 2px 4px;
+  font-size: 10px;
+  font-family: var(--western);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.chrome-bgm-btn:hover {
+  color: #fff;
+}
+
+.chrome-bgm-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 60px;
+  height: 4px;
+  background: rgba(90, 61, 36, 0.7);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.chrome-bgm-slider:hover {
+  background: rgba(140, 92, 40, 0.85);
+}
+
+.chrome-bgm-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1px solid #1a0e08;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.chrome-bgm-slider::-webkit-slider-thumb:hover {
+  background: var(--accent-hot);
+  transform: scale(1.25);
+}
+
+.chrome-bgm-slider::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1px solid #1a0e08;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.chrome-bgm-slider::-moz-range-thumb:hover {
+  background: var(--accent-hot);
+  transform: scale(1.25);
+}
+
+.chrome-bgm-vol {
+  font-size: 9px;
+  font-family: var(--western);
+  color: var(--muted);
+  min-width: 24px;
+  text-align: right;
 }
 
 /* Duel HUD additions */
@@ -1306,6 +1507,8 @@ input {
 
 .chrome-run {
   color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
 /* Title actions + Record board */
@@ -1500,5 +1703,99 @@ input {
   }
   .tactic {
     padding: 8px 10px;
+  }
+}
+
+/* ==========================================================================
+   Sandstorm & Atmospheric Desert Wind Effect
+   ========================================================================== */
+.sandstorm-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  overflow: hidden;
+  opacity: 0.9;
+  mix-blend-mode: screen;
+}
+
+.sandstorm-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sandstorm-overlay.intensity-light {
+  opacity: 0.5;
+}
+
+.sandstorm-overlay.intensity-heavy {
+  opacity: 1;
+}
+
+/* 다층 모래바람 안개 스트림 */
+.dust-wind-layer {
+  position: absolute;
+  inset: -30% -50%;
+  background:
+    radial-gradient(ellipse 65% 15% at 20% 30%, rgba(230, 160, 75, 0.09), transparent 70%),
+    radial-gradient(ellipse 75% 20% at 70% 65%, rgba(245, 175, 90, 0.07), transparent 75%),
+    linear-gradient(105deg, transparent 35%, rgba(230, 165, 85, 0.05) 50%, transparent 65%);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.wind-fast {
+  animation: windStreamFast 5.5s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+.wind-slow {
+  animation: windStreamSlow 8.5s ease-in-out infinite alternate;
+  opacity: 0.7;
+}
+
+.wind-ambient {
+  animation: windStreamAmbient 12s linear infinite;
+  opacity: 0.5;
+}
+
+@keyframes windStreamFast {
+  0% {
+    transform: translate3d(-20%, -10%, 0) skewX(-14deg);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.9;
+  }
+  75% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate3d(25%, 15%, 0) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes windStreamSlow {
+  0% {
+    transform: translate3d(-10%, 0, 0) scaleY(0.9);
+  }
+  100% {
+    transform: translate3d(15%, 10%, 0) scaleY(1.1);
+  }
+}
+
+@keyframes windStreamAmbient {
+  0% {
+    transform: translate3d(-15%, -5%, 0) rotate(1deg);
+  }
+  50% {
+    transform: translate3d(5%, 5%, 0) rotate(-1deg);
+  }
+  100% {
+    transform: translate3d(-15%, -5%, 0) rotate(1deg);
   }
 }

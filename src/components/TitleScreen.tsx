@@ -39,6 +39,7 @@ export function TitleScreen({ onStart }: Props) {
             onClick={() => {
               sfx.unlock()
               sfx.click()
+              sfx.gunLoad(0.7)
               onStart()
             }}
           >

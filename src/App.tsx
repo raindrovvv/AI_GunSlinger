@@ -8,6 +8,9 @@ import { Newspaper } from './components/Newspaper'
 import { Standoff } from './components/Standoff'
 import { TitleScreen } from './components/TitleScreen'
 import { WantedPoster } from './components/WantedPoster'
+import { Sandstorm } from './components/Sandstorm'
+import { bgm } from './audio/bgm'
+import { sfx } from './audio/sfx'
 import type {
   CareerStats,
   DuelMods,
@@ -66,6 +69,8 @@ export default function App() {
   const [lastOutcome, setLastOutcome] = useState<DuelOutcome | null>(null)
   const [endingCareer, setEndingCareer] = useState<CareerStats | null>(null)
   const [endingRun, setEndingRun] = useState<RunRecord | null>(null)
+  const [bgmMuted, setBgmMuted] = useState(() => bgm.isMuted())
+  const [bgmVolume, setBgmVolumeState] = useState(() => bgm.getVolume())
 
   const perksRef = useRef<PerkId[]>([])
   const streakRef = useRef(0)
@@ -85,6 +90,33 @@ export default function App() {
 
   useEffect(() => {
     void checkAiHealth().then(setAiReachable)
+  }, [])
+
+  useEffect(() => {
+    const unsub = bgm.subscribe(() => {
+      setBgmMuted(bgm.isMuted())
+      setBgmVolumeState(bgm.getVolume())
+    })
+    return unsub
+  }, [])
+
+  useEffect(() => {
+    bgm.playPhase(phase)
+  }, [phase])
+
+  // Unlock BGM on first user interaction anywhere
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      bgm.unlock()
+      window.removeEventListener('pointerdown', handleFirstInteraction)
+      window.removeEventListener('keydown', handleFirstInteraction)
+    }
+    window.addEventListener('pointerdown', handleFirstInteraction)
+    window.addEventListener('keydown', handleFirstInteraction)
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstInteraction)
+      window.removeEventListener('keydown', handleFirstInteraction)
+    }
   }, [])
 
   const startRound = useCallback(async (r: number, names: string[]) => {
@@ -242,6 +274,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <Sandstorm intensity={phase === 'duel' ? 'light' : 'medium'} />
       {phase === 'title' && <TitleScreen onStart={handleStart} />}
 
       {phase === 'loading' && (
@@ -308,7 +341,42 @@ export default function App() {
       )}
 
       <footer className="chrome">
-        <span>AI GUNSLINGER</span>
+        <div className="chrome-left">
+          <span>AI GUNSLINGER</span>
+          <div className="chrome-bgm-ctrl">
+            <button
+              className="chrome-bgm-btn"
+              title={bgmMuted ? '배경음 켜기' : '배경음 끄기'}
+              onClick={() => {
+                bgm.unlock()
+                sfx.click()
+                bgm.toggleMute()
+              }}
+            >
+              {bgmMuted ? '🔇 BGM' : '🔊 BGM'}
+            </button>
+            <input
+              type="range"
+              className="chrome-bgm-slider"
+              min="0"
+              max="1"
+              step="0.05"
+              value={bgmMuted ? 0 : bgmVolume}
+              title={`BGM 볼륨: ${Math.round(bgmVolume * 100)}%`}
+              onChange={(e) => {
+                bgm.unlock()
+                const next = parseFloat(e.target.value)
+                bgm.setVolume(next)
+                if (bgmMuted && next > 0) {
+                  bgm.setMuted(false)
+                }
+              }}
+            />
+            <span className="chrome-bgm-vol">
+              {bgmMuted ? 'OFF' : `${Math.round(bgmVolume * 100)}%`}
+            </span>
+          </div>
+        </div>
         {inRun && (
           <span className="chrome-run">
             R{round}/{TOTAL_ROUNDS} · 현상금 ${bounty.toLocaleString()}

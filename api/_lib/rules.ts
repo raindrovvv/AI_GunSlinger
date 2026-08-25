@@ -150,7 +150,8 @@ export function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
 }
 
-const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\uFE0F\u{1F1E6}-\u{1F1FF}]/gu
+const EMOJI =
+  /[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]|\u{FE0F}|\uD83C[\uDDE6-\uDDFF]/gu
 const META_PHRASES =
   /(죄송|사과드|도와드릴 수 없|언어\s*모델|인공지능|AI 모델|assistant|시스템 프롬프트|as an ai|i'?m sorry|i cannot)/i
 
