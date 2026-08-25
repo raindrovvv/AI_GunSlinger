@@ -63,8 +63,12 @@ export const KOREAN_RULES = `[한국어 규칙]
 export const DIALOGUE_RULES = `[대사 규칙]
 - 실제로 입에서 나올 말만 쓴다. 소설 지시문("그는 웃었다"), 괄호 설명, 행동 묘사 금지.
 - 1~2문장, 최대 60자. 짧고 날카롭게.
-- 상대가 방금 한 말에 직접 반응한다. 준비된 대사를 그냥 읊지 않는다.
-- 플레이어가 엉뚱한 질문을 하면 무시하거나 비웃되, 인물답게 답한다.
+- 방금 상대가 한 말의 핵심·톤·의도에 먼저 반응한다. 엉뚱한 준비台詞를 읊지 않는다.
+- "꺼져", "뭐래", "닥쳐" 같은 짧고 거친 한마디도 무시하지 말고 받아친다.
+- 결투 전 첫 도발(taunt) 문장을 그대로 반복하지 않는다.
+- "자네", "네가"로 매 턴 시작하지 않는다. 호칭·문장 시작을 바꾼다.
+- 이전 턴과 같은 논점(두려움, 거짓말, 승리)만 반복하지 않는다.
+- 플레이어가 버릇·죄목·외모를 짚으면 그 사실에 직접 반응한다. 둘러대지 않는다.
 - 같은 표현을 반복하지 않는다. 이전 대사와 다른 각도로 말한다.`
 
 /** 세계관 고정 */
@@ -173,6 +177,22 @@ export function sanitizeLine(
 
 export function coerceMood(input: unknown): Mood {
   return MOODS.includes(input as Mood) ? (input as Mood) : 'calm'
+}
+
+/** sanitize 실패 시에도 대화 흐름이 끊기지 않게 mood별 짧은 대사 */
+export function dialogueFallback(mood: Mood): string {
+  switch (mood) {
+    case 'angered':
+      return '입만 살았군. 손으로 증명해봐.'
+    case 'intimidated':
+      return '…기세는 알겠다. 그래도 물러서진 않아.'
+    case 'scared':
+      return '허세 부리지 마. 손이 떨리는 건 네 쪽이잖아.'
+    case 'suspicious':
+      return '뭘 그렇게 들여다보는 거야?'
+    default:
+      return '말은 됐고, 손을 볼까.'
+  }
 }
 
 /**

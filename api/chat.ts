@@ -10,6 +10,7 @@ import {
   clientIp,
   coerceDeltas,
   coerceMood,
+  dialogueFallback,
   moodGuideText,
   parseJsonLoose,
   peaceAllowed,
@@ -43,15 +44,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 결투 직전, 먼지 나는 거리에서 상대와 마주 서 있습니다.
 
 [캐릭터]
+- 죄목: ${opponent.crime ?? '알 수 없음'}
 - 성격과 약점: ${opponent.personality}
 - 겉모습: ${opponent.appearance}
 - 총을 뽑기 직전 나오는 버릇: ${opponent.tell}
   → 이 버릇을 먼저 입에 올리지 않는다. 상대가 정확히 짚으면 동요한다.
-- 평소 도발: ${opponent.taunt}
+- 결투 전 첫 도발(반복 금지): ${opponent.taunt}
 
 ${PERSONA_LOCK}
 
 ${DIALOGUE_RULES}
+
+[대화 연속성 예시]
+- 상대 "꺼져라" → "비켜? 여긴 내가 먼저 잡은 자리다."
+- 상대 "뭐래" → "못 알아들었나. 귀 막혔어?"
+- 상대 "그 버릇 다 봤어" → 버릇에 직접 반응. 부정하거나 동요한다.
 
 ${KOREAN_RULES}
 
@@ -81,9 +88,12 @@ ${OUTPUT_RULES}
           .slice(-6)
           .map((h: { role: string; text: string }) => ({
             role: h.role === 'player' ? ('user' as const) : ('assistant' as const),
-            content: String(h.text).slice(0, 200),
+            content:
+              h.role === 'player'
+                ? `[거리의 상대] ${String(h.text).slice(0, 200)}`
+                : `[${opponent.alias}] ${String(h.text).slice(0, 200)}`,
           })),
-        { role: 'user', content: playerMessage.slice(0, 200) },
+        { role: 'user', content: `[거리의 상대] ${playerMessage.slice(0, 200)}` },
       ],
     })
 
@@ -97,11 +107,18 @@ ${OUTPUT_RULES}
     const peaceEnding =
       !!parsed.peaceEnding && peaceAllowed(Number(round) || 1, Number(turn) || 1, mood)
 
+    const rawReply = sanitizeLine(parsed.reply, {
+      max: 70,
+      fallback: '',
+    })
+    const taunt = String(opponent.taunt ?? '').trim()
+    const reply =
+      rawReply && rawReply !== taunt
+        ? rawReply
+        : dialogueFallback(mood)
+
     return res.status(200).json({
-      reply: sanitizeLine(parsed.reply, {
-        max: 70,
-        fallback: '말은 충분하다. 손을 준비해라.',
-      }),
+      reply,
       mood,
       reactionDeltaMs,
       accuracyDelta,
