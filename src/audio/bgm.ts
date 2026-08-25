@@ -21,7 +21,7 @@ const TRACK_SOURCES: Record<BgmTrack, string[]> = {
   standoff: ['/sounds/bgm/standoff.mp3', '/sounds/bgm/tension.mp3', '/sounds/bgm/title.mp3', '/sounds/bgm/main.mp3'],
   duel: ['/sounds/bgm/duel.mp3', '/sounds/bgm/tension.mp3'],
   newspaper: ['/sounds/bgm/saloon.mp3', '/sounds/bgm/newspaper.mp3', '/sounds/bgm/title.mp3', '/sounds/bgm/main.mp3'],
-  victory: ['/sounds/bgm/saloon.mp3', '/sounds/bgm/victory.mp3', '/sounds/bgm/title.mp3', '/sounds/bgm/main.mp3'],
+  victory: ['/sounds/bgm/main.mp3', '/sounds/bgm/title.mp3'],
   gameover: ['/sounds/bgm/gameover.mp3', '/sounds/bgm/defeat.mp3', '/sounds/bgm/title.mp3', '/sounds/bgm/main.mp3'],
   defeat: ['/sounds/bgm/defeat.mp3', '/sounds/bgm/gameover.mp3', '/sounds/bgm/title.mp3', '/sounds/bgm/main.mp3'],
 }
@@ -190,6 +190,7 @@ class BgmManager {
       case 'newspaper':
         this.play('newspaper')
         break
+      case 'cutscene':
       case 'victory':
         this.play('victory')
         break
