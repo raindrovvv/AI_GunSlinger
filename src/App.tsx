@@ -101,8 +101,12 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    bgm.playPhase(phase)
-  }, [phase])
+    if (phase === 'newspaper') {
+      bgm.play(playerWon ? 'newspaper' : 'defeat')
+    } else {
+      bgm.playPhase(phase)
+    }
+  }, [phase, playerWon])
 
   // Unlock BGM on first user interaction anywhere
   useEffect(() => {

@@ -10,7 +10,7 @@
 
 import type { GamePhase } from '../types'
 
-export type BgmTrack = 'title' | 'standoff' | 'duel' | 'newspaper' | 'victory' | 'gameover'
+export type BgmTrack = 'title' | 'standoff' | 'duel' | 'newspaper' | 'victory' | 'gameover' | 'defeat'
 
 const STORAGE_MUTE_KEY = 'ai-gunslinger.bgm-muted'
 const STORAGE_VOL_KEY = 'ai-gunslinger.bgm-volume'
@@ -22,7 +22,8 @@ const TRACK_SOURCES: Record<BgmTrack, string[]> = {
   duel: ['/sounds/bgm/duel.mp3', '/sounds/bgm/tension.mp3'],
   newspaper: ['/sounds/bgm/saloon.mp3', '/sounds/bgm/newspaper.mp3', '/sounds/bgm/title.mp3', '/sounds/bgm/main.mp3'],
   victory: ['/sounds/bgm/saloon.mp3', '/sounds/bgm/victory.mp3', '/sounds/bgm/title.mp3', '/sounds/bgm/main.mp3'],
-  gameover: ['/sounds/bgm/title.mp3', '/sounds/bgm/gameover.mp3', '/sounds/bgm/main.mp3'],
+  gameover: ['/sounds/bgm/gameover.mp3', '/sounds/bgm/defeat.mp3', '/sounds/bgm/title.mp3', '/sounds/bgm/main.mp3'],
+  defeat: ['/sounds/bgm/defeat.mp3', '/sounds/bgm/gameover.mp3', '/sounds/bgm/title.mp3', '/sounds/bgm/main.mp3'],
 }
 
 // Track volume balance multipliers
@@ -32,7 +33,8 @@ const TRACK_GAINS: Record<BgmTrack, number> = {
   duel: 0.45,
   newspaper: 0.65,
   victory: 0.72,
-  gameover: 0.6,
+  gameover: 0.68,
+  defeat: 0.68,
 }
 
 class BgmManager {
