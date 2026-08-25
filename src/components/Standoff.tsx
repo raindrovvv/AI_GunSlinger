@@ -164,7 +164,7 @@ export function Standoff({
 
     if (result.mods.peaceEnding) {
       sfx.peace()
-      setTimeout(() => onFinish({ ...merged, peaceEnding: true }, aiNow), 2600)
+      setTimeout(() => onFinish({ ...merged, peaceEnding: true }, aiNow), 550)
     }
   }
 

@@ -1319,7 +1319,29 @@ input {
 
 .loading-screen p {
   font-family: var(--western);
-  font-size: 18px;
+  font-size: 19px;
+  color: #ffd700;
+  margin: 12px 0 6px;
+}
+
+.loading-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(36, 18, 10, 0.85);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-family: var(--display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f7ede2;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+.loading-summary-chip span {
+  display: inline-block;
 }
 
 .spinner {

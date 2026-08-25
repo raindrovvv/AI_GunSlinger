@@ -33,14 +33,14 @@ function ac(): AudioContext {
     ctx = new AudioCtx({ latencyHint: 'interactive' })
 
     masterCompressorNode = ctx.createDynamicsCompressor()
-    masterCompressorNode.threshold.value = -8
-    masterCompressorNode.knee.value = 4
-    masterCompressorNode.ratio.value = 10
+    masterCompressorNode.threshold.value = -6
+    masterCompressorNode.knee.value = 6
+    masterCompressorNode.ratio.value = 8
     masterCompressorNode.attack.value = 0.001
     masterCompressorNode.release.value = 0.08
 
     masterGainNode = ctx.createGain()
-    masterGainNode.gain.value = 1.0
+    masterGainNode.gain.value = 1.35
 
     masterGainNode.connect(masterCompressorNode)
     masterCompressorNode.connect(ctx.destination)
@@ -69,7 +69,7 @@ function tone(
   freq: number,
   duration: number,
   type: OscillatorType = 'square',
-  gain = 0.08,
+  gain = 0.15,
   slideTo?: number,
 ) {
   if (activeVoices >= MAX_CONCURRENT_VOICES) return
@@ -99,7 +99,7 @@ function tone(
   }
 }
 
-function noiseBurst(duration: number, gain = 0.12, filterHz = 1200, filterType: BiquadFilterType = 'bandpass') {
+function noiseBurst(duration: number, gain = 0.18, filterHz = 1200, filterType: BiquadFilterType = 'bandpass') {
   if (activeVoices >= MAX_CONCURRENT_VOICES) return
   activeVoices++
 
@@ -267,11 +267,11 @@ function sampleGunshot(): boolean {
   }
 
   // 메인 총성 (실녹음)
-  playSample(0, 1.4, rate)
+  playSample(0, 1.85, rate)
 
   // 야외 반향 2탭
-  playSample(0.07, 0.4, rate * 0.97, 2200)
-  playSample(0.14, 0.25, rate * 0.94, 900)
+  playSample(0.07, 0.55, rate * 0.97, 2200)
+  playSample(0.14, 0.35, rate * 0.94, 900)
 
   // 서브 충격 — 샘플 저음 보강
   const sub = c.createOscillator()
@@ -279,7 +279,7 @@ function sampleGunshot(): boolean {
   sub.type = 'sine'
   sub.frequency.setValueAtTime(95, t)
   sub.frequency.exponentialRampToValueAtTime(22, t + 0.09)
-  subG.gain.setValueAtTime(0.7, t)
+  subG.gain.setValueAtTime(0.95, t)
   subG.gain.exponentialRampToValueAtTime(0.0001, t + 0.11)
   sub.connect(subG)
   subG.connect(master)
@@ -335,11 +335,11 @@ function proceduralGunshot() {
   }
 
   // 1. 총구 크랙
-  playFiltered(whiteBuf, t, 1.25, 0.002, 0.014, 'highpass', 1400, 0.55)
+  playFiltered(whiteBuf, t, 1.65, 0.002, 0.014, 'highpass', 1400, 0.55)
   // 2. 메인 폭발
-  playFiltered(whiteBuf, t, 1.2, 0.005, 0.095, 'lowpass', 5000, 0.5, true)
+  playFiltered(whiteBuf, t, 1.6, 0.005, 0.095, 'lowpass', 5000, 0.5, true)
   // 3. .45 구경 중역 바디
-  playFiltered(pinkBuf, t, 1.05, 0.01, 0.13, 'bandpass', 320, 0.6)
+  playFiltered(pinkBuf, t, 1.45, 0.01, 0.13, 'bandpass', 320, 0.6)
 
   // 4. 서브 킥
   const sub = c.createOscillator()
@@ -347,7 +347,7 @@ function proceduralGunshot() {
   sub.type = 'sine'
   sub.frequency.setValueAtTime(130, t)
   sub.frequency.exponentialRampToValueAtTime(24, t + 0.1)
-  subG.gain.setValueAtTime(1.2, t)
+  subG.gain.setValueAtTime(1.5, t)
   subG.gain.exponentialRampToValueAtTime(0.0001, t + 0.13)
   sub.connect(subG)
   subG.connect(master)
@@ -367,38 +367,38 @@ export const sfx = {
     }
   },
   click() {
-    tone(880, 0.05, 'square', 0.04)
+    tone(880, 0.05, 'square', 0.12)
   },
   holster() {
-    tone(180, 0.12, 'triangle', 0.06, 90)
+    tone(180, 0.12, 'triangle', 0.16, 90)
   },
   grip() {
-    tone(120, 0.16, 'triangle', 0.07, 70)
-    noiseBurst(0.07, 0.05)
+    tone(120, 0.16, 'triangle', 0.18, 70)
+    noiseBurst(0.07, 0.14)
   },
   tick(step: number) {
-    tone(300 + step * 90, 0.07, 'square', 0.05)
+    tone(300 + step * 90, 0.07, 'square', 0.14)
   },
   draw() {
-    tone(660, 0.08, 'sawtooth', 0.1)
-    tone(990, 0.15, 'square', 0.06)
-    noiseBurst(0.08, 0.1)
+    tone(660, 0.08, 'sawtooth', 0.24)
+    tone(990, 0.15, 'square', 0.16)
+    noiseBurst(0.08, 0.22)
   },
   feint() {
-    tone(420, 0.06, 'sawtooth', 0.07)
-    tone(300, 0.1, 'square', 0.04)
+    tone(420, 0.06, 'sawtooth', 0.16)
+    tone(300, 0.1, 'square', 0.12)
   },
   tell() {
-    tone(1400, 0.04, 'sine', 0.035)
+    tone(1400, 0.04, 'sine', 0.12)
   },
   warn() {
-    tone(160, 0.18, 'square', 0.09, 110)
-    setTimeout(() => tone(140, 0.16, 'square', 0.07, 90), 110)
+    tone(160, 0.18, 'square', 0.22, 110)
+    setTimeout(() => tone(140, 0.16, 'square', 0.18, 90), 110)
   },
   headshot() {
-    tone(1200, 0.06, 'square', 0.1)
-    setTimeout(() => tone(1600, 0.1, 'triangle', 0.09), 50)
-    setTimeout(() => tone(2000, 0.16, 'sine', 0.07), 120)
+    tone(1200, 0.06, 'square', 0.24)
+    setTimeout(() => tone(1600, 0.1, 'triangle', 0.22), 50)
+    setTimeout(() => tone(2000, 0.16, 'sine', 0.2), 120)
   },
   gunshot() {
     try {
@@ -412,7 +412,7 @@ export const sfx = {
       proceduralGunshot()
     }
   },
-  gunLoad(gain = 0.8) {
+  gunLoad(gain = 1.3) {
     try {
       ac()
       if (gunLoadedBuffer) {
@@ -426,7 +426,7 @@ export const sfx = {
       /* fallback */
     }
   },
-  gunFall(gain = 0.85) {
+  gunFall(gain = 1.35) {
     try {
       ac()
       if (gunFallingBuffer) {
@@ -441,35 +441,35 @@ export const sfx = {
     }
   },
   win() {
-    tone(523, 0.12, 'triangle', 0.08)
-    setTimeout(() => tone(659, 0.12, 'triangle', 0.08), 90)
-    setTimeout(() => tone(784, 0.22, 'triangle', 0.1), 180)
+    tone(523, 0.12, 'triangle', 0.2)
+    setTimeout(() => tone(659, 0.12, 'triangle', 0.2), 90)
+    setTimeout(() => tone(784, 0.22, 'triangle', 0.24), 180)
   },
   lose() {
-    tone(220, 0.3, 'sawtooth', 0.1, 80)
+    tone(220, 0.3, 'sawtooth', 0.24, 80)
   },
   peace() {
-    tone(392, 0.15, 'sine', 0.07)
-    setTimeout(() => tone(494, 0.2, 'sine', 0.07), 120)
+    tone(392, 0.15, 'sine', 0.18)
+    setTimeout(() => tone(494, 0.2, 'sine', 0.18), 120)
   },
   message() {
-    tone(520, 0.06, 'triangle', 0.04)
+    tone(520, 0.06, 'triangle', 0.12)
   },
   paper() {
-    noiseBurst(0.15, 0.06)
+    noiseBurst(0.15, 0.18)
   },
   coin() {
-    tone(987, 0.06, 'sine', 0.07)
-    setTimeout(() => tone(1318, 0.08, 'triangle', 0.09), 45)
-    setTimeout(() => tone(1760, 0.14, 'sine', 0.08), 90)
+    tone(987, 0.06, 'sine', 0.18)
+    setTimeout(() => tone(1318, 0.08, 'triangle', 0.2), 45)
+    setTimeout(() => tone(1760, 0.14, 'sine', 0.18), 90)
   },
   drink() {
-    tone(280, 0.08, 'sine', 0.06, 180)
-    setTimeout(() => tone(220, 0.1, 'sine', 0.06, 140), 90)
-    noiseBurst(0.06, 0.04, 800)
+    tone(280, 0.08, 'sine', 0.16, 180)
+    setTimeout(() => tone(220, 0.1, 'sine', 0.16, 140), 90)
+    noiseBurst(0.06, 0.12, 800)
   },
   shield() {
-    tone(1600, 0.12, 'sawtooth', 0.14, 500)
-    noiseBurst(0.12, 0.1, 2400)
+    tone(1600, 0.12, 'sawtooth', 0.26, 500)
+    noiseBurst(0.12, 0.22, 2400)
   },
 }

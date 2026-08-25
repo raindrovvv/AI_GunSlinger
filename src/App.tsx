@@ -331,7 +331,7 @@ export default function App() {
     setActiveBuffs({})
 
     setPhase('loading')
-    setLoadingText('신문 조판 중…')
+    setLoadingText('신문 조달 및 인쇄 중…')
     const fameInfo = getFameInfo(nextStreak)
     const { article: paper, usedAi } = await generateNewspaper({
       opponent,
@@ -425,6 +425,13 @@ export default function App() {
         <div className="screen loading-screen">
           <div className="spinner" />
           <p>{loadingText}</p>
+          {lastOutcome && (
+            <div className="loading-summary-chip">
+              <span>{lastOutcome.won ? '🎯 상대 제압' : lastOutcome.foul ? '⚠️ 반칙' : '💀 결투 패배'}</span>
+              {lastOutcome.reactionMs != null && <span>⚡ {lastOutcome.reactionMs}ms</span>}
+              {lastOutcome.headshot && <span>💥 헤드샷!</span>}
+            </div>
+          )}
           <small>서부 전신이 메시지를 나르는 중…</small>
         </div>
       )}
