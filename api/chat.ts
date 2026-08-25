@@ -15,9 +15,11 @@ import {
   peaceAllowed,
   rateLimited,
   sanitizeLine,
-} from './_lib/rules'
+} from './_lib/rules.js'
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+function getClient() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
+}
 
 export const config = { maxDuration: 20 }
 
@@ -68,7 +70,7 @@ ${OUTPUT_RULES}
 {"reply":"대사","mood":"calm|angered|intimidated|scared|suspicious","reactionDeltaMs":숫자,"accuracyDelta":숫자,"peaceEnding":true|false}`
 
   try {
-    const completion = await client.chat.completions.create({
+    const completion = await getClient().chat.completions.create({
       model: MODEL,
       temperature: 0.9,
       max_tokens: 220,

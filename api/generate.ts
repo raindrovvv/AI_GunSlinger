@@ -12,9 +12,11 @@ import {
   parseJsonLoose,
   rateLimited,
   sanitizeLine,
-} from './_lib/rules'
+} from './_lib/rules.js'
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+function getClient() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
+}
 
 export const config = { maxDuration: 20 }
 
@@ -64,7 +66,7 @@ ${OUTPUT_RULES}
 {"name":"","alias":"","bounty":0,"crime":"","appearance":"","tell":"","personality":"","taunt":"","baseReactionMs":0,"baseAccuracy":0}`
 
   try {
-    const completion = await client.chat.completions.create({
+    const completion = await getClient().chat.completions.create({
       model: MODEL,
       temperature: 1.05,
       max_tokens: 400,
