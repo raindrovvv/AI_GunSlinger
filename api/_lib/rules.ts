@@ -79,6 +79,16 @@ export const WORLD_RULES = `[세계관 규칙]
 - 실존 인물, 실제 브랜드, 정치·종교 소재 금지.
 - 폭력은 서부극 수준의 결투 긴장까지만. 유혈 묘사, 고문, 차별 표현 금지.`
 
+/** 무법자 이름·별명 규칙 */
+export const NAME_RULES = `[이름·별명 규칙]
+- name: 1880년대 미국 서부 무법자의 본명. 한글로 표기한 서양식 이름(이름+성, 또는 단일 예명).
+  · 좋은 예: 잭 카슨, 헨리 맥그로, 로사 벨트란, 빌리 원암, 실바 데인, 마커스 스틸, 프랭크 모리건
+  · 금지: 현대 한국 성명(김철수, 박민수, 이영희, 최지훈 등), 한국 성씨+이름 조합, 현대식 두음(○○킹, ○○쟁이)
+- alias: 마을 사람들이 부르는 총잡이 별명·호칭. 8자 이내. 수배서·신문에 실릴 서부식 별명.
+  · 좋은 예: 녹슨 방아쇠, 원암 워렌, 사막의 과부, 블랙 모스, 드로우 데빌
+  · 금지: 현대 한국 이름·슬랭(허세킹, 김철수 등), 본명과 중복되는 별명
+- name과 alias는 서로 다른 역할이다. 별명에 한국 성씨를 넣지 않는다.`
+
 /** 페르소나 이탈 방지 + 프롬프트 인젝션 방어 */
 export const PERSONA_LOCK = `[페르소나 고정]
 - 당신은 게임 속 인물이다. 자신이 AI, 언어 모델, 어시스턴트라는 사실을 절대 언급하지 않는다.
@@ -256,4 +266,54 @@ export function clientIp(headers: Record<string, unknown>): string {
   return 'unknown'
 }
 
-export const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4o-mini'
+export const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-nano'
+
+const KOREAN_SURNAMES =
+  /^(김|이|박|최|정|윤|한|신|조|강|임|오|송|황|안|유|홍|전|고|문|양|손|배|백|허|남|심|노|하|곽|성|차|주|우|구|민|류|나|진|지|엄|원|천|방|공|현|함|변|염|여|추|도|소|석|선|설|마|길|연|위|표|명|기|반|완|희|빈|라|편|육|제|탁|국|은|편|황보|남궁|선우|사공|독고|서문|제갈)/
+
+const MODERN_GIVEN =
+  /철수|영희|민수|지수|현우|서연|민준|서준|지훈|수빈|예준|도윤|하준|서윤|지우|유진|성민|현석/
+
+const MODERN_SLANG = /허세킹|허세|인싸|갑분|존잘|핵인싸|MZ|얼빠|킹받|JMT|ㅋㅋ|ㅎㅎ/
+
+const WESTERN_NAME_FALLBACKS = [
+  '잭 카슨',
+  '헨리 맥그로',
+  '로사 벨트란',
+  '빌리 원암',
+  '실바 데인',
+  '마커스 스틸',
+  '프랭크 모리건',
+  '조셉 크로포드',
+  '델라 머독',
+  '무명의 방랑자',
+]
+
+/** 현대 한국식 이름·슬랭인지 판별 */
+export function isModernKoreanName(input: string): boolean {
+  const s = input.trim()
+  if (!s) return true
+  if (MODERN_SLANG.test(s)) return true
+  if (MODERN_GIVEN.test(s)) return true
+  if (KOREAN_SURNAMES.test(s)) return true
+  // 성+이름 붙어쓰기: 김철수
+  if (/^[김이박최정윤한신조강임오송황안유홍전고문양손배백허남심노하곽성차주우구민류][가-힣]{1,3}$/.test(s.replace(/\s/g, ''))) {
+    return true
+  }
+  return false
+}
+
+/** 서부 무법자 본명 — 한국식 이름이면 라운드별 서양식 이름으로 교체 */
+export function sanitizeWesternName(input: unknown, round: number): string {
+  const fallback = WESTERN_NAME_FALLBACKS[(clamp(Math.round(round), 1, 9) - 1) % WESTERN_NAME_FALLBACKS.length]
+  const s = sanitizeLine(input, { max: 16, fallback })
+  if (isModernKoreanName(s)) return fallback
+  return s
+}
+
+/** 총잡이 별명 — 현대식·한국식 이름이면 교체 */
+export function sanitizeAlias(input: unknown, fallback = '무명의 총잡이'): string {
+  const s = sanitizeLine(input, { max: 14, fallback })
+  if (isModernKoreanName(s)) return fallback
+  return s
+}

@@ -4,6 +4,7 @@ import {
   ARCHETYPES,
   KOREAN_RULES,
   MODEL,
+  NAME_RULES,
   OUTPUT_RULES,
   WORLD_RULES,
   clamp,
@@ -11,7 +12,9 @@ import {
   difficultySpec,
   parseJsonLoose,
   rateLimited,
+  sanitizeAlias,
   sanitizeLine,
+  sanitizeWesternName,
 } from './_lib/rules.js'
 
 function getClient() {
@@ -46,8 +49,8 @@ ${archetype}
 - bounty: ${spec.bounty} 근처
 
 [필드 작성 규칙]
-- name: 한국식 이름. 이미 쓴 이름과 겹치면 안 된다 → ${JSON.stringify(previousNames).slice(0, 300)}
-- alias: 서부극다운 별명. 8자 이내.
+${NAME_RULES}
+- 이미 쓴 이름·별명과 겹치면 안 된다 → ${JSON.stringify(previousNames).slice(0, 300)}
 - crime: 죄목 한 줄. 구체적인 사건으로.
 - appearance: 결투장에서 눈에 보이는 겉모습 한 줄.
 - tell: 총을 뽑기 직전 반드시 나오는 '몸의 습관' 한 줄.
@@ -81,8 +84,8 @@ ${OUTPUT_RULES}
 
     const opponent = {
       id: `ai-${spec.round}-${Date.now()}`,
-      name: sanitizeLine(parsed.name, { max: 16, fallback: '이름 없는 자' }),
-      alias: sanitizeLine(parsed.alias, { max: 14, fallback: '무명의 총잡이' }),
+      name: sanitizeWesternName(parsed.name, spec.round),
+      alias: sanitizeAlias(parsed.alias, '무명의 총잡이'),
       bounty: Math.round(clamp(Number(parsed.bounty) || spec.bounty, 500, 200000)),
       crime: sanitizeLine(parsed.crime, { max: 60, fallback: '알 수 없는 죄' }),
       appearance: sanitizeLine(parsed.appearance, {

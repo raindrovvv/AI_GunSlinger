@@ -1,11 +1,3 @@
-@font-face {
-  font-family: "Paperlogy";
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-  src: url("/fonts/Paperlogy-7Bold.woff2") format("woff2");
-}
-
 :root {
   color-scheme: dark;
   --bg: #0e0906;
@@ -20,11 +12,12 @@
   --line: #5a3d24;
   --display-en: "Special Elite", Impact, "Arial Black", sans-serif;
   --western-en: "Special Elite", "Courier New", monospace;
-  --display: "Black Han Sans", "Paperlogy", var(--display-en);
-  --western: "IBM Plex Sans KR", var(--western-en);
+  /* 한글 폰트를 영문 전용 폰트보다 앞에 — 로드 실패 시에도 sans로 떨어지지 않게 */
+  --display: "Black Han Sans", "IBM Plex Sans KR", "Noto Sans KR", sans-serif;
+  --western: "Special Elite", "Gowun Batang", "Noto Serif KR", "IBM Plex Sans KR", serif;
   --body: "IBM Plex Sans KR", "Noto Sans KR", system-ui, sans-serif;
-  --korean-display: "Black Han Sans", "Paperlogy", "IBM Plex Sans KR", sans-serif;
-  --newspaper-headline: "Paperlogy", "Black Han Sans", "IBM Plex Sans KR", sans-serif;
+  --korean-display: "Black Han Sans", "IBM Plex Sans KR", "Noto Sans KR", sans-serif;
+  --newspaper-headline: "Gowun Batang", "Noto Serif KR", "IBM Plex Sans KR", serif;
   font-family: var(--body);
   line-height: 1.5;
   background: var(--bg);
@@ -147,6 +140,7 @@ input {
   background: linear-gradient(180deg, var(--accent-hot), var(--accent));
   color: #1a120c;
   font-weight: 700;
+  font-family: var(--korean-display);
   border-color: #c48a28;
   box-shadow: 0 4px 0 #8a5a18, 0 8px 24px rgba(232, 168, 56, 0.2);
 }
@@ -987,6 +981,7 @@ input {
   justify-content: center;
   text-align: center;
   min-height: 70vh;
+  font-family: var(--body);
 }
 
 .loading-screen p {
@@ -1012,12 +1007,18 @@ input {
 .loading-screen small,
 .ending-screen .blurb {
   color: var(--muted);
+  font-family: var(--western);
+  font-size: 15px;
+  line-height: 1.65;
+  max-width: 36ch;
+  margin: 0 auto;
 }
 
 .ending-screen h1 {
-  font-family: var(--display);
+  font-family: var(--korean-display);
   font-size: clamp(28px, 6vw, 44px);
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .ending-screen.is-win h1 {
@@ -1297,9 +1298,10 @@ input {
 }
 
 .ending-stats strong {
-  font-family: var(--display);
+  font-family: var(--korean-display);
   font-size: 26px;
   color: var(--accent);
+  font-weight: 400;
 }
 
 .chrome-run {
@@ -1336,16 +1338,16 @@ input {
 .record-title {
   margin: 0 0 12px;
   color: var(--accent);
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  font-family: var(--western);
-  text-transform: uppercase;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  font-family: var(--newspaper-headline);
 }
 
 .record-empty {
   margin: 0;
   color: var(--muted);
   font-size: 14px;
+  font-family: var(--western);
 }
 
 .record-stats {
@@ -1368,9 +1370,10 @@ input {
 }
 
 .record-stats strong {
-  font-family: var(--display);
+  font-family: var(--korean-display);
   font-size: 18px;
   color: var(--accent);
+  font-weight: 400;
 }
 
 .record-compare,
@@ -1402,6 +1405,7 @@ input {
 .record-compare li {
   color: var(--paper);
   font-size: 14px;
+  font-family: var(--body);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1425,6 +1429,7 @@ input {
   align-items: center;
   font-size: 13px;
   color: var(--muted);
+  font-family: var(--body);
 }
 
 .record-recent .is-win {

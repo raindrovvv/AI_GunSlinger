@@ -27,3 +27,8 @@ dist-ssr
 *.sln
 *.sw?
 .env*
+
+# Local Cursor / git hook tooling (not part of the game)
+.cursor/
+.githooks/
+scripts/install-githooks.sh
