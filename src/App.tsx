@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react'
-import { generateNewspaper, generateOpponent } from './api/client'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { checkAiHealth, generateNewspaper, generateOpponent } from './api/client'
 import { rollPerkChoices } from './data/perks'
 import { recordRun } from './data/records'
 import { Ending } from './components/Ending'
@@ -54,6 +54,7 @@ export default function App() {
   const [peaces, setPeaces] = useState(0)
   const [prevNames, setPrevNames] = useState<string[]>([])
   const [aiFlags, setAiFlags] = useState({ opponent: false, chat: false, paper: false })
+  const [aiReachable, setAiReachable] = useState<boolean | null>(null)
   const [loadingText, setLoadingText] = useState('수배서를 인쇄하는 중…')
 
   const [perks, setPerks] = useState<PerkId[]>([])
@@ -81,6 +82,10 @@ export default function App() {
   peacesRef.current = peaces
   bountyRef.current = bounty
   roundRef.current = round
+
+  useEffect(() => {
+    void checkAiHealth().then(setAiReachable)
+  }, [])
 
   const startRound = useCallback(async (r: number, names: string[]) => {
     setPhase('loading')
@@ -114,6 +119,7 @@ export default function App() {
     bestStreakRef.current = 0
     setEndingCareer(null)
     setEndingRun(null)
+    setAiFlags({ opponent: false, chat: false, paper: false })
     void startRound(1, [])
   }
 
@@ -229,6 +235,9 @@ export default function App() {
   }
 
   const usedAiAny = aiFlags.opponent || aiFlags.chat || aiFlags.paper
+  const aiLive = usedAiAny || aiReachable === true
+  const aiStatus =
+    aiReachable === null ? '… AI 확인 중' : aiLive ? '● LIVE AI' : '○ OFFLINE FALLBACK'
   const inRun = phase !== 'title' && phase !== 'victory' && phase !== 'gameover'
 
   return (
@@ -306,7 +315,7 @@ export default function App() {
             {streak > 1 && ` · ${streak}연승`}
           </span>
         )}
-        <span>{usedAiAny ? '● LIVE AI' : '○ OFFLINE FALLBACK'}</span>
+        <span>{aiStatus}</span>
       </footer>
     </div>
   )

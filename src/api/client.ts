@@ -15,6 +15,17 @@ async function postJson<T>(url: string, body: unknown): Promise<T | null> {
   }
 }
 
+export async function checkAiHealth(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/health')
+    if (!res.ok) return false
+    const data = (await res.json()) as { ok?: boolean }
+    return !!data.ok
+  } catch {
+    return false
+  }
+}
+
 export async function generateOpponent(
   round: number,
   previousNames: string[],

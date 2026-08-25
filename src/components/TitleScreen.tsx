@@ -13,70 +13,75 @@ export function TitleScreen({ onStart }: Props) {
   const [career, setCareer] = useState<CareerStats>(EMPTY_CAREER)
 
   return (
-    <div className="screen title-screen">
-      <div className="title-sky" aria-hidden />
-      <div className="title-horizon" aria-hidden />
-      <div className="dust-layer" aria-hidden />
-      <TitleSkyline />
-      <div className="title-badge">OPENAI GAME BUILDERS SEOUL · 2026</div>
-      <h1 className="logo">
-        <span className="logo-ai">AI</span>
-        <span className="logo-gun">GUNSLINGER</span>
-      </h1>
-      <p className="tagline">말로 흔들고, 총으로 끝낸다.</p>
-      <p className="blurb">
-        매 결투마다 AI가 새로운 무법자를 만든다.
-        <br />
-        드로우 전 심리전으로 상대를 흔들거나 — 총 없이 설득하라.
-      </p>
-      <div className="title-actions">
-        <button
-          className="btn primary pulse"
-          onClick={() => {
-            sfx.unlock()
-            sfx.click()
-            onStart()
-          }}
-        >
-          결투 시작
-        </button>
-        <button
-          className="btn"
-          onClick={() => {
-            sfx.click()
-            setShowRecords((v) => {
-              if (!v) setCareer(loadCareer())
-              return !v
-            })
-          }}
-        >
-          {showRecords ? '닫기' : '전적'}
-        </button>
+    <div className="title-page">
+      <div className="title-backdrop" aria-hidden>
+        <div className="title-sky" />
+        <div className="title-horizon" />
+        <div className="dust-layer" />
+        <TitleSkyline />
       </div>
 
-      {showRecords && (
-        <div className="title-records">
-          <RecordBoard career={career} />
+      <div className="screen title-screen">
+        <div className="title-badge">OPENAI GAME BUILDERS SEOUL · 2026</div>
+        <h1 className="logo">
+          <span className="logo-ai">AI</span>
+          <span className="logo-gun">GUNSLINGER</span>
+        </h1>
+        <p className="tagline">말로 흔들고, 총으로 끝낸다.</p>
+        <p className="blurb">
+          매 결투마다 AI가 새로운 무법자를 만든다.
+          <br />
+          드로우 전 심리전으로 상대를 흔들거나 — 총 없이 설득하라.
+        </p>
+        <div className="title-actions">
+          <button
+            className="btn primary pulse"
+            onClick={() => {
+              sfx.unlock()
+              sfx.click()
+              onStart()
+            }}
+          >
+            결투 시작
+          </button>
+          <button
+            className="btn"
+            onClick={() => {
+              sfx.click()
+              setShowRecords((v) => {
+                if (!v) setCareer(loadCareer())
+                return !v
+              })
+            }}
+          >
+            {showRecords ? '닫기' : '전적'}
+          </button>
         </div>
-      )}
 
-      <div className="howto">
-        <h3>HOW TO PLAY</h3>
-        <ol>
-          <li>
-            수배서에서 상대의 <em>버릇</em>을 확인하세요 — 총을 뽑기 직전에 나오는 동작입니다
-          </li>
-          <li>대치에서 말로 심리를 흔드세요 (3턴)</li>
-          <li>
-            홀스터를 <em>누른 채 버티기</em> — 손을 떼거나 벗어나면 반칙
-          </li>
-          <li>
-            가짜 신호 <em>DRAW…?</em>에 속지 말고, 진짜 DRAW!에 상대를 클릭
-          </li>
-          <li>
-            노란 원(머리)을 맞히면 <em>헤드샷 보너스</em>
-          </li>
-        </ol>
+        {showRecords && (
+          <div className="title-records">
+            <RecordBoard career={career} />
+          </div>
+        )}
+
+        <div className="howto">
+          <h3>HOW TO PLAY</h3>
+          <ol>
+            <li>
+              수배서에서 상대의 <em>버릇</em>을 확인하세요 — 총을 뽑기 직전에 나오는 동작입니다
+            </li>
+            <li>대치에서 말로 심리를 흔드세요 (3턴)</li>
+            <li>
+              홀스터를 <em>누른 채 버티기</em> — 손을 떼거나 벗어나면 반칙
+            </li>
+            <li>
+              가짜 신호 <em>DRAW…?</em>에 속지 말고, 진짜 DRAW!에 상대를 클릭
+            </li>
+            <li>
+              노란 원(머리)을 맞히면 <em>헤드샷 보너스</em>
+            </li>
+          </ol>
+        </div>
       </div>
     </div>
   )
