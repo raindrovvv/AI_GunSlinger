@@ -21,7 +21,7 @@ let gunFallingBuffer: AudioBuffer | null = null
 // Pre-cached procedural buffers for zero-allocation procedural sounds
 let pinkNoiseCache: AudioBuffer | null = null
 let whiteNoiseCache: AudioBuffer | null = null
-let distortionCurveCache: Float32Array | null = null
+let distortionCurveCache: Float32Array<ArrayBuffer> | null = null
 
 // Active voice tracker for polyphony management
 let activeVoices = 0
@@ -131,10 +131,10 @@ function noiseBurst(duration: number, gain = 0.12, filterHz = 1200, filterType: 
   }
 }
 
-function distortionCurve(drive = 42) {
+function distortionCurve(drive = 42): Float32Array<ArrayBuffer> {
   if (distortionCurveCache) return distortionCurveCache
   const n = 256
-  const curve = new Float32Array(n)
+  const curve = new Float32Array(new ArrayBuffer(n * 4))
   for (let i = 0; i < n; i++) {
     const x = (i * 2) / n - 1
     curve[i] = Math.tanh(drive * x) / Math.tanh(drive)
