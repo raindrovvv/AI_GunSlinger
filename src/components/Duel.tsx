@@ -5,7 +5,7 @@ import { CANVAS_LABEL_FONT } from '../fonts'
 import { getFameInfo } from '../data/fame'
 import { perkById } from '../data/perks'
 import { PerkIcon } from './PerkIcon'
-import { geometryOf, getBackdrop } from '../canvas/backdrop'
+import { geometryOf, getBackdrop, getThemeInfo } from '../canvas/backdrop'
 import { createDuelFx, type DuelFx } from '../gl/duelFx'
 import {
   HOLSTER_HALF_W,
@@ -113,6 +113,7 @@ export function Duel({
 
   const has = useCallback((id: PerkId) => perks.includes(id), [perks])
   const fame = useMemo(() => getFameInfo(streak), [streak])
+  const themeInfo = useMemo(() => getThemeInfo(round), [round])
 
   const tuning = useMemo(() => {
     // 1. 라운드 난이도 & 판정 너그러움: 초반(1~3R)은 +28%, 중반(4~6R)은 +15%, 후반(7~9R)은 +5%
@@ -1169,7 +1170,9 @@ export function Duel({
   return (
     <div className={`screen duel-screen flash-${flash}`}>
       <div className="duel-meta">
-        <p className="eyebrow">ROUND {round} · DUEL</p>
+        <p className="eyebrow">
+          ROUND {round} · 📍 {themeInfo.name} ({themeInfo.subtitle})
+        </p>
         <div className="duel-stats">
           <span>
             상대 반응 <strong>{Math.round(tuning.enemyReaction)}ms</strong>

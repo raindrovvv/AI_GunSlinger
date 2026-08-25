@@ -3,6 +3,7 @@ import { checkAiHealth, generateNewspaper, generateOpponent } from './api/client
 import { getFameInfo } from './data/fame'
 import { rollPerkChoices } from './data/perks'
 import { recordRun } from './data/records'
+import { FALLBACK_OPPONENTS } from './data/fallback'
 import { Ending } from './components/Ending'
 import { Duel } from './components/Duel'
 import { Newspaper } from './components/Newspaper'
@@ -71,15 +72,19 @@ export default function App() {
             : null)
     : null
 
+  const roundParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('round') : null
+  const parsedRound = roundParam ? parseInt(roundParam, 10) : null
+  const isRoundPreview = parsedRound != null && !isNaN(parsedRound) && parsedRound >= 1 && parsedRound <= 9
+
   const isPreviewDuel9 = previewParam === 'duel9' || previewParam === 'boss'
   const isPreviewCutscene = previewParam === 'cutscene'
   const isPreviewVictory = previewParam === 'victory'
   const isPreviewDefeat = previewParam === 'defeat'
-  const isPreview = isPreviewDuel9 || isPreviewCutscene || isPreviewVictory || isPreviewDefeat
+  const isPreview = isRoundPreview || isPreviewDuel9 || isPreviewCutscene || isPreviewVictory || isPreviewDefeat
 
   const [phase, setPhase] = useState<GamePhase>(
     isPreview
-      ? isPreviewDuel9
+      ? isRoundPreview || isPreviewDuel9
         ? 'duel'
         : isPreviewCutscene
           ? 'cutscene'
@@ -88,8 +93,11 @@ export default function App() {
             : 'gameover'
       : 'title',
   )
-  const [round, setRound] = useState(isPreview ? 9 : 1)
+  const [round, setRound] = useState(isRoundPreview ? parsedRound : isPreview ? 9 : 1)
   const [opponent, setOpponent] = useState<Opponent | null>(() => {
+    if (isRoundPreview) {
+      return FALLBACK_OPPONENTS[parsedRound - 1] ?? FALLBACK_OPPONENTS[0]
+    }
     if (isPreviewDuel9) {
       return {
         id: 'boss-9',

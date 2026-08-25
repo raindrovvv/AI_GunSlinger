@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { standoffChat } from '../api/client'
 import { sfx } from '../audio/sfx'
 import { getFameInfo } from '../data/fame'
+import { getThemeInfo } from '../canvas/backdrop'
 import type { ChatMessage, DuelMods, MoodShift, Opponent, PerkId } from '../types'
 
 interface Props {
@@ -34,6 +35,7 @@ export function Standoff({
   onFinish,
 }: Props) {
   const fame = useMemo(() => getFameInfo(streak), [streak])
+  const themeInfo = useMemo(() => getThemeInfo(round), [round])
 
   useEffect(() => {
     if (activeBuffs.whiskey) {
@@ -185,7 +187,7 @@ export function Standoff({
       <div className="standoff-header">
         <div>
           <p className="eyebrow">
-            대치 · {turn}/{MAX_TURNS}턴
+            ROUND {round} · 📍 {themeInfo.name} · 대치 {turn}/{MAX_TURNS}턴
             {streak >= 2 && (
               <span className="standoff-fame-chip" style={{ borderColor: fame.color, color: fame.color }}>
                 {fame.badge}
