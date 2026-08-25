@@ -44,7 +44,7 @@ class BgmManager {
   private duckTimeout: number | null = null
 
   private muted: boolean = false
-  private volume: number = 0.55
+  private volume: number = 1.0
   private unlocked: boolean = false
   private pendingTrack: BgmTrack | null = null
   private listeners: Set<() => void> = new Set()
