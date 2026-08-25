@@ -144,33 +144,32 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       timersRef.current.push(window.setTimeout(fn, ms))
     }
 
-    const resize = () => {
-      const parent = canvas.parentElement
-      dpr = Math.min(window.devicePixelRatio || 1, 2)
-      const cssW = Math.min(920, parent?.clientWidth ?? 800)
-      const cssH = Math.min(580, Math.max(420, Math.floor(cssW * 0.68)))
-      canvas.style.width = `${cssW}px`
-      canvas.style.height = `${cssH}px`
-      canvas.width = Math.floor(cssW * dpr)
-      canvas.height = Math.floor(cssH * dpr)
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    let cachedL = {
+      w: 800,
+      h: 540,
+      horizon: 297,
+      s: 1,
+      hs: 1,
+      playerX: 144,
+      enemyX: 656,
+      bodyY: 329,
+      headY: 299,
+      bodyR: 48,
+      headR: 19,
+      holsterX: 400,
+      holsterY: 410,
     }
-    resize()
-    window.addEventListener('resize', resize)
 
-    const layout = () => {
+    const updateLayout = () => {
       const w = canvas.clientWidth
       const h = canvas.clientHeight
       const g = geometryOf(w, h)
-      // 캔버스가 작아지면 인물과 홀스터를 함께 줄여 화면 밖으로 밀려나지 않게 한다
       const s = Math.max(0.7, Math.min(1.05, h / 540))
       const bodyY = g.horizon + h * 0.06
-      // 홀스터는 전경이므로 인물 발밑에 남은 공간에 딱 맞춰 키운다.
-      // 그러지 않으면 벨트가 상대의 다리를 가로지른다.
       const bar = h * 0.042
       const room = h - bar - (bodyY + 78 * s) - 10
       const hs = Math.max(0.6, Math.min(s * 1.5, room / 98))
-      return {
+      cachedL = {
         w,
         h,
         horizon: g.horizon,
@@ -187,8 +186,25 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       }
     }
 
+    const resize = () => {
+      const parent = canvas.parentElement
+      dpr = Math.min(window.devicePixelRatio || 1, 2)
+      const cssW = Math.min(920, parent?.clientWidth ?? 800)
+      const cssH = Math.min(580, Math.max(420, Math.floor(cssW * 0.68)))
+      canvas.style.width = `${cssW}px`
+      canvas.style.height = `${cssH}px`
+      canvas.width = Math.floor(cssW * dpr)
+      canvas.height = Math.floor(cssH * dpr)
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      updateLayout()
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    const layout = () => cachedL
+
     const holsterHit = (x: number, y: number) => {
-      const L = layout()
+      const L = cachedL
       return (
         x >= L.holsterX - HOLSTER_HALF_W * L.hs &&
         x <= L.holsterX + HOLSTER_HALF_W * L.hs &&
@@ -504,7 +520,7 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
         ctx.arc(L.enemyX, L.headY, L.headR + pulse * 0.4, 0, Math.PI * 2)
         ctx.stroke()
         ctx.fillStyle = 'rgba(255, 228, 130, 0.95)'
-        ctx.font = '700 10px monospace'
+        ctx.font = `700 ${Math.round(11 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.textAlign = 'center'
         ctx.fillText('HEAD', L.enemyX, L.headY - L.headR - 8)
       }
@@ -760,7 +776,10 @@ export function Duel({ opponent, mods, round, perks, streak, onResult }: Props) 
       const { x, y } = toLocal(clientX, clientY)
       const inHolster = holsterHit(x, y)
       const wasIn = pointerRef.current.inHolster
-      pointerRef.current = { ...pointerRef.current, x, y, inHolster }
+      const p = pointerRef.current
+      p.x = x
+      p.y = y
+      p.inHolster = inHolster
       if (phaseRef.current === 'holding' && wasIn && !inHolster) breakGrip('leave')
     }
 

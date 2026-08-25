@@ -529,15 +529,22 @@ function getGrain() {
   return c
 }
 
+const patternCache = new WeakMap<CanvasRenderingContext2D, CanvasPattern | null>()
+
 export function drawGrain(
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
   strength = 1,
 ) {
-  const tile = getGrain()
-  const pattern = ctx.createPattern(tile, 'repeat')
+  let pattern = patternCache.get(ctx)
+  if (pattern === undefined) {
+    const tile = getGrain()
+    pattern = ctx.createPattern(tile, 'repeat')
+    patternCache.set(ctx, pattern)
+  }
   if (!pattern) return
+
   ctx.save()
   ctx.globalAlpha = 0.5 * strength
   ctx.globalCompositeOperation = 'overlay'
