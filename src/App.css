@@ -720,6 +720,70 @@ input {
 /* Standoff */
 .standoff-screen {
   align-items: stretch;
+  position: relative;
+  border-radius: 8px;
+  padding: 16px;
+  transition: background 0.6s ease, border-color 0.6s ease, box-shadow 0.6s ease;
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.standoff-screen.theme-day {
+  background: radial-gradient(circle at 50% 20%, rgba(255, 220, 140, 0.15), transparent 70%),
+    linear-gradient(180deg, rgba(20, 40, 60, 0.55) 0%, rgba(199, 143, 74, 0.2) 60%, rgba(36, 20, 8, 0.8) 100%);
+  border-color: rgba(230, 175, 100, 0.3);
+}
+
+.standoff-screen.theme-sunset {
+  background: radial-gradient(circle at 50% 25%, rgba(255, 140, 60, 0.18), transparent 70%),
+    linear-gradient(180deg, rgba(35, 12, 18, 0.6) 0%, rgba(184, 77, 48, 0.25) 55%, rgba(31, 7, 4, 0.85) 100%);
+  border-color: rgba(220, 110, 60, 0.35);
+}
+
+.standoff-screen.theme-dust {
+  background: radial-gradient(circle at 50% 25%, rgba(220, 200, 130, 0.15), transparent 70%),
+    linear-gradient(180deg, rgba(25, 24, 16, 0.6) 0%, rgba(158, 133, 85, 0.22) 55%, rgba(26, 19, 8, 0.85) 100%);
+  border-color: rgba(180, 155, 100, 0.3);
+}
+
+.standoff-screen.theme-rail {
+  background: radial-gradient(circle at 50% 25%, rgba(240, 170, 110, 0.16), transparent 70%),
+    linear-gradient(180deg, rgba(20, 22, 38, 0.6) 0%, rgba(163, 113, 82, 0.22) 55%, rgba(26, 13, 7, 0.85) 100%);
+  border-color: rgba(190, 130, 90, 0.35);
+}
+
+.standoff-screen.theme-crimson {
+  background: radial-gradient(circle at 50% 20%, rgba(255, 60, 40, 0.22), transparent 70%),
+    linear-gradient(180deg, rgba(40, 6, 16, 0.65) 0%, rgba(176, 52, 38, 0.28) 55%, rgba(23, 2, 4, 0.88) 100%);
+  border-color: rgba(230, 60, 40, 0.4);
+  box-shadow: 0 8px 36px rgba(180, 20, 20, 0.25);
+}
+
+.standoff-screen.theme-storm {
+  background: radial-gradient(circle at 50% 15%, rgba(180, 210, 255, 0.15), transparent 65%),
+    linear-gradient(180deg, rgba(10, 12, 26, 0.7) 0%, rgba(70, 60, 85, 0.22) 55%, rgba(13, 10, 8, 0.88) 100%);
+  border-color: rgba(130, 150, 200, 0.35);
+  box-shadow: 0 8px 36px rgba(40, 60, 120, 0.3);
+}
+
+.standoff-screen.theme-twilight {
+  background: radial-gradient(circle at 50% 25%, rgba(220, 140, 200, 0.18), transparent 70%),
+    linear-gradient(180deg, rgba(14, 16, 42, 0.65) 0%, rgba(117, 78, 96, 0.25) 55%, rgba(18, 7, 13, 0.85) 100%);
+  border-color: rgba(180, 110, 160, 0.35);
+}
+
+.standoff-screen.theme-night {
+  background: radial-gradient(circle at 60% 20%, rgba(180, 220, 255, 0.2), transparent 65%),
+    linear-gradient(180deg, rgba(3, 8, 18, 0.75) 0%, rgba(43, 60, 79, 0.25) 55%, rgba(5, 8, 12, 0.9) 100%);
+  border-color: rgba(120, 170, 230, 0.35);
+  box-shadow: 0 8px 36px rgba(30, 70, 130, 0.3);
+}
+
+.standoff-screen.theme-eclipse {
+  background: radial-gradient(circle at 50% 20%, rgba(255, 40, 20, 0.3), transparent 60%),
+    linear-gradient(180deg, rgba(16, 1, 4, 0.8) 0%, rgba(130, 12, 20, 0.35) 55%, rgba(6, 0, 1, 0.95) 100%);
+  border-color: rgba(255, 50, 30, 0.5);
+  box-shadow: 0 8px 48px rgba(220, 20, 10, 0.4);
 }
 
 .standoff-header {
@@ -1196,6 +1260,47 @@ input {
   font-style: italic;
   background: rgba(0, 0, 0, 0.05);
   font-family: var(--western);
+}
+
+.newspaper-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: min(560px, 100%);
+  margin: 10px 0 6px;
+}
+
+.btn-newspaper-action {
+  flex: 1;
+  min-width: 170px;
+  background: rgba(30, 20, 14, 0.85);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  color: #f7ede2;
+  padding: 10px 14px;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-newspaper-action:hover {
+  background: rgba(60, 40, 24, 0.95);
+  border-color: #ffd700;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 215, 0, 0.25);
+}
+
+.btn-newspaper-action:active {
+  transform: translateY(0);
 }
 
 /* Loading / Ending */

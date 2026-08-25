@@ -183,7 +183,7 @@ export function Standoff({
   const done = turn >= MAX_TURNS || mods.peaceEnding
 
   return (
-    <div className="screen standoff-screen">
+    <div className={`screen standoff-screen theme-${themeInfo.skyType}`}>
       <div className="standoff-header">
         <div>
           <p className="eyebrow">

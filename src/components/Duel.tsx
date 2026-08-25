@@ -52,6 +52,36 @@ interface Tracer {
   width: number
 }
 
+interface ShellParticle {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  rot: number
+  vRot: number
+  life: number
+  decay: number
+  groundY: number
+}
+
+interface FloatText {
+  x: number
+  y: number
+  text: string
+  color: string
+  life: number
+  size: number
+}
+
+interface ShockwaveRing {
+  x: number
+  y: number
+  r: number
+  maxR: number
+  alpha: number
+  color: string
+}
+
 const HOLD_STEPS = [620, 1240, 1860]
 
 function gradeOf(ms: number): DrawGrade {
@@ -222,6 +252,9 @@ export function Duel({
   const dustRef = useRef<Particle[]>([])
   const smokeRef = useRef<Particle[]>([])
   const tracersRef = useRef<Tracer[]>([])
+  const shellsRef = useRef<ShellParticle[]>([])
+  const floatTextsRef = useRef<FloatText[]>([])
+  const shockwavesRef = useRef<ShockwaveRing[]>([])
   const secondChanceUsedRef = useRef(false)
   const bibleUsedRef = useRef(false)
   const shakeRef = useRef(0)
@@ -375,6 +408,31 @@ export function Duel({
       }
     }
 
+    const spawnShell = (x: number, y: number, dir: number, groundY: number) => {
+      shellsRef.current.push({
+        x,
+        y,
+        vx: -dir * (2.4 + Math.random() * 2.2),
+        vy: -4.5 - Math.random() * 3.5,
+        rot: Math.random() * Math.PI * 2,
+        vRot: (Math.random() - 0.5) * 0.45,
+        life: 1,
+        decay: 0.003,
+        groundY,
+      })
+    }
+
+    const spawnShockwave = (x: number, y: number, maxR: number, color = '#ffd700') => {
+      shockwavesRef.current.push({
+        x,
+        y,
+        r: 6,
+        maxR,
+        alpha: 1,
+        color,
+      })
+    }
+
     later(() => {
       sfx.gunLoad(0.7)
     }, 280)
@@ -390,7 +448,7 @@ export function Duel({
       winnerRef.current = outcome.won ? 'player' : outcome.foul ? 'none' : 'enemy'
       fallStartRef.current = performance.now()
       resultFlashRef.current = 1
-      shakeRef.current = outcome.won ? 13 : 10
+      shakeRef.current = outcome.headshot ? 22 : outcome.won ? 15 : 10
       setFlash(outcome.won ? 'win' : 'lose')
       setMessage(outcome.detail)
       setGrade(outcome.grade)
@@ -409,8 +467,45 @@ export function Duel({
         const shooterX = outcome.won ? LF.playerX : LF.enemyX
         const dir = outcome.won ? 1 : -1
         spawnSmoke(shooterX + dir * 56 * LF.s, LF.bodyY - 20 * LF.s, dir)
+        spawnShell(shooterX, LF.bodyY - 15 * LF.s, dir, LF.bodyY + 60 * LF.s)
         bgm.duck(0.18, 1200)
         sfx.gunshot()
+      }
+
+      // 타격 FX & 플로팅 크리티컬 텍스트
+      if (outcome.won) {
+        if (outcome.headshot) {
+          spawnShockwave(LF.enemyX, LF.headY, 120 * LF.s, '#ffd700')
+          floatTextsRef.current.push({
+            x: LF.enemyX,
+            y: LF.headY - 26 * LF.s,
+            text: '💥 CRITICAL HEADSHOT!',
+            color: '#ffd700',
+            life: 1,
+            size: Math.round(20 * LF.s),
+          })
+        } else if (outcome.reactionMs != null && outcome.reactionMs <= 260) {
+          spawnShockwave(LF.enemyX, LF.bodyY - 10 * LF.s, 75 * LF.s, '#4deeea')
+          floatTextsRef.current.push({
+            x: LF.playerX,
+            y: LF.bodyY - 45 * LF.s,
+            text: `⚡ FAST DRAW! ${outcome.reactionMs}ms`,
+            color: '#4deeea',
+            life: 1,
+            size: Math.round(17 * LF.s),
+          })
+        }
+      }
+
+      if (bibleUsedRef.current) {
+        floatTextsRef.current.push({
+          x: LF.playerX,
+          y: LF.bodyY - 30 * LF.s,
+          text: '🛡️ BIBLE DEFLECT!',
+          color: '#ffffff',
+          life: 1,
+          size: Math.round(18 * LF.s),
+        })
       }
 
       later(() => {
@@ -1031,8 +1126,89 @@ export function Duel({
         ctx.fillRect(ax, ay, size, size)
       }
 
-      // 홀딩 중에는 비네트가 조여들며 시야가 좁아진다
+      // 쇼크웨이브 링 (Shockwave Rings)
+      const waves = shockwavesRef.current
+      let waveWriteIdx = 0
+      for (let i = 0; i < waves.length; i++) {
+        const sw = waves[i]
+        sw.r += (sw.maxR - sw.r) * 0.22 + 2.5
+        sw.alpha -= 0.04
+        if (sw.alpha > 0 && sw.r < sw.maxR) {
+          ctx.save()
+          ctx.strokeStyle = sw.color
+          ctx.globalAlpha = sw.alpha
+          ctx.lineWidth = 3.5 * s
+          ctx.shadowColor = sw.color
+          ctx.shadowBlur = 14
+          ctx.beginPath()
+          ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2)
+          ctx.stroke()
+          ctx.restore()
+          if (waveWriteIdx !== i) waves[waveWriteIdx] = sw
+          waveWriteIdx++
+        }
+      }
+      waves.length = waveWriteIdx
+
+      // 탄피 물리 파티클 (Brass Shell Ejection)
+      const shells = shellsRef.current
+      let shellWriteIdx = 0
+      for (let i = 0; i < shells.length; i++) {
+        const sh = shells[i]
+        sh.x += sh.vx
+        sh.y += sh.vy
+        sh.vy += 0.36
+        sh.rot += sh.vRot
+        if (sh.y >= sh.groundY) {
+          sh.y = sh.groundY
+          sh.vy = -sh.vy * 0.35
+          sh.vx *= 0.55
+          sh.vRot *= 0.5
+          sh.life -= 0.015
+        }
+        if (sh.life > 0) {
+          ctx.save()
+          ctx.translate(sh.x, sh.y)
+          ctx.rotate(sh.rot)
+          ctx.fillStyle = '#f5c542'
+          ctx.shadowColor = '#d49b20'
+          ctx.shadowBlur = 4
+          ctx.fillRect(-4.5 * s, -1.8 * s, 9 * s, 3.6 * s)
+          ctx.fillStyle = '#fff4ba'
+          ctx.fillRect(-2 * s, -1.8 * s, 4 * s, 1.2 * s)
+          ctx.restore()
+          if (shellWriteIdx !== i) shells[shellWriteIdx] = sh
+          shellWriteIdx++
+        }
+      }
+      shells.length = shellWriteIdx
+
+      // 플로팅 타격 텍스트 (Floating Combat Impact Text)
+      const fts = floatTextsRef.current
+      let ftWriteIdx = 0
+      for (let i = 0; i < fts.length; i++) {
+        const ft = fts[i]
+        ft.y -= 0.65
+        ft.life -= 0.012
+        if (ft.life > 0) {
+          ctx.save()
+          ctx.globalAlpha = Math.min(1, ft.life * 1.5)
+          ctx.font = `900 ${ft.size}px ${CANVAS_LABEL_FONT}`
+          ctx.textAlign = 'center'
+          ctx.fillStyle = ft.color
+          ctx.shadowColor = 'rgba(0,0,0,0.95)'
+          ctx.shadowBlur = 10
+          ctx.fillText(ft.text, ft.x, ft.y)
+          ctx.restore()
+          if (ftWriteIdx !== i) fts[ftWriteIdx] = ft
+          ftWriteIdx++
+        }
+      }
+      fts.length = ftWriteIdx
+
+      // 홀딩 중에는 비네트가 조여들며 심장 박동(Heartbeat) 긴장감 연출
       const squeeze = holding ? 0.1 + Math.sin(t / 300) * 0.03 : 0
+      const heartbeat = holding ? Math.sin(t / 80) * 0.5 + 0.5 : 0
       const vig = ctx.createRadialGradient(
         w / 2,
         h * 0.5,
@@ -1042,7 +1218,12 @@ export function Duel({
         h * 0.82,
       )
       vig.addColorStop(0, 'rgba(0,0,0,0)')
-      vig.addColorStop(1, `rgba(8, 4, 2, ${0.62 + squeeze * 1.6})`)
+      vig.addColorStop(
+        1,
+        holding
+          ? `rgba(${Math.round(20 + heartbeat * 60)}, 4, 2, ${0.62 + squeeze * 1.6 + heartbeat * 0.15})`
+          : `rgba(8, 4, 2, 0.62)`,
+      )
       ctx.fillStyle = vig
       ctx.fillRect(0, 0, w, h)
 
