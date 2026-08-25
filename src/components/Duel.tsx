@@ -1006,15 +1006,18 @@ export function Duel({
 
       if (phaseRef.current === 'idle') {
         const blink = 0.6 + Math.sin(t / 220) * 0.4
-        const hintY = L.holsterY - 16 * L.hs
-        ctx.font = `700 ${Math.round(13 * s)}px ${CANVAS_LABEL_FONT}`
+        const hintY = L.holsterY - 18 * L.hs
+        ctx.font = `800 ${Math.round(13.5 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.textAlign = 'center'
-        const label = '여기를 누른 채 버텨라'
+        const label = '👇 홀스터를 꾹 누르고 있어라 (HOLD)'
         const tw = ctx.measureText(label).width
-        ctx.fillStyle = 'rgba(10, 5, 2, 0.75)'
-        ctx.fillRect(L.holsterX - tw / 2 - 10, hintY - 13 * s, tw + 20, 18 * s)
+        ctx.fillStyle = 'rgba(10, 5, 2, 0.85)'
+        ctx.fillRect(L.holsterX - tw / 2 - 12, hintY - 14 * s, tw + 24, 20 * s)
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)'
+        ctx.lineWidth = 1
+        ctx.strokeRect(L.holsterX - tw / 2 - 12, hintY - 14 * s, tw + 24, 20 * s)
         ctx.globalAlpha = blink
-        ctx.fillStyle = '#ffe0a0'
+        ctx.fillStyle = '#ffd700'
         ctx.fillText(label, L.holsterX, hintY)
         ctx.globalAlpha = 1
       }
@@ -1029,6 +1032,12 @@ export function Duel({
         ctx.shadowColor = 'rgba(0,0,0,0.8)'
         ctx.shadowBlur = 16
         ctx.fillText(String(countdownRef.current), wob, 0)
+
+        // 홀딩 중 하단 안내
+        ctx.font = `700 ${Math.round(14 * s)}px ${CANVAS_LABEL_FONT}`
+        ctx.fillStyle = '#ffe0a0'
+        ctx.shadowBlur = 8
+        ctx.fillText('진짜 DRAW! 신호가 뜨면 손을 떼고 상대를 클릭!', 0, h * 0.46)
         ctx.restore()
       }
 
@@ -1053,6 +1062,13 @@ export function Duel({
         ctx.shadowColor = 'rgba(0,0,0,0.9)'
         ctx.shadowBlur = 20
         ctx.fillText('DRAW!', 0, 0)
+
+        // DRAW 시 발사 안내
+        ctx.font = `800 ${Math.round(18 * s)}px ${CANVAS_LABEL_FONT}`
+        ctx.fillStyle = '#ffea60'
+        ctx.shadowColor = '#000'
+        ctx.shadowBlur = 10
+        ctx.fillText('⚡ 상대를 즉시 클릭해 사격!', 0, h * 0.46)
         ctx.restore()
       }
 
@@ -1206,24 +1222,19 @@ export function Duel({
       }
       fts.length = ftWriteIdx
 
-      // 홀딩 중에는 비네트가 조여들며 심장 박동(Heartbeat) 긴장감 연출
-      const squeeze = holding ? 0.1 + Math.sin(t / 300) * 0.03 : 0
-      const heartbeat = holding ? Math.sin(t / 80) * 0.5 + 0.5 : 0
+      // 홀딩 중에는 화면 가장자리가 부드럽게 집중되며 시야를 모아준다 (자연스러운 영화적 비네트)
+      const squeeze = holding ? 0.03 + Math.sin(t / 600) * 0.015 : 0
+      const pulseAlpha = holding ? 0.48 + Math.sin(t / 500) * 0.06 : 0.38
       const vig = ctx.createRadialGradient(
         w / 2,
         h * 0.5,
-        h * (0.24 - squeeze),
+        h * (0.35 - squeeze),
         w / 2,
         h * 0.5,
-        h * 0.82,
+        h * 0.88,
       )
       vig.addColorStop(0, 'rgba(0,0,0,0)')
-      vig.addColorStop(
-        1,
-        holding
-          ? `rgba(${Math.round(20 + heartbeat * 60)}, 4, 2, ${0.62 + squeeze * 1.6 + heartbeat * 0.15})`
-          : `rgba(8, 4, 2, 0.62)`,
-      )
+      vig.addColorStop(1, `rgba(8, 4, 2, ${pulseAlpha})`)
       ctx.fillStyle = vig
       ctx.fillRect(0, 0, w, h)
 

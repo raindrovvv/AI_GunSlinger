@@ -117,20 +117,19 @@ export function TitleScreen({ onStart }: Props) {
         )}
 
         <div className="howto">
-          <h3>HOW TO PLAY</h3>
+          <h3>⚡ HOW TO PLAY — 결투 조작 핵심 가이드</h3>
           <ol>
             <li>
-              수배서에서 상대의 <em>버릇</em>을 확인하세요 — 총을 뽑기 직전에 나오는 동작입니다
-            </li>
-            <li>대치에서 말로 심리를 흔드세요 (3턴)</li>
-            <li>
-              홀스터를 <em>누른 채 버티기</em> — 손을 떼거나 벗어나면 반칙
+              <strong>1. [홀스터 꾹 누르기]</strong> 결투 시작 시 우측 하단의 <strong>홀스터를 마우스로 꾹 누른 채(HOLD)</strong> 대기하세요. (카운트 중 미리 떼면 <em>반칙 패배</em>)
             </li>
             <li>
-              가짜 신호 <em>DRAW…?</em>에 속지 말고, 진짜 DRAW!에 상대를 클릭
+              <strong>2. [진짜 DRAW! 확인]</strong> 페이크 신호(<em>DRAW…?</em>)에 속지 말고, 화면에 빨간색 <strong>진짜 DRAW!</strong>가 뜨는 순간 <strong>즉시 손을 뗍니다!</strong>
             </li>
             <li>
-              노란 원(머리)을 맞히면 <em>헤드샷 보너스</em>
+              <strong>3. [조준 & 광속 클릭]</strong> 손을 뗀 직후 마우스로 <strong>상대 몸통(또는 노란색 머리)을 즉시 클릭</strong>해 사격하세요! (머리 명중 시 <strong>헤드샷 보너스</strong>)
+            </li>
+            <li>
+              <strong>4. [심리전 꿀팁]</strong> 결투 직전 <strong>대치 3턴</strong> 동안 상대의 <strong>버릇/약점을 찔러</strong> 상대 반응속도를 늦추고 조준을 흔드세요!
             </li>
           </ol>
         </div>

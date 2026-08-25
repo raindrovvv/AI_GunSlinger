@@ -383,62 +383,67 @@ input {
 
 .howto {
   width: min(560px, 94%);
-  border: 1.5px solid rgba(232, 168, 56, 0.45);
+  border: 1.5px solid rgba(232, 168, 56, 0.55);
   border-radius: 8px;
-  padding: 14px 22px;
-  margin-top: 10px;
+  padding: 16px 20px;
+  margin-top: 12px;
   background:
-    radial-gradient(ellipse at center top, rgba(80, 30, 15, 0.35), transparent 70%),
-    rgba(14, 7, 5, 0.92);
+    radial-gradient(ellipse at center top, rgba(100, 40, 15, 0.4), transparent 70%),
+    rgba(12, 6, 4, 0.95);
   text-align: left;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 18px rgba(232, 168, 56, 0.15);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.85), 0 0 20px rgba(232, 168, 56, 0.2);
   word-break: keep-all;
 }
 
 .howto h3 {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   color: #ffd700;
-  font-size: 13.5px;
-  letter-spacing: 0.16em;
+  font-size: 14.5px;
+  letter-spacing: 0.12em;
   font-family: var(--western);
   font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 6px;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+  gap: 8px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
 }
 
 .howto ol {
   margin: 0;
-  padding-left: 22px;
-  color: #f7ede2;
-  font-size: 15px;
-  line-height: 1.7;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .howto ol li {
-  margin-bottom: 6px;
+  margin: 0;
+  background: rgba(35, 18, 10, 0.65);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-left: 3.5px solid #ffd700;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #f7ede2;
+  font-size: 15px;
+  line-height: 1.6;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
   word-break: keep-all;
   overflow-wrap: break-word;
-  color: #f3eae0;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
-.howto ol li::marker {
-  color: #e8a838;
-  font-weight: 700;
-}
-
-.howto ol li:last-child {
-  margin-bottom: 0;
+.howto strong {
+  color: #ffd700;
+  font-weight: 800;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.95);
 }
 
 .howto em {
-  color: #ffe066;
+  color: #ff6b4a;
   font-style: normal;
   font-weight: 800;
-  text-shadow: 0 0 8px rgba(255, 224, 102, 0.45);
+  text-shadow: 0 0 8px rgba(255, 107, 74, 0.5);
 }
 
 /* 실제 종이 결을 흉내내는 노이즈. 단색 배경의 밋밋함을 없앤다. */
