@@ -58,8 +58,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     streak >= 2 && fameTitle ? `도전자 공식 기록: 이번 결투를 포함해 정확히 [${streak}연승] 달성 ('${fameTitle}')` : null,
     `결투 직전 상대 심리: ${mood ?? '알 수 없음'}`,
     opponent.tell ? `상대의 드로우 버릇: ${opponent.tell}` : null,
-    reactionMs ? `플레이어 반응 속도: ${reactionMs}ms` : null,
-    headshot ? `명중 부위: 이마/머리 (헤드샷)` : null,
+    reactionMs ? `플레이어 반응 속도: 정확히 ${reactionMs}ms` : null,
+    headshot
+      ? `명중 부위: 이마/머리 (헤드샷 완승)`
+      : `명중 부위: 몸통 (헤드샷 아님, 헤드샷/이마 관통 단어 절대 사용 금지)`,
     detail ? `결투 정황: ${detail}` : null,
   ]
     .filter(Boolean)
@@ -72,7 +74,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 - 승자와 패자의 역할을 절대 혼동하거나 뒤바꾸지 마십시오.
   · 플레이어 승리 시: ${hero}가 ${opponent.name}을 쓰러뜨린 무용담을 씁니다.
   · 플레이어 패배 시: ${opponent.name}의 총에 ${hero}가 쓰러졌음을 보도합니다. ${opponent.name}이 졌다고 왜곡 금지!
-- 연승 숫자 엄수: 플레이어의 현재 연승은 주어진 수치(이번 승리 포함 정확히 ${streak}연승) 그대로만 표기합니다. 이번 승리를 더해 임의로 +1 계산하여 ${streak + 1}연승 등으로 쓰지 마십시오.
+- 수치 및 사실 엄수:
+  · 연승: 이번 승리 포함 정확히 [${streak}연승] (임의로 ${streak + 1}연승 등 계산 금지)
+  · 라운드: 제${round}차 결투
+  · 반응속도: ${reactionMs ? `${reactionMs}ms` : '빠른 속도'}
+  · 헤드샷 여부: ${headshot ? '헤드샷' : '몸통 사격 (헤드샷 단어 사용 금지)'}
 - headline: 24자 이내(승패가 명확한 서부식 기사 헤드라인)
 - body: 2~3문장(140자 이내, 승패의 결정적 순간 묘사)
 - quote: 승자 또는 목격자 한마디(' — 화자' 형식)
@@ -87,7 +93,7 @@ ${OUTPUT_RULES}
   try {
     const completion = await getClient().chat.completions.create({
       model: MODEL,
-      temperature: 0.85,
+      temperature: 0.8,
       max_tokens: 180,
       response_format: { type: 'json_object' },
       messages: [
@@ -123,11 +129,17 @@ ${outcomeGuide}`,
         : `${opponent.name}의 총알이 거리를 갈랐고, ${hero}는 쓰러졌다.`,
     })
 
-    // AI의 연승 계산 오차(+1 연승 환각) 보정
+    // 1. AI의 연승 계산 오차(+1 연승 환각) 보정
     if (streak > 0) {
       const wrongStreakRe = new RegExp(`${streak + 1}연승`, 'g')
       finalHeadline = finalHeadline.replace(wrongStreakRe, `${streak}연승`)
       finalBody = finalBody.replace(wrongStreakRe, `${streak}연승`)
+    }
+
+    // 2. 헤드샷이 아닌데 헤드샷 단어를 생성한 경우 보정
+    if (!headshot) {
+      finalHeadline = finalHeadline.replace(/헤드샷[!?,]?/g, '선제 사격')
+      finalBody = finalBody.replace(/헤드샷[!?,]?/g, '선제 사격')
     }
 
     return res.status(200).json({
