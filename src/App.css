@@ -3032,5 +3032,206 @@ input {
   border-radius: 4px;
 }
 
+/* ==========================================================================
+   9라운드 최종 보스전 3판 2선승제 (BO3) HUD & 배너 연출
+   ========================================================================== */
+
+.boss-duel-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: min(640px, 94%);
+  margin: -4px auto 6px;
+  background:
+    radial-gradient(ellipse at center, rgba(140, 20, 20, 0.3), transparent 70%),
+    rgba(24, 10, 8, 0.9);
+  border: 1px solid rgba(232, 168, 56, 0.4);
+  border-radius: 6px;
+  padding: 6px 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(220, 40, 30, 0.25);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.boss-hud-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.boss-crown {
+  font-size: 14px;
+}
+
+.boss-title {
+  font-family: var(--western);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: #ffd700;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.boss-score-board {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 2px 8px;
+}
+
+.score-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-side.player {
+  justify-content: flex-start;
+}
+
+.score-side.enemy {
+  justify-content: flex-end;
+}
+
+.score-name {
+  font-family: var(--korean-display), var(--display);
+  font-size: 13px;
+  color: #fff;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score-lamps {
+  display: flex;
+  gap: 6px;
+}
+
+.lamp {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: rgba(40, 20, 15, 0.9);
+  border: 1.5px solid rgba(160, 120, 90, 0.4);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lamp.active.win {
+  background: radial-gradient(circle, #fff2a0 10%, #ffd700 60%, #e89e00 100%);
+  border-color: #ffe680;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.9), 0 0 16px rgba(255, 180, 0, 0.6);
+  transform: scale(1.15);
+}
+
+.lamp.active.boss-win {
+  background: radial-gradient(circle, #ffa0a0 10%, #ff3333 60%, #a80000 100%);
+  border-color: #ff8080;
+  box-shadow: 0 0 10px rgba(255, 50, 50, 0.9), 0 0 16px rgba(200, 20, 20, 0.6);
+  transform: scale(1.15);
+}
+
+.score-vs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phase-tag {
+  font-family: var(--western);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(232, 168, 56, 0.3);
+}
+
+/* 세트 전환 오버레이 자막 (Inter-set Transition Banner) */
+.inter-set-banner-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  background: rgba(12, 5, 4, 0.88);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: cinematicFadeIn 0.4s ease-out forwards;
+}
+
+.banner-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 20px 32px;
+  background:
+    radial-gradient(ellipse at center, rgba(160, 30, 20, 0.35), transparent 75%),
+    rgba(20, 8, 6, 0.95);
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 24px rgba(232, 168, 56, 0.35);
+  max-width: min(540px, 90%);
+}
+
+.banner-eyebrow {
+  margin: 0;
+  font-family: var(--western);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+}
+
+.banner-title {
+  margin: 0;
+  font-family: var(--korean-display), var(--display);
+  font-size: clamp(22px, 3.5vw, 30px);
+  color: #fff;
+  background: linear-gradient(180deg, #ffffff 30%, #ffd080 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8));
+}
+
+.banner-sub {
+  margin: 0;
+  font-size: 13px;
+  color: #e4d0b8;
+  line-height: 1.4;
+}
+
+.banner-scores {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+  font-family: var(--korean-display), var(--display);
+  font-size: 18px;
+  color: #fff;
+}
+
+.banner-scores strong {
+  font-size: 24px;
+  color: var(--accent-hot);
+  margin-left: 4px;
+}
+
+.banner-scores .enemy-score strong {
+  color: #ff5544;
+  margin-left: 0;
+  margin-right: 4px;
+}
+
+.vs-sep {
+  color: var(--muted);
+  font-size: 16px;
+}
+
+
 
 

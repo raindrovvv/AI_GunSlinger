@@ -250,6 +250,11 @@ export async function generateNewspaper(params: {
   playerName?: string
   streak?: number
   fameTitle?: string
+  bossScore?: {
+    playerWins: number
+    enemyWins: number
+    totalSets: number
+  }
 }): Promise<{ article: NewspaperArticle; usedAi: boolean }> {
   const data = await postJson<NewspaperArticle>('/api/newspaper', params)
   if (data?.headline) {

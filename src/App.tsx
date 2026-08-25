@@ -62,29 +62,51 @@ export default function App() {
 
   const previewParam = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search).get('preview') ||
-      (window.location.search.includes('cutscene')
-        ? 'cutscene'
-        : window.location.search.includes('ending')
-          ? 'victory'
-          : null)
+      (window.location.search.includes('duel9')
+        ? 'duel9'
+        : window.location.search.includes('cutscene')
+          ? 'cutscene'
+          : window.location.search.includes('ending')
+            ? 'victory'
+            : null)
     : null
 
+  const isPreviewDuel9 = previewParam === 'duel9' || previewParam === 'boss'
   const isPreviewCutscene = previewParam === 'cutscene'
   const isPreviewVictory = previewParam === 'victory'
   const isPreviewDefeat = previewParam === 'defeat'
-  const isPreview = isPreviewCutscene || isPreviewVictory || isPreviewDefeat
+  const isPreview = isPreviewDuel9 || isPreviewCutscene || isPreviewVictory || isPreviewDefeat
 
   const [phase, setPhase] = useState<GamePhase>(
     isPreview
-      ? isPreviewCutscene
-        ? 'cutscene'
-        : isPreviewVictory
-          ? 'victory'
-          : 'gameover'
+      ? isPreviewDuel9
+        ? 'duel'
+        : isPreviewCutscene
+          ? 'cutscene'
+          : isPreviewVictory
+            ? 'victory'
+            : 'gameover'
       : 'title',
   )
   const [round, setRound] = useState(isPreview ? 9 : 1)
-  const [opponent, setOpponent] = useState<Opponent | null>(null)
+  const [opponent, setOpponent] = useState<Opponent | null>(() => {
+    if (isPreviewDuel9) {
+      return {
+        id: 'boss-9',
+        name: '엘 카란자',
+        alias: '그림자 없는 마지막 무법자',
+        bounty: 50000,
+        crime: '국경 지대 연쇄 살인 및 현상금 사냥꾼 전멸',
+        appearance: '칠흑 같은 가죽 코트와 붉은 눈빛의 전설적인 총잡이',
+        baseReactionMs: 270,
+        baseAccuracy: 0.88,
+        tell: '오른쪽 검지 손가락을 미세하게 튕김',
+        personality: '냉혹하고 침착함',
+        taunt: '내 총구를 보고도 살아남은 자는 없다.',
+      }
+    }
+    return null
+  })
   const [mods, setMods] = useState<DuelMods>(EMPTY_MODS)
   const [article, setArticle] = useState<NewspaperArticle | null>(null)
   const [playerWon, setPlayerWon] = useState(isPreviewVictory || isPreviewCutscene)
@@ -315,6 +337,7 @@ export default function App() {
       playerName,
       streak: nextStreak,
       fameTitle: fameInfo.title,
+      bossScore: outcome?.bossScore,
     })
     setArticle(paper)
     setAiFlags((f) => ({ ...f, paper: usedAi }))

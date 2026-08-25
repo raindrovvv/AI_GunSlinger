@@ -40,6 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     playerName,
     streak = 0,
     fameTitle,
+    bossScore,
   } = req.body ?? {}
   if (!opponent?.name) {
     return res.status(400).json({ error: 'missing opponent' })
@@ -48,6 +49,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const fameTag = streak >= 2 && fameTitle ? `${streak}연승의 '${fameTitle}' ` : ''
   const hero = typeof playerName === 'string' && playerName.trim() ? playerName.trim() : '이름 없는 총잡이'
 
+  const bossContext =
+    round === 9 || bossScore
+      ? `[최종 보스 3판 2선승제 사투]\n- 최종 스코어: ${hero} ${bossScore?.playerWins ?? (playerWon ? 2 : 1)}승 vs ${opponent.alias} ${bossScore?.enemyWins ?? (playerWon ? 1 : 2)}승\n- 3차전까지 이어진 서부 역사상 가장 치열했던 결투`
+      : null
+
   const outcomeGuide = peace
     ? `[결투 결과: 평화적 해결]\n- 총성 없이 대화로 결투가 무산됨.\n- 헤드라인: 평화적 타결 또는 ${opponent.alias}의 퇴장.`
     : playerWon
@@ -55,6 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : `[결투 결과: 무법자(${opponent.name}) 승리 / 플레이어(${hero}) 패배]\n- 승자: 무법자 ${opponent.name} (승리하여 생존)\n- 패자: 도전자 ${hero} (피격되어 사망/패배)\n- ⚠️ 절대 주의: 승자는 ${opponent.name}이고 패자는 ${hero}입니다. ${opponent.name}이 패배했다고 쓰면 절대 안 됩니다!\n- 헤드라인: ${opponent.name}의 승리 또는 ${hero}의 쓰러짐 보도.`
 
   const duelDetails = [
+    bossContext,
     streak >= 2 && fameTitle ? `도전자 공식 기록: 이번 결투를 포함해 정확히 [${streak}연승] 달성 ('${fameTitle}')` : null,
     `결투 직전 상대 심리: ${mood ?? '알 수 없음'}`,
     opponent.tell ? `상대의 드로우 버릇: ${opponent.tell}` : null,

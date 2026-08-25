@@ -87,6 +87,17 @@ export interface DuelOutcome {
   grade: DrawGrade
   headshot: boolean
   foul: boolean
+  bossScore?: {
+    playerWins: number
+    enemyWins: number
+    totalSets: number
+    setHistory: Array<{
+      setNum: number
+      winner: 'player' | 'enemy'
+      reactionMs: number | null
+      headshot: boolean
+    }>
+  }
 }
 
 export type PerkId =

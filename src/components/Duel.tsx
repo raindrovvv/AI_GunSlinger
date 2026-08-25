@@ -88,6 +88,29 @@ export function Duel({
   const [grade, setGrade] = useState<DrawGrade>('-')
   const [flash, setFlash] = useState<'none' | 'draw' | 'win' | 'lose'>('none')
 
+  // 9라운드 최종 보스 3판 2선승제 (BO3) 상태
+  const isFinalBoss = round === 9
+  const [bossSet, setBossSet] = useState(1)
+  const [playerScore, setPlayerScore] = useState(0)
+  const [enemyScore, setEnemyScore] = useState(0)
+  const [interSetBanner, setInterSetBanner] = useState<{ title: string; subtitle: string } | null>(null)
+
+  const isFinalBossRef = useRef(isFinalBoss)
+  useEffect(() => {
+    isFinalBossRef.current = isFinalBoss
+  }, [isFinalBoss])
+  const bossSetRef = useRef(1)
+  const playerScoreRef = useRef(0)
+  const enemyScoreRef = useRef(0)
+  const setHistoryRef = useRef<
+    Array<{
+      setNum: number
+      winner: 'player' | 'enemy'
+      reactionMs: number | null
+      headshot: boolean
+    }>
+  >([])
+
   const has = useCallback((id: PerkId) => perks.includes(id), [perks])
   const fame = useMemo(() => getFameInfo(streak), [streak])
 
@@ -363,7 +386,7 @@ export function Duel({
       clearTimers()
       setCountdown(null)
       setPhaseSafe('result')
-      winnerRef.current = outcome.won ? 'player' : 'enemy'
+      winnerRef.current = outcome.won ? 'player' : outcome.foul ? 'none' : 'enemy'
       fallStartRef.current = performance.now()
       resultFlashRef.current = 1
       shakeRef.current = outcome.won ? 13 : 10
@@ -400,6 +423,95 @@ export function Duel({
         later(() => {
           sfx.gunFall(0.75)
         }, 420)
+      }
+
+      // 9라운드 최종 보스 3판 2선승제 (BO3) 처리
+      if (isFinalBossRef.current) {
+        const setWinner = outcome.won ? 'player' : 'enemy'
+        const nextPlayerScore = outcome.won ? playerScoreRef.current + 1 : playerScoreRef.current
+        const nextEnemyScore = !outcome.won ? enemyScoreRef.current + 1 : enemyScoreRef.current
+
+        playerScoreRef.current = nextPlayerScore
+        enemyScoreRef.current = nextEnemyScore
+        setPlayerScore(nextPlayerScore)
+        setEnemyScore(nextEnemyScore)
+
+        setHistoryRef.current.push({
+          setNum: bossSetRef.current,
+          winner: setWinner,
+          reactionMs: outcome.reactionMs,
+          headshot: outcome.headshot,
+        })
+
+        // 한쪽이 2승에 도달했을 때 최종 경기 종료
+        if (nextPlayerScore >= 2 || nextEnemyScore >= 2) {
+          const finalWon = nextPlayerScore >= 2
+          const finalDetail = finalWon
+            ? `3판 2선승 대결 승리! (${nextPlayerScore}:${nextEnemyScore}) 전설의 보스를 쓰러뜨렸다!`
+            : `3판 2선승 대결 패배... (${nextPlayerScore}:${nextEnemyScore}) 마지막 사투에서 무릎 꿇다.`
+
+          const finalOutcome: DuelOutcome = {
+            ...outcome,
+            won: finalWon,
+            detail: finalDetail,
+            bossScore: {
+              playerWins: nextPlayerScore,
+              enemyWins: nextEnemyScore,
+              totalSets: bossSetRef.current,
+              setHistory: [...setHistoryRef.current],
+            },
+          }
+
+          later(() => onResultRef.current(finalOutcome), 2200)
+          return
+        }
+
+        // 1:0 또는 1:1 상황 -> 다음 세트(Phase)로 전환
+        const nextSet = bossSetRef.current + 1
+        bossSetRef.current = nextSet
+        setBossSet(nextSet)
+
+        later(() => {
+          const nextTitle =
+            nextSet === 2
+              ? outcome.won
+                ? 'PHASE 2 · 분노한 사신의 각성'
+                : 'PHASE 2 · 반격의 기회'
+              : 'FINAL PHASE · 최후의 일격 (1:1 동점)'
+          const nextSub =
+            nextSet === 2
+              ? outcome.won
+                ? '보스가 붉은 기운을 뿜으며 자세를 고쳐잡습니다! (반응속도 & 페인트 증가)'
+                : '아직 끝나지 않았다. 마음을 다잡고 방아쇠를 쥐어라!'
+              : '마지막 한 발로 모든 운명이 결정된다!'
+
+          setInterSetBanner({ title: nextTitle, subtitle: nextSub })
+          sfx.feint()
+
+          // 세트 상태 및 시각 효과 리셋
+          resolvedRef.current = false
+          playerShotAtRef.current = null
+          winnerRef.current = 'none'
+          fallStartRef.current = 0
+          hitMarkRef.current = null
+          secondChanceUsedRef.current = false
+          bibleUsedRef.current = false
+          warningsRef.current = tuning.warnings
+          setWarningsLeft(tuning.warnings)
+          tracersRef.current = []
+          dustRef.current = []
+          smokeRef.current = []
+          setFlash('none')
+          setGrade('-')
+
+          later(() => {
+            setInterSetBanner(null)
+            setPhaseSafe('idle')
+            setMessage('홀스터를 누른 채 버텨라')
+            sfx.draw()
+          }, 2400)
+        }, 1900)
+        return
       }
 
       later(() => onResultRef.current(outcome), 1850)
@@ -441,7 +553,19 @@ export function Duel({
       if (phaseRef.current !== 'holding') return
       setCountdown(null)
       drawAtRef.current = performance.now()
-      enemyShotAtRef.current = drawAtRef.current + tuning.enemyReaction
+
+      const isBoss = isFinalBossRef.current
+      const currentSet = bossSetRef.current
+      const bossReactionBonus = isBoss
+        ? currentSet === 2
+          ? playerScoreRef.current > enemyScoreRef.current ? 25 : 10
+          : currentSet === 3
+            ? 45
+            : 0
+        : 0
+      const enemyReactionTime = Math.max(160, tuning.enemyReaction - bossReactionBonus)
+      enemyShotAtRef.current = drawAtRef.current + enemyReactionTime
+
       setPhaseSafe('draw')
       setFlash('draw')
       setMessage('쏴라!')
@@ -482,7 +606,7 @@ export function Duel({
             foul: false,
           })
         }
-      }, tuning.enemyReaction + 140)
+      }, enemyReactionTime + 140)
     }
 
     const startGrip = () => {
@@ -510,8 +634,13 @@ export function Duel({
         sfx.tell()
       }, drawDelay - 170)
 
-      const feintChance = Math.min(0.7, 0.12 + round * 0.07)
-      if (round >= 2 && extra > 700 && Math.random() < feintChance) {
+      const isBoss = isFinalBossRef.current
+      const currentSet = bossSetRef.current
+      const feintChance = isBoss
+        ? currentSet === 1 ? 0.6 : currentSet === 2 ? 0.75 : 0.85
+        : Math.min(0.7, 0.12 + round * 0.07)
+
+      if ((round >= 2 || isBoss) && extra > 700 && Math.random() < feintChance) {
         const feintAt = HOLD_STEPS[2] + 120 + Math.random() * (extra - 620)
         later(() => {
           if (phaseRef.current !== 'holding') return
@@ -708,8 +837,8 @@ export function Duel({
         armed,
         reaching: false,
         fallT: fallOf('enemy'),
-        coat: '#2e1414',
-        rim: 'rgba(255, 176, 110, 0.85)',
+        coat: isFinalBoss && bossSetRef.current >= 2 ? '#350808' : '#2e1414',
+        rim: isFinalBoss && bossSetRef.current >= 2 ? 'rgba(255, 65, 45, 0.98)' : 'rgba(255, 176, 110, 0.85)',
         t,
         twitch: tellActive ? 1.2 : feintActive ? 0.5 : 0,
       })
@@ -1026,7 +1155,7 @@ export function Duel({
       canvas.removeEventListener('touchend', onTouchEnd)
       fx?.dispose()
     }
-  }, [opponent.alias, round, setPhaseSafe, tuning])
+  }, [isFinalBoss, opponent.alias, round, setPhaseSafe, tuning])
 
   return (
     <div className={`screen duel-screen flash-${flash}`}>
@@ -1086,10 +1215,62 @@ export function Duel({
         </div>
       )}
 
+      {/* 9라운드 최종 보스 3판 2선승제 HUD */}
+      {isFinalBoss && (
+        <div className="boss-duel-hud">
+          <div className="boss-hud-badge">
+            <span className="boss-crown">👑</span>
+            <span className="boss-title">FINAL BOSS · 3판 2선승제 (BEST OF 3)</span>
+          </div>
+
+          <div className="boss-score-board">
+            <div className="score-side player">
+              <span className="score-name">{playerName || 'YOU'}</span>
+              <div className="score-lamps">
+                <span className={`lamp${playerScore >= 1 ? ' active win' : ''}`} />
+                <span className={`lamp${playerScore >= 2 ? ' active win' : ''}`} />
+              </div>
+            </div>
+
+            <div className="score-vs">
+              <span className="phase-tag">SET {bossSet} / 3</span>
+            </div>
+
+            <div className="score-side enemy">
+              <div className="score-lamps">
+                <span className={`lamp${enemyScore >= 1 ? ' active boss-win' : ''}`} />
+                <span className={`lamp${enemyScore >= 2 ? ' active boss-win' : ''}`} />
+              </div>
+              <span className="score-name">{opponent.alias}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="duel-stage">
         <div className="duel-canvas-wrap">
           <canvas ref={canvasRef} />
           <canvas ref={fxCanvasRef} className="duel-fx" aria-hidden />
+
+          {/* 세트 전환 오버레이 자막 (Inter-set Transition) */}
+          {interSetBanner && (
+            <div className="inter-set-banner-overlay">
+              <div className="banner-box">
+                <p className="banner-eyebrow">★ FINAL SHOWDOWN · 3판 2선승제 ★</p>
+                <h2 className="banner-title">{interSetBanner.title}</h2>
+                <p className="banner-sub">{interSetBanner.subtitle}</p>
+                <div className="banner-scores">
+                  <span className="player-score">
+                    {playerName || 'YOU'} <strong>{playerScore}</strong>
+                  </span>
+                  <span className="vs-sep">:</span>
+                  <span className="enemy-score">
+                    <strong>{enemyScore}</strong> {opponent.alias}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1105,7 +1286,10 @@ export function Duel({
       </p>
 
       <p className="duel-hint">
-        {phase === 'idle' && '홀스터를 누른 채 3·2·1을 버텨라 — 손을 떼거나 벗어나면 반칙'}
+        {phase === 'idle' &&
+          (isFinalBoss
+            ? `[SET ${bossSet}/3] 홀스터를 누른 채 3·2·1을 버텨라 — 2승을 먼저 거두는 자가 승리한다`
+            : '홀스터를 누른 채 3·2·1을 버텨라 — 손을 떼거나 벗어나면 반칙')}
         {phase === 'holding' &&
           `상대가 움찔하면 곧 뽑는다 (${opponent.tell}) · 가짜 신호 DRAW…?에 속지 마라`}
         {phase === 'draw' && '노란 원(머리)을 맞히면 헤드샷 보너스'}
