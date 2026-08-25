@@ -1,0 +1,8 @@
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: #e8a838;
+  color: #1a120c;
+}
