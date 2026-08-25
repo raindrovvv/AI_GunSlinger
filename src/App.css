@@ -3627,3 +3627,204 @@ input {
   color: var(--accent-hot);
   font-weight: 700;
 }
+
+/* ═══════════════════ 세계 랭킹 모달 ═══════════════════ */
+
+/*
+ * 모달로 만든 이유: 타이틀·엔딩 모두 세로 여유가 없다. 엔딩은 900px에
+ * 이미 꽉 차 있고 .ending-screen이 overflow: hidden이라 인라인으로 목록을
+ * 더 밀어넣으면 재시작 버튼이 잘린다. body도 overflow-y: hidden이라
+ * 페이지 스크롤로 해결되지 않는다. 오버레이는 주변 레이아웃과 무관하다.
+ */
+.ranking-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(6, 3, 1, 0.85);
+  animation: fadeIn 0.2s ease;
+}
+
+.ranking-box {
+  width: min(780px, 94vw);
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  background: linear-gradient(180deg, #1a110c, #0e0906);
+  border: 1px solid rgba(232, 168, 56, 0.4);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.ranking-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.ranking-head strong {
+  font-family: var(--western);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.ranking-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px 8px;
+}
+
+.ranking-close:hover {
+  color: var(--paper);
+}
+
+.ranking-msg {
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--western);
+  font-size: 13px;
+  padding: 28px 0;
+  margin: 0;
+}
+
+.ranking-cols {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 8px;
+}
+
+.ranking-col {
+  flex: 1;
+  /* 이게 없으면 긴 닉네임이 칸을 밀어 3분할이 무너진다 */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 200, 120, 0.14);
+}
+
+.ranking-col h3 {
+  margin: 0;
+  padding: 7px;
+  font-family: var(--western);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  border-bottom: 1px solid rgba(255, 200, 120, 0.2);
+}
+
+.ranking-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ranking-empty {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 18px 6px;
+  margin: 0;
+}
+
+.ranking-row {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 12px;
+  padding: 4px 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ranking-row .rk-no {
+  width: 28px;
+  flex: none;
+  text-align: right;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.ranking-row .rk-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-row .rk-val {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+/* 목록 안의 내 기록 */
+.ranking-row.is-me {
+  background: rgba(232, 168, 56, 0.18);
+  color: #ffd27a;
+  font-weight: 700;
+}
+
+.ranking-row.is-me .rk-no,
+.ranking-row.is-me .rk-val {
+  opacity: 1;
+}
+
+/* 100위 밖이라 하단에 따로 고정된 내 기록 */
+.ranking-row.is-mine-pinned {
+  border-top: 2px solid rgba(232, 168, 56, 0.55);
+  border-bottom: none;
+  color: var(--accent-hot);
+  font-weight: 700;
+  padding: 6px 5px;
+}
+
+.ranking-row.is-mine-pinned .rk-no,
+.ranking-row.is-mine-pinned .rk-val {
+  opacity: 1;
+}
+
+/* 엔딩 명부에서 전체 랭킹으로 넘어가는 링크 */
+.registry-more {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: var(--western);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 4px 0 0;
+  align-self: center;
+}
+
+.registry-more:hover {
+  color: var(--accent-hot);
+  text-decoration: underline;
+}
+
+/*
+ * 좁은 화면에서 가로 3분할을 유지하면 칸이 102px가 되고 닉네임 칸이 14px까지
+ * 뭉개진다(실측). 세로로 쌓고 섹션마다 높이를 고정한다.
+ */
+@media (max-width: 620px) {
+  .ranking-cols {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .ranking-col {
+    flex: none;
+    height: 240px;
+  }
+}

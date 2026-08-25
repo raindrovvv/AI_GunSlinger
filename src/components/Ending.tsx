@@ -5,6 +5,7 @@ import { formatRank, getPlayerId, submitRun, type RankResult, type TopBoardEntry
 import { perkById } from '../data/perks'
 import type { CareerStats, PerkId, RunRecord } from '../types'
 import { PerkIcon } from './PerkIcon'
+import { RankingModal } from './RankingModal'
 import { RecordBoard } from './RecordBoard'
 
 interface Props {
@@ -69,19 +70,21 @@ export function Ending({
   // 서부 명부: 런이 끝나면 커리어 최고 기록을 올리고 순위를 받아온다.
   // 서버가 없거나 느리면 board가 null로 남고, 순위 영역은 그냥 나타나지 않는다.
   const [board, setBoard] = useState<RankResult | null>(null)
+  const [showRanking, setShowRanking] = useState(false)
   useEffect(() => {
     let alive = true
     submitRun({
       name: playerName,
       drawMs: career.bestReactionMs,
       bounty: career.bestBounty,
+      wins: career.totalWins,
     }).then((r) => {
       if (alive && r) setBoard(r)
     })
     return () => {
       alive = false
     }
-  }, [playerName, career.bestReactionMs, career.bestBounty])
+  }, [playerName, career.bestReactionMs, career.bestBounty, career.totalWins])
 
   const [displayedBounty, setDisplayedBounty] = useState(() => (victory ? 0 : bounty))
 
@@ -182,8 +185,20 @@ export function Ending({
                   />
                 </div>
               )}
+              <button
+                type="button"
+                className="registry-more"
+                onClick={() => {
+                  sfx.click()
+                  setShowRanking(true)
+                }}
+              >
+                명부 전체 보기 (TOP 100) ➔
+              </button>
             </div>
           )}
+
+          {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
 
           <div className="ending-stats-compact">
             <div className="stat-card">

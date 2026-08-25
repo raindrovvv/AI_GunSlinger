@@ -4,6 +4,7 @@ import { EMPTY_CAREER, loadCareer } from '../data/records'
 import type { CareerStats } from '../types'
 import { TitleFx } from '../gl/TitleFx'
 import { skyFxEnabled } from '../gl/flags'
+import { RankingModal } from './RankingModal'
 import { RecordBoard } from './RecordBoard'
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 
 export function TitleScreen({ onStart }: Props) {
   const [showRecords, setShowRecords] = useState(false)
+  const [showRanking, setShowRanking] = useState(false)
   const [career, setCareer] = useState<CareerStats>(EMPTY_CAREER)
   const [glSky] = useState(skyFxEnabled)
   const [fxOn, setFxOn] = useState(false)
@@ -108,6 +110,15 @@ export function TitleScreen({ onStart }: Props) {
           >
             {showRecords ? '닫기' : '전적'}
           </button>
+          <button
+            className="btn"
+            onClick={() => {
+              sfx.click()
+              setShowRanking(true)
+            }}
+          >
+            랭킹
+          </button>
         </div>
 
         {showRecords && (
@@ -115,6 +126,8 @@ export function TitleScreen({ onStart }: Props) {
             <RecordBoard career={career} />
           </div>
         )}
+
+        {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
 
         <div className="howto">
           <h3>⚡ HOW TO PLAY — 결투 조작 핵심 가이드</h3>

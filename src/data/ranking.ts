@@ -41,6 +41,7 @@ export interface TopBoardEntry extends BoardEntry {
 export interface RankResult {
   draw: BoardEntry | null
   bounty: BoardEntry | null
+  wins: BoardEntry | null
   topDraw?: TopBoardEntry[]
   topBounty?: TopBoardEntry[]
 }
@@ -51,6 +52,8 @@ export interface SubmitPayload {
   drawMs?: number | null
   /** 이번 런 누적 현상금 */
   bounty?: number | null
+  /** 커리어 누적 승수 */
+  wins?: number | null
 }
 
 const TIMEOUT_MS = 6000
@@ -84,6 +87,27 @@ export async function submitRun(payload: SubmitPayload): Promise<RankResult | nu
     id: getPlayerId(),
     ...payload,
   })
+}
+
+export type SectorKey = 'draw' | 'bounty' | 'wins'
+
+export interface TopResult {
+  top: Record<SectorKey, TopBoardEntry[]>
+  mine: Record<SectorKey, BoardEntry | null>
+}
+
+/** 섹터별 상위 100명 + 내 순위. 실패하면 null */
+export async function fetchTop(): Promise<TopResult | null> {
+  return postJson<TopResult>('/api/leaderboard', {
+    action: 'top',
+    id: getPlayerId(),
+  })
+}
+
+export const SECTOR_META: Record<SectorKey, { label: string; format: (v: number) => string }> = {
+  draw: { label: '반응속도', format: (v) => `${v}ms` },
+  bounty: { label: '최고 현상금', format: (v) => `$${v.toLocaleString()}` },
+  wins: { label: '누적 승수', format: (v) => `${v}승` },
 }
 
 export function formatRank(rank: number): string {
