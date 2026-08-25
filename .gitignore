@@ -30,5 +30,7 @@ dist-ssr
 
 # Local Cursor / git hook tooling (not part of the game)
 .cursor/
+.agents/
+skills-lock.json
 .githooks/
 scripts/install-githooks.sh
