@@ -107,7 +107,9 @@ interface Props {
 export function TitleFx({ onReady }: Props) {
   const ref = useRef<HTMLCanvasElement>(null)
   const readyRef = useRef(onReady)
-  readyRef.current = onReady
+  useEffect(() => {
+    readyRef.current = onReady
+  }, [onReady])
 
   useEffect(() => {
     const canvas = ref.current

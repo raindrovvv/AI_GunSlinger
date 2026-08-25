@@ -161,6 +161,27 @@ export function Duel({
   useEffect(() => {
     onResultRef.current = onResult
   }, [onResult])
+
+  const hasRef = useRef(has)
+  useEffect(() => {
+    hasRef.current = has
+  }, [has])
+
+  const playerNameRef = useRef(playerName)
+  useEffect(() => {
+    playerNameRef.current = playerName
+  }, [playerName])
+
+  const fameRef = useRef(fame)
+  useEffect(() => {
+    fameRef.current = fame
+  }, [fame])
+
+  const streakRef = useRef(streak)
+  useEffect(() => {
+    streakRef.current = streak
+  }, [streak])
+
   const resolvedRef = useRef(false)
   const dustRef = useRef<Particle[]>([])
   const smokeRef = useRef<Particle[]>([])
@@ -514,7 +535,7 @@ export function Duel({
       spawnDust(x, y, 6)
 
       if (!head && !body) {
-        if (has('second_chance') && !secondChanceUsedRef.current && now < enemyShotAtRef.current) {
+        if (hasRef.current('second_chance') && !secondChanceUsedRef.current && now < enemyShotAtRef.current) {
           secondChanceUsedRef.current = true
           setMessage('빗맞았다! 속사 리볼버 — 즉시 다시 쏴라!')
           sfx.grip()
@@ -670,7 +691,7 @@ export function Duel({
 
       drawNameplate(
         ctx,
-        streak >= 2 ? `${fame.badge} ${playerName || 'YOU'}` : playerName || 'YOU',
+        streakRef.current >= 2 ? `${fameRef.current.badge} ${playerNameRef.current || 'YOU'}` : playerNameRef.current || 'YOU',
         L.playerX,
         L.bodyY - 78 * s,
         s,
