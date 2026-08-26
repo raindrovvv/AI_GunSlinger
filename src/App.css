@@ -455,6 +455,17 @@ input {
   overflow-wrap: break-word;
 }
 
+.howto-tip {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  color: #e8c48a;
+  font-size: 13.5px;
+  line-height: 1.55;
+  border: 1px dashed rgba(232, 168, 56, 0.4);
+  border-radius: 4px;
+  background: rgba(20, 10, 6, 0.55);
+}
+
 .howto strong {
   color: #ffd700;
   font-weight: 800;
