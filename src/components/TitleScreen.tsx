@@ -137,6 +137,7 @@ export function TitleScreen({ onStart }: Props) {
               <strong>{t('title.how4t')}</strong> {t('title.how4', { turns: t('title.turns'), tell: t('title.tell') })}
             </li>
           </ol>
+          <p className="howto-tip">{t('title.howFullscreen')}</p>
         </div>
       </div>
     </div>
