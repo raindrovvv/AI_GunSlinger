@@ -3,6 +3,8 @@ import { standoffChat } from '../api/client'
 import { sfx } from '../audio/sfx'
 import { getFameInfo } from '../data/fame'
 import { getThemeInfo } from '../canvas/backdrop'
+import { portraitSrc } from '../data/portraits'
+import { standoffPortraitEnabled } from '../gl/flags'
 import type { ChatMessage, DuelMods, MoodShift, Opponent, PerkId } from '../types'
 
 interface Props {
@@ -36,6 +38,7 @@ export function Standoff({
 }: Props) {
   const fame = useMemo(() => getFameInfo(streak), [streak])
   const themeInfo = useMemo(() => getThemeInfo(round), [round])
+  const [showFace] = useState(standoffPortraitEnabled)
 
   useEffect(() => {
     if (activeBuffs.whiskey) {
@@ -185,7 +188,13 @@ export function Standoff({
   return (
     <div className={`screen standoff-screen theme-${themeInfo.skyType}`}>
       <div className="standoff-header">
-        <div>
+        {showFace && (
+          <div className="standoff-face" data-mood={mods.mood} aria-hidden>
+            <img src={portraitSrc(opponent, round)} alt="" width={512} height={512} decoding="async" />
+            <div className="standoff-face-grain" />
+          </div>
+        )}
+        <div className="standoff-headline">
           <p className="eyebrow">
             ROUND {round} · 📍 {themeInfo.name} · 대치 {turn}/{MAX_TURNS}턴
             {streak >= 2 && (

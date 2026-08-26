@@ -838,6 +838,87 @@ input {
   flex-wrap: wrap;
 }
 
+.standoff-headline {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+/* 상대 초상화.
+   대치는 3턴 동안 말만 오가는 화면이라 상대가 텍스트로만 존재했다.
+   심리 상태(mood)를 필터로 얹어 에셋 한 장으로 다섯 표정을 흉내낸다. */
+.standoff-face {
+  position: relative;
+  flex: 0 0 auto;
+  width: 92px;
+  height: 92px;
+  border: 2px solid rgba(240, 214, 165, 0.5);
+  border-radius: 3px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 34%, #e6d2ae, #8d7350 78%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  align-self: center;
+  /* mood는 대사 한 번에 한 단계씩 바뀐다. 즉시 튀면 필터가 아니라
+     이미지가 교체된 것처럼 보여서 천천히 넘긴다. */
+  transition: filter 420ms ease, border-color 420ms ease, box-shadow 420ms ease;
+  filter: sepia(0.3) contrast(1.06);
+}
+
+.standoff-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 12%;
+}
+
+.standoff-face-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 45%, transparent 46%, rgba(30, 16, 6, 0.5)),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.07) 3px,
+      rgba(0, 0, 0, 0.07) 4px
+    );
+}
+
+/* 분노 — 피가 오른다 */
+.standoff-face[data-mood='angered'] {
+  filter: sepia(0.18) saturate(1.6) hue-rotate(-14deg) brightness(1.06) contrast(1.12);
+  border-color: rgba(214, 92, 60, 0.9);
+  box-shadow: 0 0 16px rgba(198, 66, 40, 0.5);
+}
+
+/* 위축 — 그늘이 진다 */
+.standoff-face[data-mood='intimidated'] {
+  filter: sepia(0.44) brightness(0.72) contrast(0.94);
+  border-color: rgba(150, 128, 96, 0.55);
+}
+
+/* 공포 — 핏기가 빠진다 */
+.standoff-face[data-mood='scared'] {
+  filter: sepia(0.12) saturate(0.28) brightness(1.2) contrast(0.9);
+  border-color: rgba(206, 224, 236, 0.75);
+  box-shadow: 0 0 14px rgba(150, 190, 214, 0.35);
+}
+
+/* 경계 — 약점을 찔려 날이 선다 */
+.standoff-face[data-mood='suspicious'] {
+  filter: sepia(0.3) contrast(1.24) brightness(1.02);
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(232, 178, 66, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .standoff-face {
+    transition: none;
+  }
+}
+
 .standoff-header h2 {
   margin: 4px 0 0;
   font-family: var(--display);

@@ -13,3 +13,25 @@ export function skyFxEnabled(): boolean {
   if (mode === 'gl' || mode === 'on') return true
   return SKY_FX_DEFAULT
 }
+
+/** 대치 화면 상대 초상화. ?face=off 로 끈다. */
+const STANDOFF_PORTRAIT_DEFAULT = true
+
+export function standoffPortraitEnabled(): boolean {
+  return flag('face', STANDOFF_PORTRAIT_DEFAULT)
+}
+
+/** 신문 하프톤 초상화. ?press=off 로 끈다. */
+const PRESS_PORTRAIT_DEFAULT = true
+
+export function pressPortraitEnabled(): boolean {
+  return flag('press', PRESS_PORTRAIT_DEFAULT)
+}
+
+function flag(key: string, fallback: boolean): boolean {
+  if (typeof window === 'undefined') return fallback
+  const mode = new URLSearchParams(window.location.search).get(key)
+  if (mode === 'off' || mode === '0') return false
+  if (mode === 'on' || mode === '1') return true
+  return fallback
+}
