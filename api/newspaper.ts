@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import OpenAI from 'openai'
+import { DEFAULT_PLAYER_NAME, FAME_STREAK_THRESHOLD, isFinalRound } from '../shared/game.js'
 import {
   KOREAN_RULES,
   MODEL,
@@ -46,11 +47,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'missing opponent' })
   }
 
-  const fameTag = streak >= 2 && fameTitle ? `${streak}연승의 '${fameTitle}' ` : ''
-  const hero = typeof playerName === 'string' && playerName.trim() ? playerName.trim() : '이름 없는 총잡이'
+  const fameTag = streak >= FAME_STREAK_THRESHOLD && fameTitle ? `${streak}연승의 '${fameTitle}' ` : ''
+  const hero = typeof playerName === 'string' && playerName.trim() ? playerName.trim() : DEFAULT_PLAYER_NAME
 
   const bossContext =
-    round === 9 || bossScore
+    isFinalRound(Number(round) || 0) || bossScore
       ? `[최종 보스 3판 2선승제 사투]\n- 최종 스코어: ${hero} ${bossScore?.playerWins ?? (playerWon ? 2 : 1)}승 vs ${opponent.alias} ${bossScore?.enemyWins ?? (playerWon ? 1 : 2)}승\n- 3차전까지 이어진 서부 역사상 가장 치열했던 결투`
       : null
 

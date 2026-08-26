@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { MAX_STANDOFF_TURNS } from '../../shared/game'
 import { standoffChat } from '../api/client'
+import { CONSUMABLE_EFFECTS } from '../data/combat'
 import { sfx } from '../audio/sfx'
 import { getFameInfo } from '../data/fame'
 import { getThemeInfo } from '../canvas/backdrop'
@@ -16,8 +18,6 @@ interface Props {
   streak?: number
   onFinish: (mods: DuelMods, usedAi: boolean) => void
 }
-
-const MAX_TURNS = 3
 
 const MOOD_LABEL: Record<MoodShift, string> = {
   calm: '평정',
@@ -115,7 +115,7 @@ export function Standoff({
 
   async function send(raw?: string) {
     const text = (raw ?? input).trim()
-    if (!text || busy || turn >= MAX_TURNS) return
+    if (!text || busy || turn >= MAX_STANDOFF_TURNS) return
     setBusy(true)
     setInput('')
     sfx.click()
@@ -145,7 +145,7 @@ export function Standoff({
 
     // 위스키 버프: 플레이어가 상대를 흔들었을 때(reactionDelta > 0) 효과 1.5배 증폭
     if (activeBuffs.whiskey && addReaction > 0) {
-      addReaction = Math.round(addReaction * 1.5)
+      addReaction = Math.round(addReaction * CONSUMABLE_EFFECTS.whiskeyPressure)
     }
 
     if (hasPokerFace && result.mods.mood === 'calm') {
@@ -183,7 +183,7 @@ export function Standoff({
         ? '불리'
         : '팽팽'
 
-  const done = turn >= MAX_TURNS || mods.peaceEnding
+  const done = turn >= MAX_STANDOFF_TURNS || mods.peaceEnding
 
   return (
     <div className={`screen standoff-screen theme-${themeInfo.skyType}`}>
@@ -196,7 +196,7 @@ export function Standoff({
         )}
         <div className="standoff-headline">
           <p className="eyebrow">
-            ROUND {round} · 📍 {themeInfo.name} · 대치 {turn}/{MAX_TURNS}턴
+            ROUND {round} · 📍 {themeInfo.name} · 대치 {turn}/{MAX_STANDOFF_TURNS}턴
             {streak >= 2 && (
               <span className="standoff-fame-chip" style={{ borderColor: fame.color, color: fame.color }}>
                 {fame.badge}

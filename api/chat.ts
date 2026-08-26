@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import OpenAI from 'openai'
 import {
+  FAME_STREAK_THRESHOLD,
+  MAX_STANDOFF_TURNS,
   DIALOGUE_RULES,
   KOREAN_RULES,
   MODEL,
@@ -49,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const fameContext =
-    streak >= 2
+    streak >= FAME_STREAK_THRESHOLD
       ? `- 상대 총잡이: ${fameTitle ?? '실력자'} (${streak}연승 중인 명사수. 연승이 높을수록 위압감을 느끼거나 긴장함)`
       : ''
 
@@ -70,7 +72,7 @@ ${WORLD_RULES}
 [심리/수치 판정]
 상대 대사의 영향에 따라 mood를 고르고 수치를 결정하세요.
 ${moodGuideText()}
-- 턴: ${turn}/3 ${turn >= 3 ? '(마지막 턴)' : ''}
+- 턴: ${turn}/${MAX_STANDOFF_TURNS} ${turn >= MAX_STANDOFF_TURNS ? '(마지막 턴)' : ''}
 - peaceEnding: 3턴째에 상대 설득이 성격에 깊이 닿았을 때만 true
 
 ${OUTPUT_RULES}

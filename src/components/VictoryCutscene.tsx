@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { sfx } from '../audio/sfx'
 import { bgm } from '../audio/bgm'
-import type { PerkId } from '../types'
+import { DEFAULT_PLAYER_NAME } from '../../shared/game'
 
 interface Props {
   playerName?: string
-  streak?: number
-  bounty?: number
-  perks?: PerkId[]
   onComplete: () => void
 }
 
@@ -23,7 +20,7 @@ interface Particle {
 }
 
 export function VictoryCutscene({
-  playerName = '이름 없는 총잡이',
+  playerName = DEFAULT_PLAYER_NAME,
   onComplete,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)

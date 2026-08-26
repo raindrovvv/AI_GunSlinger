@@ -1,4 +1,20 @@
 import type { Perk, PerkId } from '../types'
+import { PERK_EFFECTS, percentFromScale } from './combat'
+
+export const PERK_IDS: readonly PerkId[] = [
+  'steady',
+  'keen',
+  'fast',
+  'silver',
+  'charm',
+  'second_chance',
+  'golden_spur',
+  'poker_face',
+]
+
+export function isPerkId(v: unknown): v is PerkId {
+  return typeof v === 'string' && (PERK_IDS as readonly string[]).includes(v)
+}
 
 export const PERKS: Perk[] = [
   {
@@ -9,12 +25,12 @@ export const PERKS: Perk[] = [
   {
     id: 'keen',
     name: '매의 눈',
-    desc: '명중 판정 범위가 30% 넓어진다',
+    desc: `명중 판정 범위가 ${percentFromScale(PERK_EFFECTS.keenHitScale)}% 넓어진다`,
   },
   {
     id: 'fast',
     name: '빠른 손',
-    desc: '드로우 판정에서 60ms를 벌어준다',
+    desc: `드로우 판정에서 ${PERK_EFFECTS.fastGraceMs}ms를 벌어준다`,
   },
   {
     id: 'silver',
@@ -24,7 +40,7 @@ export const PERKS: Perk[] = [
   {
     id: 'charm',
     name: '낡은 부적',
-    desc: '상대의 반응이 35ms 느려진다',
+    desc: `상대의 반응이 ${PERK_EFFECTS.charmDelayMs}ms 느려진다`,
   },
   {
     id: 'second_chance',
@@ -34,7 +50,7 @@ export const PERKS: Perk[] = [
   {
     id: 'golden_spur',
     name: '황금 박차',
-    desc: '결투 및 화해 보상 현상금이 30% 증가한다',
+    desc: `결투 및 화해 보상 현상금이 ${percentFromScale(PERK_EFFECTS.goldenSpurMult)}% 증가한다`,
   },
   {
     id: 'poker_face',

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { DEFAULT_PLAYER_NAME } from '../../shared/game'
 import { sfx } from '../audio/sfx'
 import { getFameInfo } from '../data/fame'
 import { formatRank, getPlayerId, submitRun, type RankResult, type TopBoardEntry } from '../data/ranking'
@@ -61,7 +62,7 @@ export function Ending({
   victory,
   career,
   lastRun,
-  playerName = '이름 없는 총잡이',
+  playerName = DEFAULT_PLAYER_NAME,
   onRestart,
   onReplayCutscene,
 }: Props) {

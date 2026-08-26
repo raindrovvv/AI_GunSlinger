@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
+import { normalizePlayerName } from '../shared/game.js'
 import { clientIp, rateLimited } from './_lib/rules.js'
 
 /**
@@ -158,8 +159,7 @@ async function readTopN(
 
   return items.map((item, i) => {
     const raw = names[i]
-    const name =
-      typeof raw === 'string' && raw.trim() ? raw.trim().slice(0, 24) : '이름 없는 총잡이'
+    const name = normalizePlayerName(raw)
     return { rank: i + 1, id: item.id, name, value: item.value }
   })
 }
@@ -197,8 +197,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    const displayName =
-      typeof name === 'string' && name.trim() ? name.trim().slice(0, 24) : '이름 없는 총잡이'
+    const displayName = normalizePlayerName(name)
     await db.hset(`player:${id}`, { name: displayName })
 
     // 드로우: 더 빠를 때(LT)만 갱신

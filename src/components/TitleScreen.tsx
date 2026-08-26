@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { DEFAULT_PLAYER_NAME } from '../../shared/game'
 import { sfx } from '../audio/sfx'
+import { loadPlayerNameDraft, savePlayerName } from '../storage/playerName'
 import { EMPTY_CAREER, loadCareer } from '../data/records'
 import type { CareerStats } from '../types'
 import { TitleFx } from '../gl/TitleFx'
@@ -17,27 +19,15 @@ export function TitleScreen({ onStart }: Props) {
   const [career, setCareer] = useState<CareerStats>(EMPTY_CAREER)
   const [glSky] = useState(skyFxEnabled)
   const [fxOn, setFxOn] = useState(false)
-  const [playerName, setPlayerName] = useState(() => {
-    try {
-      return localStorage.getItem('ai-gunslinger.player-name') ?? ''
-    } catch {
-      return ''
-    }
-  })
+  const [playerName, setPlayerName] = useState(loadPlayerNameDraft)
 
   const handleBegin = (skip = false) => {
     sfx.unlock()
     sfx.click()
     sfx.gunLoad(0.7)
     const trimmed = playerName.trim()
-    const finalName = skip || !trimmed ? '이름 없는 총잡이' : trimmed
-    try {
-      if (!skip && trimmed) {
-        localStorage.setItem('ai-gunslinger.player-name', trimmed)
-      }
-    } catch {
-      // ignore
-    }
+    const finalName = skip || !trimmed ? DEFAULT_PLAYER_NAME : trimmed
+    if (!skip && trimmed) savePlayerName(trimmed)
     onStart(finalName)
   }
 
@@ -80,7 +70,7 @@ export function TitleScreen({ onStart }: Props) {
               id="player-name-input"
               type="text"
               className="player-name-input"
-              placeholder="이름 없는 총잡이"
+              placeholder={DEFAULT_PLAYER_NAME}
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
               onKeyDown={(e) => {

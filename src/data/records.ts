@@ -1,4 +1,5 @@
 import type { CareerStats, PerkId, RunRecord } from '../types'
+import { isPerkId } from './perks'
 
 const STORAGE_KEY = 'ai-gunslinger.records.v1'
 const MAX_RECENT = 12
@@ -24,19 +25,6 @@ export interface RunSnapshot {
   bestStreak: number
   roundsReached: number
   perks: PerkId[]
-}
-
-function isPerkId(v: unknown): v is PerkId {
-  return (
-    v === 'steady' ||
-    v === 'keen' ||
-    v === 'fast' ||
-    v === 'silver' ||
-    v === 'charm' ||
-    v === 'second_chance' ||
-    v === 'golden_spur' ||
-    v === 'poker_face'
-  )
 }
 
 function sanitizeRun(raw: unknown): RunRecord | null {

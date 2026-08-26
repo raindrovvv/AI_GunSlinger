@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { bgm } from '../audio/bgm'
 import { sfx } from '../audio/sfx'
 import { CANVAS_LABEL_FONT } from '../fonts'
+import { isFinalRound } from '../../shared/game'
+import { CONSUMABLE_EFFECTS, computeDuelTuning, percentFromScale } from '../data/combat'
 import { getFameInfo } from '../data/fame'
 import { perkById } from '../data/perks'
 import { PerkIcon } from './PerkIcon'
@@ -17,6 +19,10 @@ import {
   drawTumbleweed,
   drawVultures,
 } from '../canvas/actors'
+import { applyBossSet, bossFeintChance, bossReactionBonus, nextSetBanner } from '../duel/boss'
+import { GRADE_LABEL } from '../duel/grade'
+import { classifyHit } from '../duel/hit'
+import { decidePlayerShot } from '../duel/shot'
 import type { DrawGrade, DuelMods, DuelOutcome, Opponent, PerkId } from '../types'
 
 type Phase = 'idle' | 'holding' | 'draw' | 'result'
@@ -84,21 +90,6 @@ interface ShockwaveRing {
 
 const HOLD_STEPS = [620, 1240, 1860]
 
-function gradeOf(ms: number): DrawGrade {
-  if (ms <= 220) return 'S'
-  if (ms <= 320) return 'A'
-  if (ms <= 430) return 'B'
-  return 'C'
-}
-
-const GRADE_LABEL: Record<DrawGrade, string> = {
-  S: '전광석화',
-  A: '번개같이',
-  B: '무난하게',
-  C: '아슬아슬',
-  '-': '',
-}
-
 export function Duel({
   opponent,
   mods,
@@ -118,8 +109,8 @@ export function Duel({
   const [grade, setGrade] = useState<DrawGrade>('-')
   const [flash, setFlash] = useState<'none' | 'draw' | 'win' | 'lose'>('none')
 
-  // 9라운드 최종 보스 3판 2선승제 (BO3) 상태
-  const isFinalBoss = round === 9
+  // 최종 보스 3판 2선승제 (BO3) 상태
+  const isFinalBoss = isFinalRound(round)
   const [bossSet, setBossSet] = useState(1)
   const [playerScore, setPlayerScore] = useState(0)
   const [enemyScore, setEnemyScore] = useState(0)
@@ -145,52 +136,19 @@ export function Duel({
   const fame = useMemo(() => getFameInfo(streak), [streak])
   const themeInfo = useMemo(() => getThemeInfo(round), [round])
 
-  const tuning = useMemo(() => {
-    // 1. 라운드 난이도 & 판정 너그러움: 초반(1~3R)은 +28%, 중반(4~6R)은 +15%, 후반(7~9R)은 +5%
-    const roundScale = round <= 3 ? 1.28 : round <= 6 ? 1.15 : 1.05
-
-    // 2. 대치(심리전) 결과: 공포/위축/경계 상태면 자세가 무너져 +18%, 평정이면 정자세 -5%
-    const moodScale =
-      mods.mood === 'scared' || mods.mood === 'intimidated' || mods.mood === 'suspicious'
-        ? 1.18
-        : mods.mood === 'angered'
-          ? 1.10
-          : mods.mood === 'calm'
-            ? 0.95
-            : 1.0
-
-    // 3. 사막 거리감 & 바람에 따른 고유 편차 (±5% 미세 편차)
-    const envJitter = (((opponent.name.length * 13 + round * 37) % 11) - 5) * 0.01
-
-    // 4. 전리품 및 소모품(정밀화약) 보너스
-    const perkHitScale = perks.includes('keen') ? 1.35 : 1.0
-    const perkHeadScale = (perks.includes('silver') ? 1.25 : 1.0) * (activeBuffs.powder ? 1.45 : 1.0)
-
-    // 최종 결투 히트박스 스케일
-    const totalHitScale = roundScale * moodScale * (1 + envJitter) * perkHitScale
-
-    // 결정론적 반응속도 지터
-    const jitter = (((opponent.name.length * 17 + round * 23) % 25) - 12)
-
-    // 연막탄 소모품: 상대 명중률 20% 감소
-    const smokeDebuff = activeBuffs.smoke ? 0.2 : 0
-
-    return {
-      warnings: 1 + (perks.includes('steady') ? 1 : 0),
-      hitScale: totalHitScale,
-      headScale: perkHeadScale,
-      fastGrace: perks.includes('fast') ? 65 : 0,
-      enemyReaction: Math.max(
-        190,
-        opponent.baseReactionMs +
-          mods.reactionDeltaMs +
-          jitter +
-          (perks.includes('charm') ? 40 : 0),
-      ),
-      accuracy: Math.min(0.99, Math.max(0.12, opponent.baseAccuracy + mods.accuracyDelta - smokeDebuff)),
-      hitBonusPercent: Math.round((totalHitScale - 1) * 100),
-    }
-  }, [
+  const tuning = useMemo(
+    () =>
+      computeDuelTuning({
+        round,
+        opponentName: opponent.name,
+        baseReactionMs: opponent.baseReactionMs,
+        baseAccuracy: opponent.baseAccuracy,
+        mods,
+        perks,
+        powder: activeBuffs.powder,
+        smoke: activeBuffs.smoke,
+      }),
+    [
     opponent.name,
     opponent.baseReactionMs,
     opponent.baseAccuracy,
@@ -522,67 +480,31 @@ export function Duel({
         }, 420)
       }
 
-      // 9라운드 최종 보스 3판 2선승제 (BO3) 처리
       if (isFinalBossRef.current) {
-        const setWinner = outcome.won ? 'player' : 'enemy'
-        const nextPlayerScore = outcome.won ? playerScoreRef.current + 1 : playerScoreRef.current
-        const nextEnemyScore = !outcome.won ? enemyScoreRef.current + 1 : enemyScoreRef.current
+        const boss = applyBossSet(
+          {
+            set: bossSetRef.current,
+            playerScore: playerScoreRef.current,
+            enemyScore: enemyScoreRef.current,
+            history: setHistoryRef.current,
+          },
+          outcome,
+        )
+        bossSetRef.current = boss.match.set
+        playerScoreRef.current = boss.match.playerScore
+        enemyScoreRef.current = boss.match.enemyScore
+        setHistoryRef.current = boss.match.history
+        setPlayerScore(boss.match.playerScore)
+        setEnemyScore(boss.match.enemyScore)
+        setBossSet(boss.match.set)
 
-        playerScoreRef.current = nextPlayerScore
-        enemyScoreRef.current = nextEnemyScore
-        setPlayerScore(nextPlayerScore)
-        setEnemyScore(nextEnemyScore)
-
-        setHistoryRef.current.push({
-          setNum: bossSetRef.current,
-          winner: setWinner,
-          reactionMs: outcome.reactionMs,
-          headshot: outcome.headshot,
-        })
-
-        // 한쪽이 2승에 도달했을 때 최종 경기 종료
-        if (nextPlayerScore >= 2 || nextEnemyScore >= 2) {
-          const finalWon = nextPlayerScore >= 2
-          const finalDetail = finalWon
-            ? `3판 2선승 대결 승리! (${nextPlayerScore}:${nextEnemyScore}) 전설의 보스를 쓰러뜨렸다!`
-            : `3판 2선승 대결 패배... (${nextPlayerScore}:${nextEnemyScore}) 마지막 사투에서 무릎 꿇다.`
-
-          const finalOutcome: DuelOutcome = {
-            ...outcome,
-            won: finalWon,
-            detail: finalDetail,
-            bossScore: {
-              playerWins: nextPlayerScore,
-              enemyWins: nextEnemyScore,
-              totalSets: bossSetRef.current,
-              setHistory: [...setHistoryRef.current],
-            },
-          }
-
-          later(() => onResultRef.current(finalOutcome), 750)
+        if (boss.finished && boss.finalOutcome) {
+          later(() => onResultRef.current(boss.finalOutcome!), 750)
           return
         }
 
-        // 1:0 또는 1:1 상황 -> 다음 세트(Phase)로 전환
-        const nextSet = bossSetRef.current + 1
-        bossSetRef.current = nextSet
-        setBossSet(nextSet)
-
         later(() => {
-          const nextTitle =
-            nextSet === 2
-              ? outcome.won
-                ? 'PHASE 2 · 분노한 사신의 각성'
-                : 'PHASE 2 · 반격의 기회'
-              : 'FINAL PHASE · 최후의 일격 (1:1 동점)'
-          const nextSub =
-            nextSet === 2
-              ? outcome.won
-                ? '보스가 붉은 기운을 뿜으며 자세를 고쳐잡습니다! (반응속도 & 페인트 증가)'
-                : '아직 끝나지 않았다. 마음을 다잡고 방아쇠를 쥐어라!'
-              : '마지막 한 발로 모든 운명이 결정된다!'
-
-          setInterSetBanner({ title: nextTitle, subtitle: nextSub })
+          setInterSetBanner(nextSetBanner(boss.match.set, outcome.won))
           sfx.feint()
 
           // 세트 상태 및 시각 효과 리셋
@@ -655,14 +577,10 @@ export function Duel({
 
       const isBoss = isFinalBossRef.current
       const currentSet = bossSetRef.current
-      const bossReactionBonus = isBoss
-        ? currentSet === 2
-          ? playerScoreRef.current > enemyScoreRef.current ? 25 : 10
-          : currentSet === 3
-            ? 45
-            : 0
+      const reactionCut = isBoss
+        ? bossReactionBonus(currentSet, playerScoreRef.current, enemyScoreRef.current)
         : 0
-      const enemyReactionTime = Math.max(160, tuning.enemyReaction - bossReactionBonus)
+      const enemyReactionTime = Math.max(160, tuning.enemyReaction - reactionCut)
       enemyShotAtRef.current = drawAtRef.current + enemyReactionTime
 
       setPhaseSafe('draw')
@@ -736,7 +654,7 @@ export function Duel({
       const isBoss = isFinalBossRef.current
       const currentSet = bossSetRef.current
       const feintChance = isBoss
-        ? currentSet === 1 ? 0.6 : currentSet === 2 ? 0.75 : 0.85
+        ? bossFeintChance(currentSet)
         : Math.min(0.7, 0.12 + round * 0.07)
 
       if ((round >= 2 || isBoss) && extra > 700 && Math.random() < feintChance) {
@@ -766,15 +684,8 @@ export function Duel({
       const enemyMs = enemyShotAtRef.current - drawAtRef.current
 
       const L = layout()
-      const dHead = Math.hypot(x - L.enemyX, y - L.headY)
-      const dBody = Math.hypot(x - L.enemyX, y - (L.bodyY + 10 * L.s))
-      const head = dHead <= L.headR
-      // 캡슐 히트박스 판정: 캐릭터 주변 실루엣에 맞으면 너그럽게 몸통 명중 인정
-      const inBodyCapsule =
-        Math.abs(x - L.enemyX) <= L.bodyR * 1.12 &&
-        y >= L.headY - L.headR &&
-        y <= L.bodyY + 68 * L.s
-      const body = !head && (dBody <= L.bodyR || inBodyCapsule)
+      const hit = classifyHit(x, y, L)
+      const head = hit === 'head'
 
       tracersRef.current.push({
         x1: L.playerX + 24 * L.s,
@@ -788,82 +699,46 @@ export function Duel({
 
       spawnDust(x, y, 6)
 
-      if (!head && !body) {
-        if (hasRef.current('second_chance') && !secondChanceUsedRef.current && now < enemyShotAtRef.current) {
-          secondChanceUsedRef.current = true
-          setMessage('빗맞았다! 속사 리볼버 — 즉시 다시 쏴라!')
-          sfx.grip()
-          shakeRef.current = 4
-          return
-        }
+      const decision = decidePlayerShot({
+        hit,
+        rawMs: raw,
+        effectiveMs: effective,
+        enemyMs,
+        now,
+        enemyShotAt: enemyShotAtRef.current,
+        accuracy: effAccuracy(),
+        roll: Math.random(),
+        hasSecondChance: hasRef.current('second_chance'),
+        secondChanceUsed: secondChanceUsedRef.current,
+        hasBible: !!activeBuffsRef.current.bible,
+        bibleUsed: bibleUsedRef.current,
+      })
 
-        playerShotAtRef.current = now
-        const enemyHits = Math.random() < effAccuracy()
-        resolve({
-          won: false,
-          detail:
-            now >= enemyShotAtRef.current && enemyHits
-              ? '허공을 쐈다. 상대의 총알에 피격.'
-              : '허공을 쐈다! 조준이 빗나갔다.',
-          reactionMs: Math.round(raw),
-          grade: '-',
-          headshot: false,
-          foul: false,
-        })
+      if (decision.type === 'second_chance') {
+        secondChanceUsedRef.current = true
+        setMessage('빗맞았다! 속사 리볼버 — 즉시 다시 쏴라!')
+        sfx.grip()
+        shakeRef.current = 4
         return
       }
 
       playerShotAtRef.current = now
-      hitMarkRef.current = { x: L.enemyX, y: head ? L.headY : L.bodyY + 10 * L.s, head }
-
-      if (effective < enemyMs) {
-        spawnDust(L.enemyX, head ? L.headY : L.bodyY, head ? 24 : 16)
-        resolve({
-          won: true,
-          detail: head ? `헤드샷! ${Math.round(raw)}ms` : `선제 사격! ${Math.round(raw)}ms`,
-          reactionMs: Math.round(raw),
-          grade: gradeOf(raw),
-          headshot: head,
-          foul: false,
-        })
-        return
+      if (hit !== 'miss') {
+        hitMarkRef.current = { x: L.enemyX, y: head ? L.headY : L.bodyY + 10 * L.s, head }
       }
-
-      const diffMs = effective - enemyMs
-      // 근소한 차이(50ms 이내)로 늦었을 때 적 탄환이 빗나갈 확률 45% 보정 (극적인 역전 찬스)
-      const isCloseCall = diffMs <= 50
-      const enemyHitChance = isCloseCall ? effAccuracy() * 0.55 : effAccuracy()
-      const enemyHits = Math.random() < enemyHitChance
-
-      // 방탄 포켓 성경 버프 발동: 늦게 쐈더라도 성경이 총알을 막아내고 플레이어가 명중시킴
-      if (enemyHits && activeBuffsRef.current.bible && !bibleUsedRef.current) {
+      if (decision.bibleUsed) {
         bibleUsedRef.current = true
         sfx.shield()
         shakeRef.current = 14
         spawnDust(L.playerX, L.bodyY, 18)
         spawnDust(L.enemyX, head ? L.headY : L.bodyY, 16)
-        resolve({
-          won: true,
-          detail: `가슴의 포켓 성경이 총알을 튕겨냈다! 기적의 역전 명중! (${Math.round(raw)}ms)`,
-          reactionMs: Math.round(raw),
-          grade: gradeOf(raw),
-          headshot: head,
-          foul: false,
-        })
-        return
+      } else if (decision.outcome.won) {
+        spawnDust(L.enemyX, head ? L.headY : L.bodyY, head ? 24 : 16)
+      } else if (hit !== 'miss') {
+        spawnDust(L.playerX, L.bodyY, 16)
       }
 
-      spawnDust(enemyHits ? L.playerX : L.enemyX, L.bodyY, 16)
-      resolve({
-        won: !enemyHits,
-        detail: enemyHits
-          ? `한발 늦었다! 상대의 총알에 피격. (상대 ${Math.round(enemyMs)}ms)`
-          : `상대의 총알이 빗나갔다! 역전 명중 성공! (${Math.round(raw)}ms)`,
-        reactionMs: Math.round(raw),
-        grade: enemyHits ? '-' : gradeOf(raw),
-        headshot: head && !enemyHits,
-        foul: false,
-      })
+      resolve(decision.outcome)
     }
 
     /* ------------------------------ 렌더 루프 ------------------------------ */
@@ -1395,12 +1270,12 @@ export function Duel({
             </span>
           )}
           {activeBuffs.smoke && (
-            <span className="chip-buff chip-smoke" title="서부 연막탄: 상대 명중률 -20% 감소">
+            <span className="chip-buff chip-smoke" title={`서부 연막탄: 상대 명중률 -${Math.round(CONSUMABLE_EFFECTS.smokeAccuracy * 100)}% 감소`}>
               💨 연막탄
             </span>
           )}
           {activeBuffs.powder && (
-            <span className="chip-buff chip-powder" title="정밀 화약: 헤드샷 판정 범위 +40% 확대">
+            <span className="chip-buff chip-powder" title={`정밀 화약: 헤드샷 판정 범위 +${percentFromScale(CONSUMABLE_EFFECTS.powderHeadScale)}% 확대`}>
               🎯 정밀 화약
             </span>
           )}

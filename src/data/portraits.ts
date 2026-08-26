@@ -1,3 +1,4 @@
+import { FINAL_ROUND } from '../../shared/game'
 import type { Opponent, PortraitId } from '../types'
 
 /**
@@ -21,9 +22,6 @@ const DIR = '/portraits'
 
 /** 512px WebP. 원본 1536px PNG은 배포본에 넣지 않는다(장당 2MB). */
 const EXT = 'webp'
-
-/** 최종 라운드. 이 라운드 상대는 무조건 보스 초상화를 쓴다. */
-const FINAL_ROUND = 9
 
 /** 특징이 뚜렷한 9장. */
 const NAMED: Record<string, string> = {

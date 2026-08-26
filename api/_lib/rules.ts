@@ -4,43 +4,24 @@
  * 세 개의 엔드포인트가 공유하는 규칙 집합. 프롬프트에 넣는 "지시"와
  * 응답을 신뢰하지 않고 서버에서 강제하는 "검증"을 한 곳에 모은다.
  * 모델이 규칙을 어겨도 게임 밸런스가 깨지지 않는 것이 목표.
+ *
+ * 무드·평화 게이트는 shared/mood.ts — 클라이언트 폴백과 같은 파일이다.
  */
 
-export type Mood = 'calm' | 'angered' | 'intimidated' | 'scared' | 'suspicious'
+import { TOTAL_ROUNDS } from '../../shared/game.js'
+import { clamp, type Mood } from '../../shared/mood.js'
 
-export const MOODS: Mood[] = ['calm', 'angered', 'intimidated', 'scared', 'suspicious']
-
-/** mood별 허용 수치 범위. 프롬프트 안내와 서버 클램프가 같은 표를 쓴다. */
-export const MOOD_RANGES: Record<
-  Mood,
-  { reaction: [number, number]; accuracy: [number, number]; note: string }
-> = {
-  calm: {
-    reaction: [-20, 5],
-    accuracy: [0, 0.08],
-    note: '플레이어의 말이 시시했다. 상대는 오히려 집중한다 → 플레이어 불리',
-  },
-  angered: {
-    reaction: [-50, -15],
-    accuracy: [-0.2, -0.08],
-    note: '도발에 격분. 드로우는 빨라지지만 조준이 흔들린다 → 트레이드오프',
-  },
-  intimidated: {
-    reaction: [25, 70],
-    accuracy: [-0.08, -0.02],
-    note: '기세에 눌림. 손이 무거워진다 → 플레이어 유리',
-  },
-  scared: {
-    reaction: [60, 120],
-    accuracy: [-0.18, -0.06],
-    note: '공포. 드물게만 허용 → 플레이어 크게 유리',
-  },
-  suspicious: {
-    reaction: [15, 50],
-    accuracy: [-0.1, -0.03],
-    note: '텔을 간파당해 동요 → 플레이어 유리',
-  },
-}
+export { FAME_STREAK_THRESHOLD, MAX_STANDOFF_TURNS, TOTAL_ROUNDS } from '../../shared/game.js'
+export {
+  type Mood,
+  MOODS,
+  MOOD_RANGES,
+  clamp,
+  coerceDeltas,
+  coerceMood,
+  moodGuideText,
+  peaceAllowed,
+} from '../../shared/mood.js'
 
 /** 모든 엔드포인트 공통 출력 규칙 (토큰 최적화) */
 export const OUTPUT_RULES = `[출력 규칙]
@@ -114,7 +95,7 @@ export const PERSONA_LOCK = `[페르소나/가드레일]
 
 /** 라운드별 난이도 기준표 (generate + 검증 공용) */
 export function difficultySpec(round: number) {
-  const r = clamp(Math.round(round), 1, 9)
+  const r = clamp(Math.round(round), 1, TOTAL_ROUNDS)
   // R1: 580ms … R2: 520ms … R5: 395ms … R9: 285ms
   const reactionTable = [580, 520, 470, 430, 395, 365, 335, 310, 285]
   const accuracyTable = [0.42, 0.48, 0.54, 0.60, 0.66, 0.72, 0.78, 0.84, 0.88]
@@ -137,29 +118,7 @@ export const ARCHETYPES = [
   '그림자 없는 마지막 무법자 — 전지적이고 여유롭다. 오직 진심만이 닿는다',
 ]
 
-export function moodGuideText() {
-  return MOODS.map((m) => {
-    const r = MOOD_RANGES[m]
-    return `- ${m}: reactionDeltaMs [${r.reaction[0]}, ${r.reaction[1]}], accuracyDelta [${r.accuracy[0]}, ${r.accuracy[1]}]`
-  }).join('\n')
-}
-
-/**
- * 평화 엔딩 게이트.
- * 마지막 턴 + 설득에 맞는 심리 상태 + 라운드가 낮을수록 관대.
- */
-export function peaceAllowed(round: number, turn: number, mood: Mood) {
-  if (turn < 3) return false
-  if (round <= 3) return mood === 'scared' || mood === 'intimidated' || mood === 'suspicious'
-  if (round <= 6) return mood === 'scared' || mood === 'intimidated'
-  return mood === 'scared'
-}
-
 /* ------------------------------- 검증 유틸 ------------------------------- */
-
-export function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n))
-}
 
 const EMOJI =
   /[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]|\u{FE0F}|\uD83C[\uDDE6-\uDDFF]/gu
@@ -197,10 +156,6 @@ export function sanitizeLine(
   return s
 }
 
-export function coerceMood(input: unknown): Mood {
-  return MOODS.includes(input as Mood) ? (input as Mood) : 'calm'
-}
-
 /** sanitize 실패 시에도 대화 흐름이 끊기지 않게 mood별 짧은 대사 */
 export function dialogueFallback(mood: Mood): string {
   switch (mood) {
@@ -214,27 +169,6 @@ export function dialogueFallback(mood: Mood): string {
       return '뭘 그렇게 들여다보는 거야?'
     default:
       return '말은 됐고, 손을 볼까.'
-  }
-}
-
-/**
- * mood와 수치의 정합성 강제.
- * 모델이 범위를 벗어나거나 부호를 뒤집어 보내도 mood에 맞는 값으로 교정한다.
- */
-export function coerceDeltas(mood: Mood, reaction: unknown, accuracy: unknown) {
-  const range = MOOD_RANGES[mood]
-  const rNum = Number(reaction)
-  const aNum = Number(accuracy)
-  const rMid = (range.reaction[0] + range.reaction[1]) / 2
-  const aMid = (range.accuracy[0] + range.accuracy[1]) / 2
-
-  return {
-    reactionDeltaMs: Math.round(
-      clamp(Number.isFinite(rNum) ? rNum : rMid, range.reaction[0], range.reaction[1]),
-    ),
-    accuracyDelta: Number(
-      clamp(Number.isFinite(aNum) ? aNum : aMid, range.accuracy[0], range.accuracy[1]).toFixed(3),
-    ),
   }
 }
 
@@ -317,7 +251,7 @@ export function isModernKoreanName(input: string): boolean {
 
 /** 서부 무법자 본명 — 한국식 이름이면 라운드별 서양식 이름으로 교체 */
 export function sanitizeWesternName(input: unknown, round: number): string {
-  const fallback = WESTERN_NAME_FALLBACKS[(clamp(Math.round(round), 1, 9) - 1) % WESTERN_NAME_FALLBACKS.length]
+  const fallback = WESTERN_NAME_FALLBACKS[(clamp(Math.round(round), 1, TOTAL_ROUNDS) - 1) % WESTERN_NAME_FALLBACKS.length]
   const s = sanitizeLine(input, { max: 16, fallback })
   if (isModernKoreanName(s)) return fallback
   return s

@@ -1,3 +1,4 @@
+import { TOTAL_ROUNDS } from '../../shared/game'
 import { sfx } from '../audio/sfx'
 import { portraitSrc } from '../data/portraits'
 import type { Opponent } from '../types'
@@ -13,7 +14,7 @@ export function WantedPoster({ opponent, round, usedAi, onContinue }: Props) {
   return (
     <div className="screen wanted-screen">
       <p className="eyebrow">
-        ROUND {round} / 9 · {usedAi ? 'AI GENERATED' : 'FALLBACK DECK'}
+        ROUND {round} / {TOTAL_ROUNDS} · {usedAi ? 'AI GENERATED' : 'FALLBACK DECK'}
       </p>
       <article className="wanted-poster">
         <div className="wanted-stamp">DEAD OR ALIVE</div>

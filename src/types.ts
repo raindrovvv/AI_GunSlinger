@@ -1,3 +1,5 @@
+import type { Mood } from '../shared/mood'
+
 export type GamePhase =
   | 'title'
   | 'loading'
@@ -10,7 +12,7 @@ export type GamePhase =
   | 'victory'
   | 'gameover'
 
-export type MoodShift = 'intimidated' | 'angered' | 'calm' | 'scared' | 'suspicious'
+export type MoodShift = Mood
 
 /**
  * 초상화 에셋 식별자. api/_lib/rules.ts의 PORTRAIT_IDS와 같은 목록이며,
@@ -66,13 +68,6 @@ export interface NewspaperArticle {
   headline: string
   body: string
   quote: string
-}
-
-export interface GameStats {
-  round: number
-  wins: number
-  peaces: number
-  usedAi: boolean
 }
 
 /** 한 번의 런(시작~승리/패배) 결과 */
