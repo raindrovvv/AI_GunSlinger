@@ -1,3 +1,4 @@
+import type { Translator } from '../i18n/types'
 import type { DuelOutcome } from '../types'
 
 export type BossSetRecord = {
@@ -30,25 +31,16 @@ export function bossFeintChance(set: number) {
   return 0.85
 }
 
-export function nextSetBanner(nextSet: number, won: boolean) {
+export function nextSetBanner(nextSet: number, won: boolean, t: Translator) {
   if (nextSet === 2) {
     return won
-      ? {
-          title: 'PHASE 2 · 분노한 사신의 각성',
-          subtitle: '보스가 붉은 기운을 뿜으며 자세를 고쳐잡습니다! (반응속도 & 페인트 증가)',
-        }
-      : {
-          title: 'PHASE 2 · 반격의 기회',
-          subtitle: '아직 끝나지 않았다. 마음을 다잡고 방아쇠를 쥐어라!',
-        }
+      ? { title: t('boss.p2winT'), subtitle: t('boss.p2winS') }
+      : { title: t('boss.p2loseT'), subtitle: t('boss.p2loseS') }
   }
-  return {
-    title: 'FINAL PHASE · 최후의 일격 (1:1 동점)',
-    subtitle: '마지막 한 발로 모든 운명이 결정된다!',
-  }
+  return { title: t('boss.p3T'), subtitle: t('boss.p3S') }
 }
 
-export function applyBossSet(match: BossMatch, outcome: DuelOutcome): {
+export function applyBossSet(match: BossMatch, outcome: DuelOutcome, t: Translator): {
   match: BossMatch
   finished: boolean
   finalOutcome?: DuelOutcome
@@ -81,8 +73,8 @@ export function applyBossSet(match: BossMatch, outcome: DuelOutcome): {
         ...outcome,
         won: finalWon,
         detail: finalWon
-          ? `3판 2선승 대결 승리! (${playerScore}:${enemyScore}) 전설의 보스를 쓰러뜨렸다!`
-          : `3판 2선승 대결 패배... (${playerScore}:${enemyScore}) 마지막 사투에서 무릎 꿇다.`,
+          ? t('boss.win', { p: playerScore, e: enemyScore })
+          : t('boss.lose', { p: playerScore, e: enemyScore }),
         bossScore: {
           playerWins: playerScore,
           enemyWins: enemyScore,

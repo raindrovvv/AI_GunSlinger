@@ -136,7 +136,7 @@ export function formatReaction(ms: number | null | undefined): string {
 
 export function formatRunDate(at: number): string {
   try {
-    return new Date(at).toLocaleDateString('ko-KR', {
+    return new Date(at).toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',

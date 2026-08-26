@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { sfx } from '../audio/sfx'
 import { bgm } from '../audio/bgm'
-import { DEFAULT_PLAYER_NAME } from '../../shared/game'
+import { useT } from '../i18n/LocaleContext'
 
 interface Props {
   playerName?: string
@@ -20,9 +20,11 @@ interface Particle {
 }
 
 export function VictoryCutscene({
-  playerName = DEFAULT_PLAYER_NAME,
+  playerName,
   onComplete,
 }: Props) {
+  const t = useT()
+  const hero = playerName || t('player.default')
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [sceneIndex, setSceneIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
@@ -33,31 +35,31 @@ export function VictoryCutscene({
     () => [
       {
         eyebrow: 'DUST TOWN · HIGH NOON HAS PASSED',
-        title: '아홉 번째 총성이 멎고, 거리에 침묵이 내려앉았다.',
-        desc: '더스트 타운을 공포로 몰아넣었던 무법자들은 모두 무릎을 꿇었다.',
+        title: t('cut.s1t'),
+        desc: t('cut.s1d'),
         sfxTrigger: () => {
           sfx.holster()
         },
       },
       {
         eyebrow: 'THE UNVANQUISHED DRIFTER',
-        title: '피와 화약 연기로 얼룩졌던 황야에 마침내 평온이 깃든다.',
-        desc: '서부의 거친 바람마저 그의 발걸음 앞에서는 숨을 죽였다.',
+        title: t('cut.s2t'),
+        desc: t('cut.s2d'),
         sfxTrigger: () => {
           sfx.draw()
         },
       },
       {
         eyebrow: 'IMMORTAL WESTERN LEGEND',
-        title: `${playerName}, 황야의 불멸한 전설로 영원히 기억되다.`,
-        desc: '방아쇠를 당길 때마다 쓰여진 무용담은 이제 서부 전역의 노래가 되었다.',
+        title: t('cut.s3t', { name: hero }),
+        desc: t('cut.s3d'),
         sfxTrigger: () => {
           sfx.win()
           sfx.shield()
         },
       },
     ],
-    [playerName],
+    [hero, t],
   )
 
   const nextScene = useCallback(() => {
@@ -327,7 +329,7 @@ export function VictoryCutscene({
           onComplete()
         }}
       >
-        건너뛰기 (SKIP) ➔
+        {t('cut.skip')}
       </button>
 
       {/* Center Cinematic Content */}
@@ -354,7 +356,7 @@ export function VictoryCutscene({
           />
         ))}
       </div>
-      <p className="cutscene-hint">화면을 클릭하거나 스페이스바를 누르면 다음 장면으로 넘어갑니다</p>
+      <p className="cutscene-hint">{t('cut.hint')}</p>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { sfx } from '../audio/sfx'
-import { perkById } from '../data/perks'
+import { localizedPerk } from '../i18n/content'
+import { useT } from '../i18n/LocaleContext'
 import { PerkIcon } from './PerkIcon'
 import { downloadNewspaperImage } from '../canvas/newspaperImage'
 import { halftone, loadImage } from '../canvas/halftone'
@@ -39,6 +40,7 @@ export function Newspaper({
   onNext,
   isLast,
 }: Props) {
+  const t = useT()
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -51,17 +53,17 @@ export function Newspaper({
   const handleCopyText = async () => {
     sfx.click()
     const text = [
-      `📰 [DUST TOWN GAZETTE] ROUND ${round} 속보`,
+      t('paper.copyHead', { round }),
       `━━━━━━━━━━━━━━━━━━━━━━`,
       `[${status}] ${article.headline}`,
-      `상대: ${opponent.alias} (현상금 $${opponent.bounty.toLocaleString()})`,
+      t('paper.copyOpp', { alias: opponent.alias, bounty: opponent.bounty.toLocaleString() }),
       ``,
       article.body,
       article.quote ? `\n"${article.quote}"` : '',
       `━━━━━━━━━━━━━━━━━━━━━━`,
-      outcome?.reactionMs != null ? `⚡ 드로우 반응속도: ${outcome.reactionMs}ms` : '',
-      outcome?.headshot ? `💥 헤드샷 명중!` : '',
-      reward > 0 ? `💰 수령 현상금: $${reward.toLocaleString()}` : '',
+      outcome?.reactionMs != null ? t('paper.copyMs', { ms: outcome.reactionMs }) : '',
+      outcome?.headshot ? t('paper.copyHs') : '',
+      reward > 0 ? t('paper.copyPay', { n: reward.toLocaleString() }) : '',
       `👉 AI Gunslinger 플레이하기: https://ai-gunslinger.vercel.app`,
     ]
       .filter(Boolean)
@@ -103,7 +105,7 @@ export function Newspaper({
         <p className={`stamp stamp-${status.toLowerCase()}`}>{status}</p>
         <h2>{article.headline}</h2>
         <p className="byline">
-          {opponent.alias} — 현상금 ${opponent.bounty.toLocaleString()}
+          {t('paper.byline', { alias: opponent.alias, bounty: opponent.bounty.toLocaleString() })}
         </p>
         <NewspaperMug opponent={opponent} round={round} />
         <p className="body">{article.body}</p>
@@ -113,12 +115,12 @@ export function Newspaper({
           <div className="ledger">
             {reward > 0 && (
               <span>
-                수령 <strong>${reward.toLocaleString()}</strong>
+                {t('paper.reward')} <strong>${reward.toLocaleString()}</strong>
               </span>
             )}
             {outcome?.reactionMs != null && (
               <span>
-                드로우 <strong>{outcome.reactionMs}ms</strong>
+                {t('paper.draw')} <strong>{outcome.reactionMs}ms</strong>
               </span>
             )}
             {outcome?.grade && outcome.grade !== '-' && (
@@ -135,26 +137,26 @@ export function Newspaper({
           type="button"
           className="btn-newspaper-action"
           onClick={handleCopyText}
-          title="신문 기사 텍스트를 클립보드에 복사합니다"
+          title={t('paper.copyTip')}
         >
-          {copied ? '✓ 클립보드 복사 완료!' : '📋 기사 텍스트 복사'}
+          {copied ? t('paper.copied') : t('paper.copy')}
         </button>
         <button
           type="button"
           className="btn-newspaper-action"
           onClick={handleDownload}
-          title="1880년대 빈티지 신문 그래픽 PNG 이미지로 저장합니다"
+          title={t('paper.dlTip')}
         >
-          💾 신문 이미지 다운로드
+          {t('paper.download')}
         </button>
       </div>
 
       {showPicker && (
         <section className="perk-picker">
-          <h3>{pickedPerk ? '장비를 챙겼다' : '전리품 — 하나만 챙길 수 있다'}</h3>
+          <h3>{pickedPerk ? t('paper.picked') : t('paper.pick')}</h3>
           <div className="perk-cards">
             {perkChoices.map((id) => {
-              const perk = perkById(id)
+              const perk = localizedPerk(id, t)
               const selected = pickedPerk === id
               const dimmed = pickedPerk !== null && !selected
               return (
@@ -185,7 +187,7 @@ export function Newspaper({
           onNext()
         }}
       >
-        {playerWon || peace ? (isLast ? '전설이 되다' : '더스트 타운 잡화점 들르기 ➔') : '무덤에서 다시'}
+        {playerWon || peace ? (isLast ? t('paper.nextLast') : t('paper.nextStore')) : t('paper.retry')}
       </button>
     </div>
   )

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { TOTAL_ROUNDS } from '../shared/game'
 import { checkAiHealth, generateNewspaper, generateOpponent } from './api/client'
-import { getFameInfo } from './data/fame'
+import { useLocale } from './i18n/LocaleContext'
+import { localizedFame } from './i18n/content'
 import { parsePreviewSearch } from './data/preview'
 import { recordRun } from './data/records'
 import { loadStoredPlayerName } from './storage/playerName'
@@ -21,6 +22,7 @@ import type { ConsumableId, DuelMods, DuelOutcome, PerkId } from './types'
 import './App.css'
 
 export default function App() {
+  const { locale, setLocale, t } = useLocale()
   const preview = typeof window !== 'undefined' ? parsePreviewSearch(window.location.search) : null
   const [run, dispatch] = useReducer(runReducer, undefined, () =>
     createInitialRun(loadStoredPlayerName(), preview),
@@ -67,10 +69,10 @@ export default function App() {
   }, [])
 
   const startRound = useCallback(async (r: number, names: string[]) => {
-    dispatch({ type: 'LOADING', text: 'AI가 새로운 무법자를 쓰는 중…' })
-    const { opponent: opp, usedAi } = await generateOpponent(r, names)
+    dispatch({ type: 'LOADING', text: t('load.opponent') })
+    const { opponent: opp, usedAi } = await generateOpponent(r, names, locale)
     dispatch({ type: 'ROUND_READY', opponent: opp, usedAi })
-  }, [])
+  }, [locale, t])
 
   function handleStart(customName?: string) {
     dispatch({ type: 'START_RUN', playerName: customName })
@@ -91,6 +93,7 @@ export default function App() {
       isPeace,
       outcome,
       opponent: current.opponent,
+      loadingText: t('load.paper'),
     })
     dispatch({ type: 'COMMIT', state: next })
 
@@ -105,8 +108,9 @@ export default function App() {
       detail: outcome?.detail,
       playerName: current.playerName,
       streak: next.streak,
-      fameTitle: getFameInfo(next.streak).title,
+      fameTitle: localizedFame(next.streak, t).title,
       bossScore: outcome?.bossScore,
+      locale,
     })
     dispatch({ type: 'NEWSPAPER_READY', article: paper, usedAi })
   }
@@ -177,7 +181,8 @@ export default function App() {
   const usedAiAny = run.aiFlags.opponent || run.aiFlags.chat || run.aiFlags.paper
   const aiLive = usedAiAny || aiReachable === true
   const aiStatus =
-    aiReachable === null ? '… AI 확인 중' : aiLive ? '● LIVE AI' : '○ OFFLINE FALLBACK'
+    aiReachable === null ? t('chrome.aiChecking') : aiLive ? '● LIVE AI' : '○ OFFLINE FALLBACK'
+  const fame = localizedFame(run.streak, t)
   const inRun =
     run.phase !== 'title' &&
     run.phase !== 'cutscene' &&
@@ -197,16 +202,16 @@ export default function App() {
             <div className="loading-summary-chip">
               <span>
                 {run.lastOutcome.won
-                  ? '🎯 상대 제압'
+                  ? `🎯 ${t('load.win')}`
                   : run.lastOutcome.foul
-                    ? '⚠️ 반칙'
-                    : '💀 결투 패배'}
+                    ? `⚠️ ${t('load.foul')}`
+                    : `💀 ${t('load.lose')}`}
               </span>
               {run.lastOutcome.reactionMs != null && <span>⚡ {run.lastOutcome.reactionMs}ms</span>}
-              {run.lastOutcome.headshot && <span>💥 헤드샷!</span>}
+              {run.lastOutcome.headshot && <span>💥 {t('paper.copyHs')}</span>}
             </div>
           )}
-          <small>서부 전신이 메시지를 나르는 중…</small>
+          <small>{t('load.wire')}</small>
         </div>
       )}
 
@@ -300,10 +305,21 @@ export default function App() {
       <footer className="chrome">
         <div className="chrome-left">
           <span>AI GUNSLINGER</span>
+          <button
+            type="button"
+            className="chrome-lang-btn"
+            title={t('lang.toggleTitle')}
+            onClick={() => {
+              sfx.click()
+              setLocale(locale === 'ko' ? 'en' : 'ko')
+            }}
+          >
+            {t('lang.toggle')}
+          </button>
           <div className="chrome-bgm-ctrl">
             <button
               className="chrome-bgm-btn"
-              title={bgmMuted ? '배경음 켜기' : '배경음 끄기'}
+              title={bgmMuted ? t('chrome.bgmOn') : t('chrome.bgmOff')}
               onClick={() => {
                 bgm.unlock()
                 sfx.click()
@@ -319,7 +335,7 @@ export default function App() {
               max="1"
               step="0.05"
               value={bgmMuted ? 0 : bgmVolume}
-              title={`BGM 볼륨: ${Math.round(bgmVolume * 100)}%`}
+              title={t('chrome.volume', { n: Math.round(bgmVolume * 100) })}
               onChange={(e) => {
                 bgm.unlock()
                 const next = parseFloat(e.target.value)
@@ -336,10 +352,14 @@ export default function App() {
         </div>
         {inRun && (
           <span className="chrome-run">
-            R{run.round}/{TOTAL_ROUNDS} · 현상금 ${run.bounty.toLocaleString()}
+            {t('chrome.runBounty', {
+              round: run.round,
+              total: TOTAL_ROUNDS,
+              bounty: run.bounty.toLocaleString(),
+            })}
             {run.streak > 0 && (
-              <span style={{ color: getFameInfo(run.streak).color, marginLeft: 6 }}>
-                · {getFameInfo(run.streak).badge} ({run.streak}연승)
+              <span style={{ color: fame.color, marginLeft: 6 }}>
+                · {fame.badge} {t('chrome.streak', { n: run.streak })}
               </span>
             )}
           </span>

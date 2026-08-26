@@ -1,5 +1,7 @@
+import type { Locale } from '../../shared/locale'
 import type { DuelMods, MoodShift, NewspaperArticle, Opponent } from '../types'
 import { FALLBACK_OPPONENTS } from '../data/fallback'
+import { displayOpponent } from '../i18n/content'
 import { fallbackChat } from '../offline/chat'
 import { fallbackNewspaper } from '../offline/newspaper'
 
@@ -31,17 +33,22 @@ export async function checkAiHealth(): Promise<boolean> {
 export async function generateOpponent(
   round: number,
   previousNames: string[],
+  locale: Locale = 'ko',
 ): Promise<{ opponent: Opponent; usedAi: boolean }> {
   const data = await postJson<{ opponent: Opponent }>('/api/generate', {
     round,
     previousNames,
+    locale,
   })
   if (data?.opponent?.name) {
     return { opponent: data.opponent, usedAi: true }
   }
   const idx = Math.min(round - 1, FALLBACK_OPPONENTS.length - 1)
   return {
-    opponent: { ...FALLBACK_OPPONENTS[idx], id: `fb-${round}-${Date.now()}` },
+    opponent: displayOpponent(
+      { ...FALLBACK_OPPONENTS[idx], id: `fb-${round}-${Date.now()}` },
+      locale,
+    ),
     usedAi: false,
   }
 }
@@ -54,6 +61,7 @@ export async function standoffChat(params: {
   round: number
   streak?: number
   fameTitle?: string
+  locale?: Locale
 }): Promise<{
   reply: string
   mood: MoodShift
@@ -102,6 +110,7 @@ export async function generateNewspaper(params: {
     enemyWins: number
     totalSets: number
   }
+  locale?: Locale
 }): Promise<{ article: NewspaperArticle; usedAi: boolean }> {
   const data = await postJson<NewspaperArticle>('/api/newspaper', params)
   if (data?.headline) {

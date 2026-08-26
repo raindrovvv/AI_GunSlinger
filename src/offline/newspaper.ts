@@ -1,4 +1,5 @@
 import { DEFAULT_PLAYER_NAME, FAME_STREAK_THRESHOLD } from '../../shared/game'
+import type { Locale } from '../../shared/locale'
 import type { NewspaperArticle, Opponent } from '../types'
 
 const HEADSHOT_QUOTES = [
@@ -42,6 +43,47 @@ const DEFEAT_QUOTES = [
   '"관 치수는 넉넉하게 짜두겠소. 편히 쉬시오." — 관 짜는 목수',
 ]
 
+const HEADSHOT_QUOTES_EN = [
+  '"The hat left at a hell of an angle. Thought it was a pinwheel." — saloon upstairs',
+  '"Nearly drooled on the whiskey glass. Blink, and the brow was open." — the barkeep',
+  '"Even a fly ought to watch its forehead around that one." — Tom the smith',
+  '"Good I measured the box early. Cleanest headshot I ever sold." — Jack the undertaker',
+  '"Never saw the hand move. Thought the devil had come west." — a stage passenger',
+  '"Extra! Extra! Next brow open before the ink dried!" — Charlie the paper boy',
+]
+
+const FAST_WIN_QUOTES_EN = [
+  '"Over before the beer head died. Never saw a monster like that." — a regular',
+  '"The trigger was louder than thunder. Heart dropped." — a deputy on walk',
+  '"No time to lay a bet. The table went over!" — a poker man',
+  '"I ought to frame that casing." — the smith\'s boy',
+  '"The air still smells torn." — an old soldier',
+  '"That muzzle beat the reaper\'s scythe." — an old miner',
+]
+
+const COMEBACK_QUOTES_EN = [
+  '"Their slug kissed his ear! Near had a heart stop." — a rancher passing',
+  '"I held a royal flush and dumped it at the shot! You owe me!" — saloon gambler',
+  '"Went to the door of hell and came back on one trigger." — a stage driver',
+  '"Had the lid nails ready. Wrong customer." — Jack the undertaker',
+]
+
+const PEACE_QUOTES_EN = [
+  '"Came for a fight with a drink. Left with the drink. No blood, thank God." — the barkeep',
+  '"Talked a gun down better than the preacher." — the padre',
+  '"No boxes sold today. Quiet is fine by me." — Jack the undertaker',
+  '"First man I saw walk out of the West without firing." — an old hunter',
+  '"Buy a round for the life you kept." — a cowboy passing',
+]
+
+const DEFEAT_QUOTES_EN = [
+  '"Forgot how to draw, I reckon. Mind the road down." — Jack the undertaker',
+  '"Hid under the table and broke two bottles. Take it off that bounty." — the barkeep',
+  '"All mouth, then ate desert dust." — a saloon watcher',
+  '"Saw the eyes? Lost before the iron cleared." — a cowboy passing',
+  '"I will cut the box generous. Rest easy." — the coffin man',
+]
+
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
@@ -57,6 +99,7 @@ export function fallbackNewspaper(params: {
   playerName?: string
   streak?: number
   fameTitle?: string
+  locale?: Locale
 }): NewspaperArticle {
   const {
     opponent,
@@ -69,51 +112,72 @@ export function fallbackNewspaper(params: {
     detail,
     streak = 0,
     fameTitle,
+    locale = 'ko',
   } = params
-  const fameTag = streak >= FAME_STREAK_THRESHOLD && fameTitle ? `${streak}연승의 '${fameTitle}' ` : ''
-  const hero = playerName?.trim() || DEFAULT_PLAYER_NAME
+  const en = locale === 'en'
+  const fameTag =
+    streak >= FAME_STREAK_THRESHOLD && fameTitle
+      ? en
+        ? `${fameTitle} on a ${streak}-win streak `
+        : `${streak}연승의 '${fameTitle}' `
+      : ''
+  const hero = playerName?.trim() || (en ? 'Nameless Gunslinger' : DEFAULT_PLAYER_NAME)
 
   if (peace) {
     return {
-      headline: `총성 없는 정오, ${opponent.alias} 물러서다`,
-      body: `모두가 총성을 기다렸다. 그러나 ${opponent.name}은 손을 멈췄고, ${hero}도 총을 뽑지 않았다. 마을 사람들은 아직 그 침묵을 이야기한다.`,
-      quote: pickRandom(PEACE_QUOTES),
+      headline: en ? `A noon without a shot — ${opponent.alias} steps off` : `총성 없는 정오, ${opponent.alias} 물러서다`,
+      body: en
+        ? `The town waited on a bang. ${opponent.name} stopped the hand, and ${hero} never drew. They still talk about that quiet.`
+        : `모두가 총성을 기다렸다. 그러나 ${opponent.name}은 손을 멈췄고, ${hero}도 총을 뽑지 않았다. 마을 사람들은 아직 그 침묵을 이야기한다.`,
+      quote: pickRandom(en ? PEACE_QUOTES_EN : PEACE_QUOTES),
     }
   }
 
   if (playerWon) {
     if (headshot) {
       return {
-        headline: `전광석화 헤드샷! ${fameTag}${hero} 완승`,
-        body: `제${round}차 결투. 단 한 발의 총성이 정적을 깼다. ${fameTag}${hero}는 ${reactionMs ? `${reactionMs}ms만에 ` : ''}${opponent.name}의 모자를 꿰뚫는 결정타를 날렸다.`,
-        quote: pickRandom(HEADSHOT_QUOTES),
+        headline: en ? `Lightning headshot! ${fameTag}${hero} takes it` : `전광석화 헤드샷! ${fameTag}${hero} 완승`,
+        body: en
+          ? `Round ${round}. One shot broke the hush. ${fameTag}${hero} put a hole through ${opponent.name}'s hat${reactionMs ? ` in ${reactionMs}ms` : ''}.`
+          : `제${round}차 결투. 단 한 발의 총성이 정적을 깼다. ${fameTag}${hero}는 ${reactionMs ? `${reactionMs}ms만에 ` : ''}${opponent.name}의 모자를 꿰뚫는 결정타를 날렸다.`,
+        quote: pickRandom(en ? HEADSHOT_QUOTES_EN : HEADSHOT_QUOTES),
       }
     }
-    if (detail?.includes('역전')) {
+    if (detail && /역전|turned|Miracle|comeback/i.test(detail)) {
       return {
-        headline: `기적의 역전승! ${opponent.alias} 쓰러지다`,
-        body: `제${round}차 결투. ${opponent.name}의 총알이 아슬아슬하게 빗나간 찰나, ${fameTag}${hero}의 반격이 상대를 정확히 쓰러뜨렸다.`,
-        quote: pickRandom(COMEBACK_QUOTES),
+        headline: en ? `A miracle turn! ${opponent.alias} falls` : `기적의 역전승! ${opponent.alias} 쓰러지다`,
+        body: en
+          ? `Round ${round}. ${opponent.name}'s slug missed by a hair, and ${fameTag}${hero} put them down on the answer.`
+          : `제${round}차 결투. ${opponent.name}의 총알이 아슬아슬하게 빗나간 찰나, ${fameTag}${hero}의 반격이 상대를 정확히 쓰러뜨렸다.`,
+        quote: pickRandom(en ? COMEBACK_QUOTES_EN : COMEBACK_QUOTES),
       }
     }
     return {
-      headline: `${fameTag}${hero}, ${opponent.alias} 격파 ($${opponent.bounty.toLocaleString()})`,
-      body: `제${round}차 결투. ${hero}는 ${opponent.name}이 숨기지 못한 버릇(${opponent.tell.slice(0, 12)}…)을 읽고 반 박자 앞섰다. ${streak >= FAME_STREAK_THRESHOLD ? `${streak}연승의 소문은 이미 서부 전역으로 퍼졌다.` : '소문은 이미 다음 마을까지 갔다.'}`,
-      quote: pickRandom(FAST_WIN_QUOTES),
+      headline: en
+        ? `${fameTag}${hero} drops ${opponent.alias} ($${opponent.bounty.toLocaleString()})`
+        : `${fameTag}${hero}, ${opponent.alias} 격파 ($${opponent.bounty.toLocaleString()})`,
+      body: en
+        ? `Round ${round}. ${hero} read the tell ${opponent.name} could not hide (${opponent.tell.slice(0, 24)}…) and beat the beat. ${streak >= FAME_STREAK_THRESHOLD ? `The ${streak}-win rumor already rides the whole West.` : 'The rumor already hit the next town.'}`
+        : `제${round}차 결투. ${hero}는 ${opponent.name}이 숨기지 못한 버릇(${opponent.tell.slice(0, 12)}…)을 읽고 반 박자 앞섰다. ${streak >= FAME_STREAK_THRESHOLD ? `${streak}연승의 소문은 이미 서부 전역으로 퍼졌다.` : '소문은 이미 다음 마을까지 갔다.'}`,
+      quote: pickRandom(en ? FAST_WIN_QUOTES_EN : FAST_WIN_QUOTES),
     }
   }
 
-  if (detail?.includes('허공')) {
+  if (detail && /허공|air|shot air/i.test(detail)) {
     return {
-      headline: `조준 실패, ${hero} 쓰러지다`,
-      body: `제${round}차 결투. ${hero}의 총알이 허공을 가르는 사이, ${opponent.name}의 냉혹한 사격이 결투를 끝냈다.`,
-      quote: pickRandom(DEFEAT_QUOTES),
+      headline: en ? `Aim gone wild — ${hero} falls` : `조준 실패, ${hero} 쓰러지다`,
+      body: en
+        ? `Round ${round}. ${hero} shot the air, and ${opponent.name}'s cold iron ended it.`
+        : `제${round}차 결투. ${hero}의 총알이 허공을 가르는 사이, ${opponent.name}의 냉혹한 사격이 결투를 끝냈다.`,
+      quote: pickRandom(en ? DEFEAT_QUOTES_EN : DEFEAT_QUOTES),
     }
   }
 
   return {
-    headline: `${hero}, ${opponent.alias}에게 지다`,
-    body: `너무 빨랐거나, 너무 늦었다. ${opponent.name}의 총구가 먼저 불을 뿜었고 거리에는 먼지만 남았다. 관 짜는 목수만 바빴다.`,
-    quote: pickRandom(DEFEAT_QUOTES),
+    headline: en ? `${hero} loses to ${opponent.alias}` : `${hero}, ${opponent.alias}에게 지다`,
+    body: en
+      ? `Too fast, or too late. ${opponent.name}'s muzzle spoke first and the street kept only dust. The coffin man stayed busy.`
+      : `너무 빨랐거나, 너무 늦었다. ${opponent.name}의 총구가 먼저 불을 뿜었고 거리에는 먼지만 남았다. 관 짜는 목수만 바빴다.`,
+    quote: pickRandom(en ? DEFEAT_QUOTES_EN : DEFEAT_QUOTES),
   }
 }

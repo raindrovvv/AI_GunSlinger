@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { DEFAULT_PLAYER_NAME } from '../../shared/game'
 import { sfx } from '../audio/sfx'
-import { getFameInfo } from '../data/fame'
-import { formatRank, getPlayerId, submitRun, type RankResult, type TopBoardEntry } from '../data/ranking'
-import { perkById } from '../data/perks'
+import { getPlayerId, submitRun, type RankResult, type TopBoardEntry } from '../data/ranking'
+import { localizedFame, localizedPerk } from '../i18n/content'
+import { useT } from '../i18n/LocaleContext'
 import type { CareerStats, PerkId, RunRecord } from '../types'
 import { PerkIcon } from './PerkIcon'
 import { RankingModal } from './RankingModal'
@@ -62,11 +61,13 @@ export function Ending({
   victory,
   career,
   lastRun,
-  playerName = DEFAULT_PLAYER_NAME,
+  playerName,
   onRestart,
   onReplayCutscene,
 }: Props) {
-  const runFame = getFameInfo(lastRun.bestStreak)
+  const t = useT()
+  const hero = playerName || t('player.default')
+  const runFame = localizedFame(lastRun.bestStreak, t)
 
   // 서부 명부: 런이 끝나면 커리어 최고 기록을 올리고 순위를 받아온다.
   // 서버가 없거나 느리면 board가 null로 남고, 순위 영역은 그냥 나타나지 않는다.
@@ -75,7 +76,7 @@ export function Ending({
   useEffect(() => {
     let alive = true
     submitRun({
-      name: playerName,
+      name: hero,
       drawMs: career.bestReactionMs,
       bounty: career.bestBounty,
       wins: career.totalWins,
@@ -85,7 +86,7 @@ export function Ending({
     return () => {
       alive = false
     }
-  }, [playerName, career.bestReactionMs, career.bestBounty, career.totalWins])
+  }, [hero, career.bestReactionMs, career.bestBounty, career.totalWins])
 
   const [displayedBounty, setDisplayedBounty] = useState(() => (victory ? 0 : bounty))
 
@@ -131,17 +132,15 @@ export function Ending({
             <span className="star-symbol">★</span>
           </div>
         ) : (
-          <p className="eyebrow">BOOT HILL · 황야의 묘지</p>
+          <p className="eyebrow">{t('end.grave')}</p>
         )}
         <h1 className="ending-hero-title">
           {victory
-            ? `${playerName}, 마을의 전설이 되다`
-            : `${playerName}, 먼지가 되었다`}
+            ? t('end.winTitle', { name: hero })
+            : t('end.loseTitle', { name: hero })}
         </h1>
         <p className="ending-hero-sub">
-          {victory
-            ? '모든 무법자를 꺾고 더스트 타운에 영원한 평화를 가져온 진정한 영웅'
-            : '거친 서부의 총구 앞에 스러진 또 하나의 방랑자'}
+          {victory ? t('end.winSub') : t('end.loseSub')}
         </p>
       </div>
 
@@ -151,20 +150,20 @@ export function Ending({
         <div className="ending-left-panel">
           {board && (hasPersonalRank || hasTopLists) && (
             <div className="registry-board">
-              <span className="registry-board-label">서부 명부 · 세계 순위</span>
+              <span className="registry-board-label">{t('end.registry')}</span>
               {hasPersonalRank && (
                 <div className="registry-cols">
                   {board.draw && (
                     <div className="registry-col">
-                      <span className="registry-col-name">내 최속 드로우</span>
-                      <strong className="registry-col-rank">{formatRank(board.draw.rank)}</strong>
+                      <span className="registry-col-name">{t('end.myDraw')}</span>
+                      <strong className="registry-col-rank">{t('rank.nth', { n: board.draw.rank })}</strong>
                       <span className="registry-col-val">{board.draw.value}ms</span>
                     </div>
                   )}
                   {board.bounty && (
                     <div className="registry-col">
-                      <span className="registry-col-name">내 최고 현상금</span>
-                      <strong className="registry-col-rank">{formatRank(board.bounty.rank)}</strong>
+                      <span className="registry-col-name">{t('end.myBounty')}</span>
+                      <strong className="registry-col-rank">{t('rank.nth', { n: board.bounty.rank })}</strong>
                       <span className="registry-col-val">${board.bounty.value.toLocaleString()}</span>
                     </div>
                   )}
@@ -173,13 +172,13 @@ export function Ending({
               {hasTopLists && (
                 <div className="registry-toplists">
                   <TopList
-                    title="최속 드로우 TOP 10"
+                    title={t('end.topDraw')}
                     entries={board.topDraw ?? []}
                     formatValue={(v) => `${v}ms`}
                     myId={myId}
                   />
                   <TopList
-                    title="최고 현상금 TOP 10"
+                    title={t('end.topBounty')}
                     entries={board.topBounty ?? []}
                     formatValue={(v) => `$${v.toLocaleString()}`}
                     myId={myId}
@@ -194,7 +193,7 @@ export function Ending({
                   setShowRanking(true)
                 }}
               >
-                명부 전체 보기 (TOP 100) ➔
+                {t('end.more')}
               </button>
             </div>
           )}
@@ -203,19 +202,19 @@ export function Ending({
 
           <div className="ending-stats-compact">
             <div className="stat-card">
-              <span className="stat-label">결투 승리</span>
+              <span className="stat-label">{t('end.duelWins')}</span>
               <strong className="stat-val">{wins}</strong>
             </div>
             <div className="stat-card">
-              <span className="stat-label">평화 해결</span>
+              <span className="stat-label">{t('end.peaces')}</span>
               <strong className="stat-val">{peaces}</strong>
             </div>
             <div className="stat-card highlight">
-              <span className="stat-label">누적 현상금</span>
+              <span className="stat-label">{t('end.bounty')}</span>
               <strong className="stat-val bounty-val">${displayedBounty.toLocaleString()}</strong>
             </div>
             <div className="stat-card">
-              <span className="stat-label">최고 명성</span>
+              <span className="stat-label">{t('end.fame')}</span>
               <strong className="stat-val fame-val" style={{ color: runFame.color }}>
                 {runFame.badge}
               </strong>
@@ -225,10 +224,10 @@ export function Ending({
           {/* Equipped Perks Strip */}
           {perks.length > 0 && (
             <div className="ending-perks-compact">
-              <span className="ending-section-label">장착 전리품</span>
+              <span className="ending-section-label">{t('end.gear')}</span>
               <div className="perk-chips-row">
                 {perks.map((id) => {
-                  const perk = perkById(id)
+                  const perk = localizedPerk(id, t)
                   return (
                     <span key={id} className="perk-chip" title={perk.desc}>
                       <PerkIcon id={id} size={14} />
@@ -244,8 +243,8 @@ export function Ending({
           <div className="ending-chronicle-compact">
             <p className="blurb">
               {victory
-                ? '“그의 손은 번개보다 빨랐고, 그의 눈은 석양보다 뜨거웠다. 더스트 타운의 거리는 그의 이름을 영원히 기억할 것이다.”'
-                : '서부는 잔인하다. 바람 속에 흩어진 이름을 다시 새기기 위해 홀스터를 고쳐 매라.'}
+                ? t('end.winQuote')
+                : t('end.loseQuote')}
             </p>
           </div>
         </div>
@@ -267,7 +266,7 @@ export function Ending({
               onReplayCutscene()
             }}
           >
-            🎬 컷씬 다시보기
+            {t('end.replay')}
           </button>
         )}
         <button
@@ -278,7 +277,7 @@ export function Ending({
             onRestart()
           }}
         >
-          처음부터 다시 도전 ➔
+          {t('end.retry')}
         </button>
       </div>
     </div>

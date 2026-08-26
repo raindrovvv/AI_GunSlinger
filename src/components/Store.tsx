@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { sfx } from '../audio/sfx'
 import { CONSUMABLE_ITEMS, PERK_BUY_PRICE, PERK_REROLL_PRICE } from '../data/shop'
-import { perkById, rollPerkChoices } from '../data/perks'
+import { rollPerkChoices } from '../data/perks'
+import { localizedItem, localizedPerk } from '../i18n/content'
+import { useT } from '../i18n/LocaleContext'
 import { PerkIcon } from './PerkIcon'
 import type { ActiveBuffs, ConsumableId, PerkId } from '../types'
 
@@ -26,6 +28,7 @@ export function Store({
   onSpendBounty,
   onNext,
 }: Props) {
+  const t = useT()
   const [shopPerks, setShopPerks] = useState<PerkId[]>(() => rollPerkChoices(perks, 3))
   const [storeMessage, setStoreMessage] = useState<string | null>(null)
 
@@ -36,45 +39,45 @@ export function Store({
 
   const handleBuyConsumable = (id: ConsumableId, price: number) => {
     if (activeBuffs[id]) {
-      showMsg('이미 해당 보급품을 보유하고 있습니다.')
+      showMsg(t('store.haveItem'))
       return
     }
     if (bounty < price) {
       sfx.warn()
-      showMsg('현상금이 부족합니다! 무법자를 더 잡고 오시오.')
+      showMsg(t('store.brokeHunt'))
       return
     }
     sfx.coin()
     onBuyConsumable(id, price)
-    showMsg('구매 완료! 다음 라운드에 즉시 발동됩니다.')
+    showMsg(t('store.bought'))
   }
 
   const handleBuyPerk = (id: PerkId) => {
     if (perks.includes(id)) {
-      showMsg('이미 장착 중인 전리품입니다.')
+      showMsg(t('store.havePerk'))
       return
     }
     if (bounty < PERK_BUY_PRICE) {
       sfx.warn()
-      showMsg('현상금이 부족합니다!')
+      showMsg(t('store.broke'))
       return
     }
     sfx.coin()
     onBuyPerk(id, PERK_BUY_PRICE)
     setShopPerks((prev) => prev.filter((p) => p !== id))
-    showMsg('특수 전리품을 획득했습니다!')
+    showMsg(t('store.gotPerk'))
   }
 
   const handleRerollPerks = () => {
     if (bounty < PERK_REROLL_PRICE) {
       sfx.warn()
-      showMsg('새로고침을 위한 $200가 부족합니다.')
+      showMsg(t('store.rerollBroke'))
       return
     }
     if (onSpendBounty(PERK_REROLL_PRICE)) {
       sfx.coin()
       setShopPerks(rollPerkChoices(perks, 3))
-      showMsg('새로운 암시장 전리품 목록이 도착했습니다.')
+      showMsg(t('store.rerolled'))
     }
   }
 
@@ -86,13 +89,11 @@ export function Store({
         <p className="eyebrow">ROUND {round} · DUST TOWN GENERAL STORE</p>
         <div className="store-header-box">
           <div className="store-title-group">
-            <h2 className="store-title">더스트 타운 잡화점 & 살룬</h2>
-            <p className="store-sub">
-              "피를 흘리기 싫다면 장비에 돈을 아끼지 마시오."
-            </p>
+            <h2 className="store-title">{t('store.title')}</h2>
+            <p className="store-sub">{t('store.quote')}</p>
           </div>
           <div className="store-wallet">
-            <span className="wallet-label">보유 현상금</span>
+            <span className="wallet-label">{t('store.wallet')}</span>
             <strong className="wallet-amount">${bounty.toLocaleString()}</strong>
           </div>
         </div>
@@ -104,11 +105,12 @@ export function Store({
         {/* 1. 결투 / 대치 1회성 보급품 */}
         <section className="store-section">
           <div className="section-title-row">
-            <h3>1회성 결투 보급품 (다음 라운드 적용)</h3>
-            <span className="section-badge">활성 보급: {activeBuffCount}개</span>
+            <h3>{t('store.consumables')}</h3>
+            <span className="section-badge">{t('store.active', { n: activeBuffCount })}</span>
           </div>
           <div className="store-grid consumables-grid">
-            {CONSUMABLE_ITEMS.map((item) => {
+            {CONSUMABLE_ITEMS.map((raw) => {
+              const item = localizedItem(raw.id, t)
               const active = !!activeBuffs[item.id]
               const affordable = bounty >= item.price
               return (
@@ -118,7 +120,7 @@ export function Store({
                 >
                   <div className="item-card-top">
                     <span className="item-icon" aria-hidden>{item.icon}</span>
-                    <span className={`item-tag tag-${item.tag}`}>{item.tag}</span>
+                    <span className={`item-tag tag-${raw.tag}`}>{t(`tag.${raw.tag}`)}</span>
                   </div>
                   <strong className="item-name">{item.name}</strong>
                   <p className="item-desc">{item.desc}</p>
@@ -130,7 +132,7 @@ export function Store({
                       disabled={active}
                       onClick={() => handleBuyConsumable(item.id, item.price)}
                     >
-                      {active ? '✓ 장착 중' : '구매'}
+                      {active ? t('store.equipped') : t('store.buy')}
                     </button>
                   </div>
                 </div>
@@ -142,18 +144,18 @@ export function Store({
         {/* 2. 전리품 상점 */}
         <section className="store-section">
           <div className="section-title-row">
-            <h3>암시장 특수 전리품 (지속 패시브)</h3>
+            <h3>{t('store.perks')}</h3>
             <button
               type="button"
               className="btn btn-reroll"
               onClick={handleRerollPerks}
             >
-              🎲 목록 새로고침 (${PERK_REROLL_PRICE})
+              🎲 {t('store.reroll', { n: PERK_REROLL_PRICE })}
             </button>
           </div>
           <div className="store-grid perks-grid">
             {shopPerks.map((id) => {
-              const perk = perkById(id)
+              const perk = localizedPerk(id, t)
               const owned = perks.includes(id)
               const affordable = bounty >= PERK_BUY_PRICE
               return (
@@ -163,7 +165,7 @@ export function Store({
                 >
                   <div className="item-card-top">
                     <PerkIcon id={id} />
-                    <span className="item-tag tag-패시브">패시브</span>
+                    <span className="item-tag tag-패시브">{t('store.passive')}</span>
                   </div>
                   <strong className="item-name">{perk.name}</strong>
                   <p className="item-desc">{perk.desc}</p>
@@ -175,7 +177,7 @@ export function Store({
                       disabled={owned}
                       onClick={() => handleBuyPerk(id)}
                     >
-                      {owned ? '✓ 보유 중' : '구매'}
+                      {owned ? t('store.owned') : t('store.buy')}
                     </button>
                   </div>
                 </div>
@@ -195,7 +197,7 @@ export function Store({
             onNext()
           }}
         >
-          거리로 나서기 (다음 결투) ➔
+          {t('store.next')}
         </button>
       </div>
     </div>

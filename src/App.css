@@ -473,45 +473,81 @@ input {
   --paper-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }
 
-/* Wanted */
+/* Wanted — 벽에 못 박힌 1880년대 현상수배지 */
 .wanted-poster {
-  width: min(400px, 100%);
-  background:
-    var(--paper-noise),
-    radial-gradient(circle at 82% 12%, rgba(140, 92, 40, 0.16), transparent 22%),
-    radial-gradient(circle at 12% 88%, rgba(120, 74, 30, 0.14), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 30%),
-    repeating-linear-gradient(0deg, #efe2c0, #efe2c0 2px, #e8d8b0 2px, #e8d8b0 4px);
-  background-blend-mode: multiply, normal, normal, normal, normal;
-  color: var(--paper-ink);
-  padding: 28px 22px 30px;
-  border: 10px double #3a2518;
-  box-shadow:
-    8px 14px 0 rgba(0, 0, 0, 0.4),
-    inset 0 0 40px rgba(90, 50, 20, 0.2),
-    inset 0 0 90px rgba(60, 30, 8, 0.12);
+  --wanted-ink: #1c120b;
+  --wanted-blood: #7a1a16;
+  width: min(30rem, calc(100vw - 48px));
+  max-width: 480px;
+  color: var(--wanted-ink);
+  padding: 34px 34px 28px;
+  position: relative;
   transform-origin: 50% 0%;
   transform: rotate(-1.2deg);
-  position: relative;
+  background:
+    var(--paper-noise),
+    radial-gradient(ellipse at 18% 8%, rgba(70, 40, 16, 0.22), transparent 28%),
+    radial-gradient(ellipse at 86% 18%, rgba(110, 62, 22, 0.2), transparent 26%),
+    radial-gradient(ellipse at 12% 92%, rgba(90, 48, 18, 0.28), transparent 32%),
+    radial-gradient(ellipse at 78% 86%, rgba(60, 32, 12, 0.2), transparent 28%),
+    linear-gradient(185deg, rgba(255, 244, 214, 0.35), transparent 42%),
+    repeating-linear-gradient(0deg, #ead4a6, #ead4a6 2px, #e0c58f 2px, #e0c58f 4px);
+  background-blend-mode: multiply, multiply, multiply, multiply, multiply, soft-light, normal;
+  box-shadow: inset 0 0 70px rgba(70, 38, 12, 0.28);
+  clip-path: polygon(
+    2.4% 0.8%, 7% 2.2%, 13% 0.4%, 21% 1.8%, 30% 0.3%, 39% 2%, 50% 0.5%, 61% 1.7%,
+    71% 0.4%, 81% 2.1%, 90% 0.6%, 97.2% 1.4%, 98.8% 7%, 96.4% 13%, 99.2% 20%,
+    96.8% 28%, 99.4% 36%, 96.2% 44%, 99.1% 53%, 96.6% 61%, 99.3% 70%, 96.4% 78%,
+    98.8% 86%, 96.8% 93%, 98.4% 98.6%, 90% 97.2%, 81% 99.4%, 71% 97.4%, 60% 99.2%,
+    49% 97.6%, 38% 99.3%, 27% 97.3%, 17% 99.1%, 8% 97.6%, 1.6% 98.8%, 3.4% 91%,
+    0.6% 83%, 3.6% 74%, 0.4% 65%, 3.2% 56%, 0.7% 47%, 3.8% 38%, 0.5% 29%,
+    3.4% 20%, 0.8% 12%, 3.2% 5%
+  );
+  filter: drop-shadow(10px 16px 0 rgba(0, 0, 0, 0.42));
   animation:
     posterDrop 0.5s cubic-bezier(0.22, 1, 0.36, 1),
     paperWindFlutter 6s ease-in-out 0.5s infinite;
-  will-change: transform, box-shadow;
+  will-change: transform, filter;
 }
 
-/* 벽에 박아둔 못 */
+/* 타들어간 가장자리 + 접힌 자국 */
 .wanted-poster::after {
   content: "";
   position: absolute;
-  top: -4px;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 48%, rgba(70, 40, 16, 0.1) 50%, transparent 52%),
+    radial-gradient(ellipse at 50% 0%, rgba(40, 22, 8, 0.28), transparent 26%),
+    radial-gradient(ellipse at 50% 100%, rgba(40, 22, 8, 0.22), transparent 24%);
+  box-shadow: inset 0 0 0 3px #2a1810, inset 0 0 0 7px #cbb48a, inset 0 0 0 9px #2a1810;
+}
+
+.wanted-nail {
+  position: absolute;
+  top: 8px;
   left: 50%;
-  width: 12px;
-  height: 12px;
-  margin-left: -6px;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #b9a37a, #4a3a20 70%, #241a0c);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
-  z-index: 2;
+  background: radial-gradient(circle at 32% 28%, #d8c49a, #5a4630 62%, #1c140c);
+  box-shadow:
+    0 2px 3px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 236, 190, 0.45);
+  z-index: 3;
+}
+
+.wanted-nail::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  width: 1px;
+  height: 18px;
+  margin-left: -0.5px;
+  background: linear-gradient(#5a3d24, transparent);
+  opacity: 0.45;
 }
 
 @keyframes posterDrop {
@@ -525,84 +561,139 @@ input {
   }
 }
 
-/* 종이가 서부 모래바람에 살짝 날리고 펄럭이는 애니메이션 */
 @keyframes paperWindFlutter {
   0% {
     transform: rotateZ(-1.2deg) rotateX(0deg) rotateY(0deg);
-    box-shadow:
-      8px 14px 0 rgba(0, 0, 0, 0.4),
-      inset 0 0 40px rgba(90, 50, 20, 0.2),
-      inset 0 0 90px rgba(60, 30, 8, 0.12);
+    filter: drop-shadow(10px 16px 0 rgba(0, 0, 0, 0.42));
   }
   22% {
     transform: rotateZ(-0.4deg) rotateX(2.8deg) rotateY(-1.4deg) translate3d(2px, 0, 0);
-    box-shadow:
-      11px 18px 10px rgba(0, 0, 0, 0.35),
-      inset 0 0 40px rgba(90, 50, 20, 0.2),
-      inset 0 0 90px rgba(60, 30, 8, 0.12);
+    filter: drop-shadow(13px 20px 6px rgba(0, 0, 0, 0.34));
   }
   48% {
     transform: rotateZ(-2deg) rotateX(1.2deg) rotateY(1.6deg);
-    box-shadow:
-      7px 12px 6px rgba(0, 0, 0, 0.44),
-      inset 0 0 40px rgba(90, 50, 20, 0.2),
-      inset 0 0 90px rgba(60, 30, 8, 0.12);
+    filter: drop-shadow(8px 13px 4px rgba(0, 0, 0, 0.44));
   }
   74% {
     transform: rotateZ(-0.8deg) rotateX(3.4deg) rotateY(-0.8deg) translate3d(3px, 0, 0);
-    box-shadow:
-      13px 20px 12px rgba(0, 0, 0, 0.32),
-      inset 0 0 40px rgba(90, 50, 20, 0.2),
-      inset 0 0 90px rgba(60, 30, 8, 0.12);
+    filter: drop-shadow(14px 22px 8px rgba(0, 0, 0, 0.3));
   }
   100% {
     transform: rotateZ(-1.2deg) rotateX(0deg) rotateY(0deg);
-    box-shadow:
-      8px 14px 0 rgba(0, 0, 0, 0.4),
-      inset 0 0 40px rgba(90, 50, 20, 0.2),
-      inset 0 0 90px rgba(60, 30, 8, 0.12);
+    filter: drop-shadow(10px 16px 0 rgba(0, 0, 0, 0.42));
   }
 }
 
-.wanted-stamp {
-  position: absolute;
-  top: 96px;
-  right: 4px;
-  border: 3px solid #8b1e1e;
-  color: #8b1e1e;
-  font-family: var(--western);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  padding: 4px 8px;
-  transform: rotate(12deg);
-  opacity: 0.85;
-  pointer-events: none;
+.wanted-masthead {
+  margin: 2px 0 6px;
+  text-align: center;
+  font-family: "Special Elite", var(--western);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.62;
 }
 
 .wanted-poster header {
   font-family: "Special Elite", var(--display-en);
-  font-size: 48px;
-  letter-spacing: 0.12em;
-  text-indent: 0.12em;
+  font-size: clamp(42px, 8vw, 58px);
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
   text-align: center;
-  border-bottom: 4px double #1a120c;
-  margin-bottom: 14px;
-  line-height: 1;
+  margin: 0;
+  line-height: 0.88;
   width: 100%;
+  font-weight: 400;
+  text-shadow:
+    1px 0 0 rgba(90, 30, 12, 0.18),
+    0 1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.wanted-poster header span {
+  display: block;
+  border-top: 3px solid #1c120b;
+  border-bottom: 3px solid #1c120b;
+  padding: 7px 0 8px;
+  box-shadow:
+    inset 0 1px 0 #1c120b,
+    inset 0 -1px 0 #1c120b;
+}
+
+.wanted-or {
+  margin: 8px 0 14px;
+  text-align: center;
+  font-family: "Special Elite", var(--western);
+  font-size: 13px;
+  letter-spacing: 0.28em;
+  text-indent: 0.28em;
+  font-weight: 700;
+}
+
+.wanted-stamp {
+  position: absolute;
+  top: 198px;
+  right: 14px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 3px solid var(--wanted-blood);
+  color: var(--wanted-blood);
+  font-family: "Special Elite", var(--western);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 10px;
+  transform: rotate(16deg);
+  opacity: 0.72;
+  pointer-events: none;
+  z-index: 4;
+  background: radial-gradient(circle, rgba(160, 36, 28, 0.08), transparent 68%);
+  box-shadow: inset 0 0 0 1px rgba(122, 26, 22, 0.45);
+  mix-blend-mode: multiply;
+}
+
+.wanted-stamp em,
+.wanted-stamp strong {
+  display: block;
+  font-style: normal;
+  line-height: 1.1;
+}
+
+.wanted-stamp em {
+  font-size: 8px;
+  letter-spacing: 0.22em;
+}
+
+.wanted-stamp strong {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.wanted-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
 .mugshot {
-  height: 128px;
-  border: 3px solid #1a120c;
-  margin: 0 auto 12px;
-  width: 128px;
+  height: 168px;
+  width: 142px;
+  border: 5px solid #1c120b;
+  margin: 0;
   display: grid;
   place-items: center;
   background:
     radial-gradient(circle at 50% 38%, #e6d2ae, #b99b72 70%, #7d6544);
   position: relative;
   overflow: hidden;
-  filter: sepia(0.35) contrast(1.08);
+  filter: sepia(0.48) contrast(1.16) saturate(0.78);
+  box-shadow:
+    0 0 0 1px #c9b48a,
+    0 0 0 7px #1c120b,
+    inset 0 0 18px rgba(30, 16, 8, 0.35);
 }
 
 /* 오래된 사진의 눌린 네 귀퉁이 */
@@ -617,14 +708,35 @@ input {
 .mugshot-grain {
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 3px,
-    rgba(0, 0, 0, 0.06) 3px,
-    rgba(0, 0, 0, 0.06) 4px
-  );
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.08) 2px,
+      rgba(0, 0, 0, 0.08) 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(40, 22, 8, 0.05) 3px,
+      rgba(40, 22, 8, 0.05) 4px
+    );
   pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.mugshot-corners {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    linear-gradient(135deg, #1c120b 9px, transparent 9px),
+    linear-gradient(225deg, #1c120b 9px, transparent 9px),
+    linear-gradient(45deg, #1c120b 9px, transparent 9px),
+    linear-gradient(315deg, #1c120b 9px, transparent 9px);
 }
 
 .silhouette {
@@ -659,9 +771,16 @@ input {
   font-family: var(--korean-display), var(--display);
 }
 
+.wanted-names {
+  min-width: 0;
+}
+
 .wanted-poster h2 {
   margin: 0;
-  font-size: 30px;
+  font-size: clamp(26px, 5vw, 34px);
+  font-family: "Special Elite", var(--korean-display), var(--display);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
 }
 
 .wanted-poster header,
@@ -672,28 +791,30 @@ input {
 }
 
 .alias {
-  margin: 4px 0 8px;
-  font-family: var(--western);
+  margin: 6px 0 8px;
+  font-family: "Special Elite", var(--western);
   font-style: italic;
 }
 
 .bounty {
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  font-family: var(--western);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-family: "Special Elite", var(--western);
 }
 
 .bounty strong {
   display: block;
-  font-family: var(--display);
-  font-size: 32px;
-  color: #8b1e1e;
-  letter-spacing: 0.02em;
+  font-family: "Special Elite", var(--display);
+  font-size: 36px;
+  color: var(--wanted-blood, #7a1a16);
+  letter-spacing: 0.04em;
+  text-shadow: 1px 0 0 rgba(40, 8, 6, 0.25);
 }
 
 .wanted-poster dl {
   text-align: left;
-  margin: 16px 0;
+  margin: 16px 0 12px;
 }
 
 .wanted-poster dl > div {
@@ -701,40 +822,64 @@ input {
 }
 
 .wanted-poster dt {
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  font-size: 10px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  opacity: 0.65;
-  font-family: var(--western);
+  opacity: 0.7;
+  font-family: "Special Elite", var(--western);
 }
 
 .wanted-poster dd {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   font-size: 14px;
+  font-family: "Gowun Batang", "Noto Serif KR", var(--western);
+}
+
+.wanted-poster .tell {
+  padding: 8px 10px 9px;
+  border: 2px solid #1c120b;
+  box-shadow: inset 0 0 0 1px rgba(28, 18, 11, 0.35);
+  background: rgba(60, 32, 10, 0.05);
 }
 
 .wanted-poster .tell dd {
   font-weight: 700;
-  background: #ffe08a;
-  padding: 6px 8px;
-  border-left: 4px solid #c48a28;
+  background: none;
+  padding: 0;
+  border: 0;
 }
 
 .wanted-poster blockquote {
   margin: 0;
-  font-family: var(--western);
+  font-family: "Special Elite", var(--western);
   font-style: italic;
-  border-top: 1px dashed #1a120c;
+  border-top: 2px solid #1c120b;
   padding-top: 12px;
   font-size: 14px;
 }
 
+.wanted-foot {
+  margin: 12px 0 0;
+  text-align: center;
+  font-family: "Special Elite", var(--western);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.58;
+}
+
 .wanted-screen {
-  overflow: hidden;
-  justify-content: center;
+  /* .screen 의 920px 칸에 스크롤이 생기면 바가 화면 한가운데에 뜬다 */
+  width: 100%;
+  max-width: none;
+  overflow-x: clip;
+  overflow-y: auto;
+  /* 넘치면 center 때문에 윗부분이 잘리고 스크롤이 어긋난다 */
+  justify-content: safe center;
   gap: 10px;
   padding-top: 10px;
   padding-bottom: 8px;
+  scrollbar-gutter: stable;
 }
 
 .wanted-screen .eyebrow,
@@ -743,14 +888,10 @@ input {
 }
 
 .wanted-screen .wanted-poster {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  min-width: 0;
-  width: min(400px, 100%);
-  max-width: 100%;
-  overflow-x: clip;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+  width: min(30rem, calc(100vw - 48px));
+  max-width: 480px;
 }
 
 .wanted-screen .wanted-poster::-webkit-scrollbar:horizontal {
@@ -1607,6 +1748,23 @@ input {
   flex-wrap: wrap;
 }
 
+.chrome-lang-btn {
+  background: transparent;
+  border: 1px solid rgba(232, 168, 56, 0.35);
+  color: var(--accent);
+  padding: 2px 7px;
+  font-size: 10px;
+  font-family: var(--western);
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  border-radius: 3px;
+}
+
+.chrome-lang-btn:hover {
+  color: #fff;
+  border-color: var(--accent);
+}
+
 .chrome-bgm-ctrl {
   display: inline-flex;
   align-items: center;
@@ -2195,63 +2353,39 @@ input {
 }
 
 @media (max-height: 900px) {
+  .wanted-poster,
   .wanted-screen .wanted-poster {
-    width: min(380px, 100%);
-    padding: 16px 18px 18px;
-    border-width: 7px;
+    padding: 26px 20px 20px;
   }
 
   .wanted-poster header {
-    font-size: 34px;
-    margin-bottom: 8px;
+    font-size: 40px;
   }
 
   .mugshot {
-    width: 88px;
-    height: 88px;
-    margin-bottom: 8px;
+    width: 118px;
+    height: 140px;
   }
 
   .wanted-stamp {
-    top: 70px;
-    font-size: 10px;
-    padding: 3px 6px;
+    top: 168px;
+    width: 78px;
+    height: 78px;
+    right: 10px;
   }
 
   .wanted-poster h2 {
-    font-size: 22px;
-  }
-
-  .alias {
-    margin: 2px 0 4px;
-    font-size: 14px;
-  }
-
-  .bounty strong {
     font-size: 24px;
   }
 
-  .wanted-poster dl {
-    margin: 8px 0;
-  }
-
-  .wanted-poster dl > div {
-    margin-bottom: 6px;
-  }
-
-  .wanted-poster dd {
-    font-size: 13px;
+  .bounty strong {
+    font-size: 28px;
   }
 
   .wanted-poster .tell-note {
     margin: 4px 0 0;
     font-size: 11px;
     line-height: 1.35;
-  }
-
-  .wanted-poster blockquote {
-    padding-top: 8px;
-    font-size: 13px;
   }
 }
 
@@ -2261,16 +2395,22 @@ input {
   }
 
   .mugshot {
+    width: 96px;
+    height: 114px;
+  }
+
+  .wanted-poster header {
+    font-size: 32px;
+  }
+
+  .wanted-stamp {
+    top: 148px;
     width: 68px;
     height: 68px;
   }
 
-  .wanted-poster header {
-    font-size: 28px;
-  }
-
-  .wanted-stamp {
-    top: 56px;
+  .wanted-stamp strong {
+    font-size: 9px;
   }
 
   .wanted-poster .tell-note {
@@ -2280,71 +2420,6 @@ input {
   .wanted-screen .btn {
     padding: 8px 20px;
     font-size: 13px;
-  }
-}
-
-/* 가로로 넓고 세로가 낮은 모니터: 수배서를 2열로 접어 한 화면에 담는다 */
-@media (max-height: 860px) and (min-width: 700px) {
-  .wanted-screen .wanted-poster {
-    width: min(680px, 96%);
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-areas:
-      "title title"
-      "face name"
-      "face alias"
-      "face bounty"
-      "info info"
-      "quote quote";
-    column-gap: 18px;
-    align-items: start;
-    text-align: left;
-    transform: rotate(-0.6deg);
-  }
-
-  .wanted-poster header {
-    grid-area: title;
-    text-align: center;
-  }
-
-  .mugshot {
-    grid-area: face;
-    margin: 0;
-    width: 96px;
-    height: 110px;
-  }
-
-  .wanted-poster h2 {
-    grid-area: name;
-  }
-
-  .wanted-poster .alias {
-    grid-area: alias;
-  }
-
-  .wanted-poster .bounty {
-    grid-area: bounty;
-  }
-
-  .wanted-poster dl {
-    grid-area: info;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 16px;
-    margin: 10px 0 0;
-  }
-
-  .wanted-poster dl > .tell {
-    grid-column: 1 / -1;
-  }
-
-  .wanted-poster blockquote {
-    grid-area: quote;
-  }
-
-  .wanted-stamp {
-    top: 52px;
-    right: 12px;
   }
 }
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { DEFAULT_PLAYER_NAME } from '../../shared/game'
 import { sfx } from '../audio/sfx'
+import { useT } from '../i18n/LocaleContext'
 import { loadPlayerNameDraft, savePlayerName } from '../storage/playerName'
 import { EMPTY_CAREER, loadCareer } from '../data/records'
 import type { CareerStats } from '../types'
@@ -14,6 +14,8 @@ interface Props {
 }
 
 export function TitleScreen({ onStart }: Props) {
+  const t = useT()
+  const defaultName = t('player.default')
   const [showRecords, setShowRecords] = useState(false)
   const [showRanking, setShowRanking] = useState(false)
   const [career, setCareer] = useState<CareerStats>(EMPTY_CAREER)
@@ -26,7 +28,7 @@ export function TitleScreen({ onStart }: Props) {
     sfx.click()
     sfx.gunLoad(0.7)
     const trimmed = playerName.trim()
-    const finalName = skip || !trimmed ? DEFAULT_PLAYER_NAME : trimmed
+    const finalName = skip || !trimmed ? defaultName : trimmed
     if (!skip && trimmed) savePlayerName(trimmed)
     onStart(finalName)
   }
@@ -54,23 +56,23 @@ export function TitleScreen({ onStart }: Props) {
             fetchPriority="high"
           />
         </h1>
-        <p className="tagline">말빨로 멘탈 흔들고, 0.2초 만에 쏴라!</p>
+        <p className="tagline">{t('title.tagline')}</p>
         <p className="blurb">
-          매 판 살아 숨 쉬는 <strong>생성형 AI 무법자</strong>와의 숨 막히는 심리전!
+          {t('title.blurb1')} <strong>{t('title.blurbStrong1')}</strong>{t('title.blurb2')}
           <br />
-          약점을 찔러 멘탈을 흔들거나, 번개 같은 <strong>0.2초 드로우</strong>로 제압하라.
+          {t('title.blurb3')} <strong>{t('title.blurbStrong2')}</strong>{t('title.blurb4')}
         </p>
 
         <div className="player-setup">
           <label htmlFor="player-name-input" className="player-name-label">
-            당신의 총잡이 이름
+            {t('title.nameLabel')}
           </label>
           <div className="player-name-box">
             <input
               id="player-name-input"
               type="text"
               className="player-name-input"
-              placeholder={DEFAULT_PLAYER_NAME}
+              placeholder={defaultName}
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
               onKeyDown={(e) => {
@@ -83,10 +85,10 @@ export function TitleScreen({ onStart }: Props) {
 
         <div className="title-actions">
           <button className="btn primary pulse" onClick={() => handleBegin(false)}>
-            {playerName.trim() ? `${playerName.trim()}로 결투 시작` : '결투 시작'}
+            {playerName.trim() ? t('title.startNamed', { name: playerName.trim() }) : t('title.start')}
           </button>
           <button className="btn outline" onClick={() => handleBegin(true)}>
-            이름 없이 시작 (스킵)
+            {t('title.skip')}
           </button>
           <button
             className="btn"
@@ -98,7 +100,7 @@ export function TitleScreen({ onStart }: Props) {
               })
             }}
           >
-            {showRecords ? '닫기' : '전적'}
+            {showRecords ? t('title.close') : t('title.records')}
           </button>
           <button
             className="btn"
@@ -107,7 +109,7 @@ export function TitleScreen({ onStart }: Props) {
               setShowRanking(true)
             }}
           >
-            랭킹
+            {t('title.ranking')}
           </button>
         </div>
 
@@ -120,19 +122,19 @@ export function TitleScreen({ onStart }: Props) {
         {showRanking && <RankingModal onClose={() => setShowRanking(false)} />}
 
         <div className="howto">
-          <h3>⚡ HOW TO PLAY — 결투 조작 핵심 가이드</h3>
+          <h3>⚡ {t('title.howto')}</h3>
           <ol>
             <li>
-              <strong>1. [홀스터 꾹 누르기]</strong> 결투 시작 시 우측 하단의 <strong>홀스터를 마우스로 꾹 누른 채(HOLD)</strong> 대기하세요. (카운트 중 미리 떼면 <em>반칙 패배</em>)
+              <strong>{t('title.how1t')}</strong> {t('title.how1', { hold: t('title.hold'), foul: t('title.foul') })}
             </li>
             <li>
-              <strong>2. [진짜 DRAW! 확인]</strong> 페이크 신호(<em>DRAW…?</em>)에 속지 말고, 화면에 빨간색 <strong>진짜 DRAW!</strong>가 뜨는 순간 <strong>즉시 손을 뗍니다!</strong>
+              <strong>{t('title.how2t')}</strong> {t('title.how2', { fake: t('title.fake'), real: t('title.real'), release: t('title.release') })}
             </li>
             <li>
-              <strong>3. [조준 & 광속 클릭]</strong> 손을 뗀 직후 마우스로 <strong>상대 몸통(또는 노란색 머리)을 즉시 클릭</strong>해 사격하세요! (머리 명중 시 <strong>헤드샷 보너스</strong>)
+              <strong>{t('title.how3t')}</strong> {t('title.how3', { aim: t('title.aim'), hs: t('title.hs') })}
             </li>
             <li>
-              <strong>4. [심리전 꿀팁]</strong> 결투 직전 <strong>대치 3턴</strong> 동안 상대의 <strong>버릇/약점을 찔러</strong> 상대 반응속도를 늦추고 조준을 흔드세요!
+              <strong>{t('title.how4t')}</strong> {t('title.how4', { turns: t('title.turns'), tell: t('title.tell') })}
             </li>
           </ol>
         </div>

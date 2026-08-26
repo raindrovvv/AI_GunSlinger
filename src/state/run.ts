@@ -114,7 +114,13 @@ export type RunAction =
 
 export function applyEncounter(
   state: RunState,
-  p: { won: boolean; isPeace: boolean; outcome: DuelOutcome | null; opponent: Opponent },
+  p: {
+    won: boolean
+    isPeace: boolean
+    outcome: DuelOutcome | null
+    opponent: Opponent
+    loadingText?: string
+  },
 ): RunState {
   const nextStreak = p.won ? state.streak + 1 : 0
   let bestStreak = state.bestStreak
@@ -148,7 +154,7 @@ export function applyEncounter(
     pickedPerk: null,
     activeBuffs: {},
     phase: 'loading',
-    loadingText: '신문 조달 및 인쇄 중…',
+    loadingText: p.loadingText ?? '신문 조달 및 인쇄 중…',
   }
 }
 

@@ -1,5 +1,5 @@
-import { getFameInfo } from '../data/fame'
-import { perkById } from '../data/perks'
+import { localizedFame, localizedPerk } from '../i18n/content'
+import { useT } from '../i18n/LocaleContext'
 import { formatReaction, formatRunDate } from '../data/records'
 import type { CareerStats, RunRecord } from '../types'
 import { PerkIcon } from './PerkIcon'
@@ -19,40 +19,41 @@ function isNewBest(run: RunRecord, career: CareerStats, field: 'bounty' | 'react
 }
 
 export function RecordBoard({ career, lastRun = null, compact = false }: Props) {
+  const t = useT()
   const empty = career.runs === 0 && !lastRun
-  const careerFame = getFameInfo(career.bestStreak)
+  const careerFame = localizedFame(career.bestStreak, t)
 
   return (
     <div className={`record-board ${compact ? 'is-compact' : ''}`}>
-      <h3 className="record-title">전적</h3>
+      <h3 className="record-title">{t('record.title')}</h3>
 
       {empty ? (
-        <p className="record-empty">아직 기록이 없다. 홀스터를 잡고 첫 결투를 남겨라.</p>
+        <p className="record-empty">{t('record.empty')}</p>
       ) : (
         <>
           <div className="record-stats">
             <div>
-              <span>출전</span>
+              <span>{t('record.runs')}</span>
               <strong>{career.runs}</strong>
             </div>
             <div>
-              <span>완주</span>
+              <span>{t('record.wins')}</span>
               <strong>{career.victories}</strong>
             </div>
             <div>
-              <span>전사</span>
+              <span>{t('record.deaths')}</span>
               <strong>{career.defeats}</strong>
             </div>
             <div>
-              <span>최고 현상금</span>
+              <span>{t('record.bestBounty')}</span>
               <strong>${career.bestBounty.toLocaleString()}</strong>
             </div>
             <div>
-              <span>최속 드로우</span>
+              <span>{t('record.bestDraw')}</span>
               <strong>{formatReaction(career.bestReactionMs)}</strong>
             </div>
             <div>
-              <span>최고 명성</span>
+              <span>{t('record.bestFame')}</span>
               <strong style={{ color: careerFame.color }}>
                 {career.bestStreak ? `${careerFame.badge}` : '—'}
               </strong>
@@ -61,28 +62,28 @@ export function RecordBoard({ career, lastRun = null, compact = false }: Props) 
 
           {lastRun && (
             <div className="record-compare">
-              <p className="record-compare-label">이번 런</p>
+              <p className="record-compare-label">{t('record.thisRun')}</p>
               <ul>
                 <li>
-                  현상금 ${lastRun.bounty.toLocaleString()}
+                  {t('record.bounty', { n: lastRun.bounty.toLocaleString() })}
                   {isNewBest(lastRun, career, 'bounty') && (
                     <em className="record-best">NEW BEST</em>
                   )}
                 </li>
                 <li>
-                  최속 {formatReaction(lastRun.bestReactionMs)}
+                  {t('record.fast', { ms: formatReaction(lastRun.bestReactionMs) })}
                   {isNewBest(lastRun, career, 'reaction') && (
                     <em className="record-best">NEW BEST</em>
                   )}
                 </li>
                 <li>
-                  연승 {lastRun.bestStreak || 0}
+                  {t('record.streak', { n: lastRun.bestStreak || 0 })}
                   {isNewBest(lastRun, career, 'streak') && (
                     <em className="record-best">NEW BEST</em>
                   )}
                 </li>
                 <li>
-                  결투 {lastRun.wins} · 평화 {lastRun.peaces} · R{lastRun.roundsReached}
+                  {t('record.line', { w: lastRun.wins, p: lastRun.peaces, r: lastRun.roundsReached })}
                 </li>
               </ul>
             </div>
@@ -90,18 +91,18 @@ export function RecordBoard({ career, lastRun = null, compact = false }: Props) 
 
           {career.recent.length > 0 && (
             <div className="record-recent">
-              <p className="record-compare-label">최근 기록</p>
+              <p className="record-compare-label">{t('record.recent')}</p>
               <ul>
                 {career.recent.slice(0, compact ? 3 : 6).map((run) => (
                   <li key={run.id}>
                     <span className={run.victory ? 'is-win' : 'is-lose'}>
-                      {run.victory ? '완주' : '전사'}
+                      {run.victory ? t('record.wins') : t('record.deaths')}
                     </span>
                     <span>${run.bounty.toLocaleString()}</span>
                     <span>{formatReaction(run.bestReactionMs)}</span>
                     <span className="record-date">{formatRunDate(run.at)}</span>
                     {run.perks.length > 0 && (
-                      <span className="record-perks" title={run.perks.map((id) => perkById(id).name).join(', ')}>
+                      <span className="record-perks" title={run.perks.map((id) => localizedPerk(id, t).name).join(', ')}>
                         {run.perks.slice(0, 3).map((id) => (
                           <PerkIcon key={id} id={id} size={12} />
                         ))}

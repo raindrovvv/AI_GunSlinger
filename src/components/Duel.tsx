@@ -4,10 +4,10 @@ import { sfx } from '../audio/sfx'
 import { CANVAS_LABEL_FONT } from '../fonts'
 import { isFinalRound } from '../../shared/game'
 import { CONSUMABLE_EFFECTS, computeDuelTuning, percentFromScale } from '../data/combat'
-import { getFameInfo } from '../data/fame'
-import { perkById } from '../data/perks'
+import { displayOpponent, localizedFame, localizedPerk, localizedTheme } from '../i18n/content'
+import { useLocale } from '../i18n/LocaleContext'
 import { PerkIcon } from './PerkIcon'
-import { geometryOf, getBackdrop, getThemeInfo } from '../canvas/backdrop'
+import { geometryOf, getBackdrop } from '../canvas/backdrop'
 import { createDuelFx, type DuelFx } from '../gl/duelFx'
 import {
   HOLSTER_HALF_W,
@@ -20,7 +20,6 @@ import {
   drawVultures,
 } from '../canvas/actors'
 import { applyBossSet, bossFeintChance, bossReactionBonus, nextSetBanner } from '../duel/boss'
-import { GRADE_LABEL } from '../duel/grade'
 import { classifyHit } from '../duel/hit'
 import { decidePlayerShot } from '../duel/shot'
 import type { DrawGrade, DuelMods, DuelOutcome, Opponent, PerkId } from '../types'
@@ -102,8 +101,12 @@ export function Duel({
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fxCanvasRef = useRef<HTMLCanvasElement>(null)
+  const { locale, t } = useLocale()
+  const tRef = useRef(t)
+  tRef.current = t
+  const face = displayOpponent(opponent, locale)
   const [phase, setPhase] = useState<Phase>('idle')
-  const [message, setMessage] = useState('홀스터를 누른 채 버텨라')
+  const [message, setMessage] = useState(() => t('duel.hold'))
   const [countdown, setCountdown] = useState<number | null>(null)
   const [warning, setWarning] = useState<string | null>(null)
   const [grade, setGrade] = useState<DrawGrade>('-')
@@ -133,8 +136,10 @@ export function Duel({
   >([])
 
   const has = useCallback((id: PerkId) => perks.includes(id), [perks])
-  const fame = useMemo(() => getFameInfo(streak), [streak])
-  const themeInfo = useMemo(() => getThemeInfo(round), [round])
+  const fame = useMemo(() => localizedFame(streak, t), [streak, t])
+  const themeCopy = useMemo(() => localizedTheme(round, t), [round, t])
+  const aliasRef = useRef(face.alias)
+  aliasRef.current = face.alias
 
   const tuning = useMemo(
     () =>
@@ -489,6 +494,7 @@ export function Duel({
             history: setHistoryRef.current,
           },
           outcome,
+          tRef.current,
         )
         bossSetRef.current = boss.match.set
         playerScoreRef.current = boss.match.playerScore
@@ -504,7 +510,7 @@ export function Duel({
         }
 
         later(() => {
-          setInterSetBanner(nextSetBanner(boss.match.set, outcome.won))
+          setInterSetBanner(nextSetBanner(boss.match.set, outcome.won, tRef.current))
           sfx.feint()
 
           // 세트 상태 및 시각 효과 리셋
@@ -526,7 +532,7 @@ export function Duel({
           later(() => {
             setInterSetBanner(null)
             setPhaseSafe('idle')
-            setMessage('홀스터를 누른 채 버텨라')
+            setMessage(tRef.current('duel.hold'))
             sfx.draw()
           }, 1800)
         }, 750)
@@ -542,10 +548,10 @@ export function Duel({
       setCountdown(null)
       const feinted = performance.now() < feintUntilRef.current
       const reason = feinted
-        ? '페인트에 걸렸다!'
+        ? tRef.current('duel.feint')
         : kind === 'leave'
-          ? '홀스터에서 손이 벗어났다!'
-          : '성급하게 손을 뗐다!'
+          ? tRef.current('duel.leave')
+          : tRef.current('duel.release')
 
       sfx.crow()
 
@@ -553,15 +559,15 @@ export function Duel({
         warningsRef.current -= 1
         setWarningsLeft(warningsRef.current)
         enemyAccBonusRef.current += 0.04
-        setWarning(`${reason} 상대가 침착해진다 · 남은 기회 ${warningsRef.current}`)
-        setMessage('다시 홀스터를 잡아라')
+        setWarning(tRef.current('duel.warnMsg', { reason, n: warningsRef.current }))
+        setMessage(tRef.current('duel.rehold'))
         setPhaseSafe('idle')
         sfx.warn()
         shakeRef.current = 5
       } else {
         resolve({
           won: false,
-          detail: `${reason} 반칙 패배.`,
+          detail: tRef.current('duel.foul', { reason }),
           reactionMs: null,
           grade: '-',
           headshot: false,
@@ -585,7 +591,7 @@ export function Duel({
 
       setPhaseSafe('draw')
       setFlash('draw')
-      setMessage('쏴라!')
+      setMessage(tRef.current('duel.shoot'))
       sfx.draw()
       shakeRef.current = 8
       // 조준을 가리지 않도록 색수차만 짧게 튄다. 블러는 판정 후에만.
@@ -610,13 +616,13 @@ export function Duel({
             bibleUsedRef.current = true
             sfx.shield()
             shakeRef.current = 10
-            setMessage('포켓 성경이 총알을 튕겨냈다! 즉시 쏴라!')
+            setMessage(tRef.current('duel.bibleLive'))
             return
           }
 
           resolve({
             won: false,
-            detail: enemyHits ? '너무 늦었다. 상대가 먼저 쏘았다.' : '망설이다 쏘지 못했다. 결투 패배.',
+            detail: enemyHits ? tRef.current('duel.late') : tRef.current('duel.noShot'),
             reactionMs: null,
             grade: '-',
             headshot: false,
@@ -630,7 +636,7 @@ export function Duel({
       if (phaseRef.current !== 'idle' || resolvedRef.current) return
       setPhaseSafe('holding')
       setWarning(null)
-      setMessage('버텨라 — 손을 떼지 마라')
+      setMessage(tRef.current('duel.holding'))
       sfx.grip()
       setCountdown(3)
       sfx.heartbeat(1)
@@ -712,11 +718,12 @@ export function Duel({
         secondChanceUsed: secondChanceUsedRef.current,
         hasBible: !!activeBuffsRef.current.bible,
         bibleUsed: bibleUsedRef.current,
+        t: tRef.current,
       })
 
       if (decision.type === 'second_chance') {
         secondChanceUsedRef.current = true
-        setMessage('빗맞았다! 속사 리볼버 — 즉시 다시 쏴라!')
+        setMessage(tRef.current('duel.second'))
         sfx.grip()
         shakeRef.current = 4
         return
@@ -837,7 +844,7 @@ export function Duel({
         ctx.font = `700 ${Math.round(11 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.fillStyle = '#ffe080'
         ctx.shadowBlur = 4
-        ctx.fillText('버릇 포착!', L.enemyX, L.bodyY - 84 * s)
+        ctx.fillText(tRef.current('duel.catch'), L.enemyX, L.bodyY - 84 * s)
         ctx.restore()
       }
 
@@ -848,7 +855,7 @@ export function Duel({
         L.bodyY - 78 * s,
         s,
       )
-      drawNameplate(ctx, opponent.alias, L.enemyX, L.bodyY - 78 * s, s)
+      drawNameplate(ctx, aliasRef.current, L.enemyX, L.bodyY - 78 * s, s)
 
       // 총구 연기는 인물 위에 얹혀야 자연스럽다 (In-place zero-allocation update)
       const smokes = smokeRef.current
@@ -887,7 +894,7 @@ export function Duel({
         const hintY = L.holsterY - 18 * L.hs
         ctx.font = `800 ${Math.round(13.5 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.textAlign = 'center'
-        const label = '👇 홀스터를 꾹 누르고 있어라 (HOLD)'
+        const label = tRef.current('duel.canvasHold')
         const boxW = Math.round(256 * s)
         ctx.fillStyle = 'rgba(10, 5, 2, 0.85)'
         ctx.fillRect(L.holsterX - boxW / 2, hintY - 14 * s, boxW, 20 * s)
@@ -915,7 +922,7 @@ export function Duel({
         ctx.font = `700 ${Math.round(14 * s)}px ${CANVAS_LABEL_FONT}`
         ctx.fillStyle = '#ffe0a0'
         ctx.shadowBlur = 8
-        ctx.fillText('진짜 DRAW! 신호가 뜨면 손을 떼고 상대를 클릭!', 0, h * 0.46)
+        ctx.fillText(tRef.current('duel.canvasDraw'), 0, h * 0.46)
         ctx.restore()
       }
 
@@ -946,7 +953,7 @@ export function Duel({
         ctx.fillStyle = '#ffea60'
         ctx.shadowColor = '#000'
         ctx.shadowBlur = 10
-        ctx.fillText('⚡ 상대를 즉시 클릭해 사격!', 0, h * 0.46)
+        ctx.fillText(tRef.current('duel.canvasFire'), 0, h * 0.46)
         ctx.restore()
       }
 
@@ -1242,46 +1249,46 @@ export function Duel({
     <div className={`screen duel-screen flash-${flash}`}>
       <div className="duel-meta">
         <p className="eyebrow">
-          ROUND {round} · 📍 {themeInfo.name} ({themeInfo.subtitle})
+          ROUND {round} · 📍 {themeCopy.name} ({themeCopy.subtitle})
         </p>
         <div className="duel-stats">
           <span>
-            상대 반응 <strong>{Math.round(tuning.enemyReaction)}ms</strong>
+            {t('duel.react')} <strong>{Math.round(tuning.enemyReaction)}ms</strong>
           </span>
           <span>
-            명중 <strong>{(tuning.accuracy * 100).toFixed(0)}%</strong>
+            {t('duel.acc')} <strong>{(tuning.accuracy * 100).toFixed(0)}%</strong>
           </span>
-          <span className="chip-warn">경고 여유 {warningsLeft}</span>
+          <span className="chip-warn">{t('duel.warnLeft', { n: warningsLeft })}</span>
           {streak > 0 && (
             <span
               className="chip-streak"
               style={{ borderColor: fame.color, color: fame.color }}
-              title={`현재 명성: ${fame.title} (${fame.subtitle})`}
+              title={t('duel.fameTip', { title: fame.title, sub: fame.subtitle })}
             >
-              {fame.badge} · {streak}연승
+              {fame.badge} · {t('chrome.streak', { n: streak })}
             </span>
           )}
           {tuning.hitBonusPercent !== 0 && (
             <span
               className={tuning.hitBonusPercent > 0 ? 'chip-hit-bonus' : 'chip-hit-penalty'}
-              title="라운드 난이도, 심리전 결과, 환경 편차 및 전리품이 반영된 조준 판정 배율입니다."
+              title={t('duel.aimTip')}
             >
-              조준 {tuning.hitBonusPercent > 0 ? `+${tuning.hitBonusPercent}%` : `${tuning.hitBonusPercent}%`}
+              {t('duel.aim')} {tuning.hitBonusPercent > 0 ? `+${tuning.hitBonusPercent}%` : `${tuning.hitBonusPercent}%`}
             </span>
           )}
           {activeBuffs.smoke && (
-            <span className="chip-buff chip-smoke" title={`서부 연막탄: 상대 명중률 -${Math.round(CONSUMABLE_EFFECTS.smokeAccuracy * 100)}% 감소`}>
-              💨 연막탄
+            <span className="chip-buff chip-smoke" title={t('duel.smokeTip', { n: Math.round(CONSUMABLE_EFFECTS.smokeAccuracy * 100) })}>
+              💨 {t('duel.smoke')}
             </span>
           )}
           {activeBuffs.powder && (
-            <span className="chip-buff chip-powder" title={`정밀 화약: 헤드샷 판정 범위 +${percentFromScale(CONSUMABLE_EFFECTS.powderHeadScale)}% 확대`}>
-              🎯 정밀 화약
+            <span className="chip-buff chip-powder" title={t('duel.powderTip', { n: percentFromScale(CONSUMABLE_EFFECTS.powderHeadScale) })}>
+              🎯 {t('duel.powder')}
             </span>
           )}
           {activeBuffs.bible && (
-            <span className="chip-buff chip-bible" title="방탄 포켓 성경: 치명상 피격 시 1회 총알 방어">
-              🛡️ 포켓 성경
+            <span className="chip-buff chip-bible" title={t('duel.bibleTip')}>
+              🛡️ {t('duel.bible')}
             </span>
           )}
         </div>
@@ -1290,9 +1297,9 @@ export function Duel({
       {perks.length > 0 && (
         <div className="perk-strip">
           {perks.map((id) => (
-            <span key={id} className="perk-tag" title={perkById(id).desc}>
+            <span key={id} className="perk-tag" title={localizedPerk(id, t).desc}>
               <PerkIcon id={id} size={15} />
-              {perkById(id).name}
+              {localizedPerk(id, t).name}
             </span>
           ))}
         </div>
@@ -1303,7 +1310,7 @@ export function Duel({
         <div className="boss-duel-hud">
           <div className="boss-hud-badge">
             <span className="boss-crown">👑</span>
-            <span className="boss-title">FINAL BOSS · 3판 2선승제 (BEST OF 3)</span>
+            <span className="boss-title">{t('duel.bossHud')}</span>
           </div>
 
           <div className="boss-score-board">
@@ -1324,7 +1331,7 @@ export function Duel({
                 <span className={`lamp${enemyScore >= 1 ? ' active boss-win' : ''}`} />
                 <span className={`lamp${enemyScore >= 2 ? ' active boss-win' : ''}`} />
               </div>
-              <span className="score-name">{opponent.alias}</span>
+              <span className="score-name">{face.alias}</span>
             </div>
           </div>
         </div>
@@ -1339,7 +1346,7 @@ export function Duel({
           {interSetBanner && (
             <div className="inter-set-banner-overlay">
               <div className="banner-box">
-                <p className="banner-eyebrow">★ FINAL SHOWDOWN · 3판 2선승제 ★</p>
+                <p className="banner-eyebrow">{t('duel.bossBanner')}</p>
                 <h2 className="banner-title">{interSetBanner.title}</h2>
                 <p className="banner-sub">{interSetBanner.subtitle}</p>
                 <div className="banner-scores">
@@ -1348,7 +1355,7 @@ export function Duel({
                   </span>
                   <span className="vs-sep">:</span>
                   <span className="enemy-score">
-                    <strong>{enemyScore}</strong> {opponent.alias}
+                    <strong>{enemyScore}</strong> {face.alias}
                   </span>
                 </div>
               </div>
@@ -1363,7 +1370,7 @@ export function Duel({
         {message}
         {grade !== '-' && (
           <span className={`grade grade-${grade}`}>
-            {grade} · {GRADE_LABEL[grade]}
+            {grade} · {t(`grade.${grade}`)}
           </span>
         )}
       </p>
@@ -1371,12 +1378,11 @@ export function Duel({
       <p className="duel-hint">
         {phase === 'idle' &&
           (isFinalBoss
-            ? `[SET ${bossSet}/3] 홀스터를 누른 채 3·2·1을 버텨라 — 2승을 먼저 거두는 자가 승리한다`
-            : '홀스터를 누른 채 3·2·1을 버텨라 — 손을 떼거나 벗어나면 반칙')}
-        {phase === 'holding' &&
-          `상대가 움찔하면 곧 뽑는다 (${opponent.tell}) · 가짜 신호 DRAW…?에 속지 마라`}
-        {phase === 'draw' && '노란 원(머리)을 맞히면 헤드샷 보너스'}
-        {phase === 'result' && (has('steady') ? '' : '경고를 다 쓰면 즉시 패배한다')}
+            ? t('duel.holdHintBoss', { set: bossSet })
+            : t('duel.holdHint'))}
+        {phase === 'holding' && t('duel.holdingHint', { tell: face.tell })}
+        {phase === 'draw' && t('duel.shootHint')}
+        {phase === 'result' && (has('steady') ? '' : t('duel.warnHint'))}
       </p>
     </div>
   )

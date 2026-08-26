@@ -3,11 +3,11 @@ import { sfx } from '../audio/sfx'
 import {
   SECTOR_META,
   fetchTop,
-  formatRank,
   getPlayerId,
   type SectorKey,
   type TopResult,
 } from '../data/ranking'
+import { useT } from '../i18n/LocaleContext'
 
 /**
  * 서부 명부 — 세계 랭킹 모달
@@ -29,6 +29,7 @@ interface Props {
 }
 
 export function RankingModal({ onClose }: Props) {
+  const t = useT()
   const [data, setData] = useState<TopResult | null>(null)
   const [failed, setFailed] = useState(false)
   // 서버가 내려준 id와 대조해 내 행을 찾는다. 닉네임이 겹쳐도 오작동하지 않는다.
@@ -65,24 +66,20 @@ export function RankingModal({ onClose }: Props) {
       className="ranking-modal"
       role="dialog"
       aria-modal="true"
-      aria-label="서부 명부 세계 랭킹"
+      aria-label={t('rank.title')}
       onClick={close}
     >
       {/* 내용 클릭이 배경까지 올라가 닫히지 않게 막는다 */}
       <div className="ranking-box" onClick={(e) => e.stopPropagation()}>
         <header className="ranking-head">
-          <strong>서부 명부 · 세계 랭킹</strong>
-          <button type="button" className="ranking-close" onClick={close} aria-label="닫기">
+          <strong>{t('rank.title')}</strong>
+          <button type="button" className="ranking-close" onClick={close} aria-label={t('rank.close')}>
             ✕
           </button>
         </header>
 
-        {!data && !failed && <p className="ranking-msg">명부를 넘기는 중…</p>}
-        {failed && (
-          <p className="ranking-msg">
-            명부를 불러오지 못했다. 전신이 끊긴 모양이다.
-          </p>
-        )}
+        {!data && !failed && <p className="ranking-msg">{t('rank.loading')}</p>}
+        {failed && <p className="ranking-msg">{t('rank.fail')}</p>}
 
         {data && (
           <div className="ranking-cols">
@@ -94,9 +91,9 @@ export function RankingModal({ onClose }: Props) {
               const inList = rows.some((r) => r.id === myId)
               return (
                 <section className="ranking-col" key={key}>
-                  <h3>{meta.label}</h3>
+                  <h3>{t(`rank.${key}`)}</h3>
                   <div className="ranking-list">
-                    {rows.length === 0 && <p className="ranking-empty">아직 아무도 없다</p>}
+                    {rows.length === 0 && <p className="ranking-empty">{t('rank.empty')}</p>}
                     {rows.map((r) => (
                       <div
                         key={`${key}-${r.rank}`}
@@ -104,15 +101,15 @@ export function RankingModal({ onClose }: Props) {
                       >
                         <span className="rk-no">{r.rank}</span>
                         <span className="rk-name">{r.name}</span>
-                        <span className="rk-val">{meta.format(r.value)}</span>
+                        <span className="rk-val">{key === 'wins' ? t('rank.winsN', { n: r.value }) : meta.format(r.value)}</span>
                       </div>
                     ))}
                   </div>
                   {mine && !inList && (
                     <div className="ranking-row is-mine-pinned">
-                      <span className="rk-no">{formatRank(mine.rank).replace('위', '')}</span>
-                      <span className="rk-name">나</span>
-                      <span className="rk-val">{meta.format(mine.value)}</span>
+                      <span className="rk-no">{mine.rank}</span>
+                      <span className="rk-name">{t('rank.me')}</span>
+                      <span className="rk-val">{key === 'wins' ? t('rank.winsN', { n: mine.value }) : meta.format(mine.value)}</span>
                     </div>
                   )}
                 </section>

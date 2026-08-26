@@ -3,13 +3,14 @@ import OpenAI from 'openai'
 import {
   FAME_STREAK_THRESHOLD,
   MAX_STANDOFF_TURNS,
-  DIALOGUE_RULES,
-  KOREAN_RULES,
   MODEL,
   OUTPUT_RULES,
   PERSONA_LOCK,
   WORLD_RULES,
   clientIp,
+  dialogueRules,
+  languageRules,
+  parseLocale,
   coerceDeltas,
   coerceMood,
   dialogueFallback,
@@ -45,17 +46,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     round = 1,
     streak = 0,
     fameTitle,
+    locale: rawLocale,
   } = req.body ?? {}
+  const locale = parseLocale(rawLocale)
+  const en = locale === 'en'
   if (!opponent?.name || typeof playerMessage !== 'string') {
     return res.status(400).json({ error: 'missing fields' })
   }
 
-  const fameContext =
-    streak >= FAME_STREAK_THRESHOLD
-      ? `- 상대 총잡이: ${fameTitle ?? '실력자'} (${streak}연승 중인 명사수. 연승이 높을수록 위압감을 느끼거나 긴장함)`
-      : ''
+  const fameContext = streak >= FAME_STREAK_THRESHOLD
+    ? en
+      ? `- The other gun: ${fameTitle ?? 'a known hand'} (${streak}-win streak. The longer it runs, the more they feel the weight.)`
+      : `- 상대 총잡이: ${fameTitle ?? '실력자'} (${streak}연승 중인 명사수. 연승이 높을수록 위압감을 느끼거나 긴장함)`
+    : ''
 
-  const systemPrompt = `당신은 1880년대 서부 무법자 '${opponent.name}'(${opponent.alias})입니다. 결투 직전 대치 중입니다.
+  const systemPrompt = en
+    ? `You are the 1880s Western outlaw '${opponent.name}' (${opponent.alias}). This is the standoff before the draw.
+
+[Character]
+- Crime: ${opponent.crime ?? 'unknown'}
+- Nature / crack: ${opponent.personality}
+- Tell before the draw: ${opponent.tell} (if they name it exactly, flinch or deny)
+- Opening taunt (do not reuse): ${opponent.taunt}
+${fameContext}
+
+${PERSONA_LOCK}
+${dialogueRules(locale)}
+${languageRules(locale)}
+${WORLD_RULES}
+
+[Judgment]
+Pick mood and numbers from what they said.
+${moodGuideText()}
+- Turn: ${turn}/${MAX_STANDOFF_TURNS} ${turn >= MAX_STANDOFF_TURNS ? '(last turn)' : ''}
+- peaceEnding: true only on turn 3 if persuasion hits their nature
+
+${OUTPUT_RULES}
+
+[Schema]
+{"reply":"line","mood":"calm|angered|intimidated|scared|suspicious","reactionDeltaMs":0,"accuracyDelta":0,"peaceEnding":false}`
+    : `당신은 1880년대 서부 무법자 '${opponent.name}'(${opponent.alias})입니다. 결투 직전 대치 중입니다.
 
 [캐릭터]
 - 죄목: ${opponent.crime ?? '알 수 없음'}
@@ -65,8 +95,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 ${fameContext}
 
 ${PERSONA_LOCK}
-${DIALOGUE_RULES}
-${KOREAN_RULES}
+${dialogueRules(locale)}
+${languageRules(locale)}
 ${WORLD_RULES}
 
 [심리/수치 판정]
@@ -109,14 +139,14 @@ ${OUTPUT_RULES}
       !!parsed.peaceEnding && peaceAllowed(Number(round) || 1, Number(turn) || 1, mood)
 
     const rawReply = sanitizeLine(parsed.reply, {
-      max: 70,
+      max: en ? 90 : 70,
       fallback: '',
     })
     const taunt = String(opponent.taunt ?? '').trim()
     const reply =
       rawReply && rawReply !== taunt
         ? rawReply
-        : dialogueFallback(mood)
+        : dialogueFallback(mood, locale)
 
     return res.status(200).json({
       reply,

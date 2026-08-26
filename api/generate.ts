@@ -1,18 +1,19 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import OpenAI from 'openai'
 import {
-  ARCHETYPES,
-  KOREAN_RULES,
   MODEL,
-  NAME_RULES,
   OUTPUT_RULES,
   PORTRAIT_RULES,
   WORLD_RULES,
+  archetypeFor,
   clamp,
   clientIp,
   coercePortrait,
   difficultySpec,
+  languageRules,
+  nameRules,
   parseJsonLoose,
+  parseLocale,
   rateLimited,
   sanitizeAlias,
   sanitizeLine,
@@ -36,17 +37,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'too many requests' })
   }
 
-  const { round = 1, previousNames = [] } = req.body ?? {}
+  const { round = 1, previousNames = [], locale: rawLocale } = req.body ?? {}
+  const locale = parseLocale(rawLocale)
   const spec = difficultySpec(Number(round) || 1)
-  const archetype = ARCHETYPES[spec.round - 1] ?? ARCHETYPES[0]
+  const archetype = archetypeFor(spec.round, locale)
   const avoidList = Array.isArray(previousNames) ? previousNames.slice(-6).join(', ') : ''
+  const en = locale === 'en'
 
-  const systemPrompt = `서부극 결투 상대 캐릭터를 생성해 JSON으로 반환하세요.
+  const systemPrompt = en
+    ? `Create a Western duel opponent and return JSON.
+
+[Type] ${archetype}
+[Stats] baseReactionMs ~${spec.reaction} (lower is faster), baseAccuracy ~${spec.accuracy}, bounty ~$${spec.bounty}
+
+${nameRules(locale)}
+${avoidList ? `- Do not reuse: ${avoidList}` : ''}
+- crime: one concrete crime
+- appearance: one line of looks
+- tell: one visible pre-draw habit (hand/eye/hat/gear)
+- personality: nature and a talking weakness
+- taunt: pre-duel line (max 70 characters)
+${PORTRAIT_RULES}
+
+${languageRules(locale)}
+${WORLD_RULES}
+${OUTPUT_RULES}
+
+[Schema]
+{"name":"","alias":"","bounty":0,"crime":"","appearance":"","tell":"","personality":"","taunt":"","portrait":"","baseReactionMs":0,"baseAccuracy":0}`
+    : `서부극 결투 상대 캐릭터를 생성해 JSON으로 반환하세요.
 
 [상대 유형] ${archetype}
 [기준 스탯] baseReactionMs ~${spec.reaction} (낮을수록 빠름), baseAccuracy ~${spec.accuracy}, bounty ~$${spec.bounty}
 
-${NAME_RULES}
+${nameRules(locale)}
 ${avoidList ? `- 중복 방지: ${avoidList}` : ''}
 - crime: 구체적 범죄 한 줄
 - appearance: 외모 특징 한 줄
@@ -55,7 +79,7 @@ ${avoidList ? `- 중복 방지: ${avoidList}` : ''}
 - taunt: 결투 직전 도발 대사(40자 이내)
 ${PORTRAIT_RULES}
 
-${KOREAN_RULES}
+${languageRules(locale)}
 ${WORLD_RULES}
 ${OUTPUT_RULES}
 
@@ -72,7 +96,7 @@ ${OUTPUT_RULES}
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `라운드 ${spec.round} 무법자 1명 생성` },
+        { role: 'user', content: en ? `Generate 1 outlaw for round ${spec.round}` : `라운드 ${spec.round} 무법자 1명 생성` },
       ],
     })
 
@@ -80,23 +104,23 @@ ${OUTPUT_RULES}
 
     const opponent = {
       id: `ai-${spec.round}-${Date.now()}`,
-      name: sanitizeWesternName(parsed.name, spec.round),
-      alias: sanitizeAlias(parsed.alias, '무명의 총잡이'),
+      name: sanitizeWesternName(parsed.name, spec.round, locale),
+      alias: sanitizeAlias(parsed.alias, en ? 'Nameless Gun' : '무명의 총잡이', locale),
       bounty: Math.round(clamp(Number(parsed.bounty) || spec.bounty, 500, 200000)),
-      crime: sanitizeLine(parsed.crime, { max: 60, fallback: '알 수 없는 죄' }),
+      crime: sanitizeLine(parsed.crime, { max: 60, fallback: en ? 'Unknown crime' : '알 수 없는 죄' }),
       appearance: sanitizeLine(parsed.appearance, {
         max: 60,
-        fallback: '먼지투성이 코트와 낡은 모자',
+        fallback: en ? 'A dusty coat and a worn hat' : '먼지투성이 코트와 낡은 모자',
       }),
       tell: sanitizeLine(parsed.tell, {
         max: 60,
-        fallback: '뽑기 직전 침을 한 번 삼킨다',
+        fallback: en ? 'Swallows once just before the draw' : '뽑기 직전 침을 한 번 삼킨다',
       }),
       personality: sanitizeLine(parsed.personality, {
         max: 70,
-        fallback: '호전적이며 도발에 쉽게 넘어간다',
+        fallback: en ? 'Mean, and easy to taunt' : '호전적이며 도발에 쉽게 넘어간다',
       }),
-      taunt: sanitizeLine(parsed.taunt, { max: 44, fallback: '덤벼라, 이름 없는 놈.' }),
+      taunt: sanitizeLine(parsed.taunt, { max: en ? 70 : 44, fallback: en ? 'Come on, nameless.' : '덤벼라, 이름 없는 놈.' }),
       // 목록 밖이면 null로 넘긴다. 클라이언트가 appearance 키워드 → 이름 해시
       // 순으로 대신 배정하므로 초상화가 비는 일은 없다.
       portrait: coercePortrait(parsed.portrait),

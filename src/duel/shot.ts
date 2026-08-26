@@ -1,3 +1,4 @@
+import type { Translator } from '../i18n/types'
 import type { DuelOutcome } from '../types'
 import { gradeOf } from './grade'
 import type { HitZone } from './hit'
@@ -24,6 +25,7 @@ export function decidePlayerShot(input: {
   secondChanceUsed: boolean
   hasBible: boolean
   bibleUsed: boolean
+  t: Translator
 }): ShotDecision {
   const raw = Math.round(input.rawMs)
   const enemyMs = Math.round(input.enemyMs)
@@ -37,7 +39,7 @@ export function decidePlayerShot(input: {
       type: 'resolve',
       outcome: {
         won: false,
-        detail: enemyHits ? '허공을 쐈다. 상대의 총알에 피격.' : '허공을 쐈다! 조준이 빗나갔다.',
+        detail: enemyHits ? input.t('shot.missHit') : input.t('shot.miss'),
         reactionMs: raw,
         grade: '-',
         headshot: false,
@@ -52,7 +54,7 @@ export function decidePlayerShot(input: {
       type: 'resolve',
       outcome: {
         won: true,
-        detail: head ? `헤드샷! ${raw}ms` : `선제 사격! ${raw}ms`,
+        detail: head ? input.t('shot.head', { ms: raw }) : input.t('shot.first', { ms: raw }),
         reactionMs: raw,
         grade: gradeOf(input.rawMs),
         headshot: head,
@@ -68,7 +70,7 @@ export function decidePlayerShot(input: {
       bibleUsed: true,
       outcome: {
         won: true,
-        detail: `가슴의 포켓 성경이 총알을 튕겨냈다! 기적의 역전 명중! (${raw}ms)`,
+        detail: input.t('shot.bible', { ms: raw }),
         reactionMs: raw,
         grade: gradeOf(input.rawMs),
         headshot: head,
@@ -82,8 +84,8 @@ export function decidePlayerShot(input: {
     outcome: {
       won: !enemyHits,
       detail: enemyHits
-        ? `한발 늦었다! 상대의 총알에 피격. (상대 ${enemyMs}ms)`
-        : `상대의 총알이 빗나갔다! 역전 명중 성공! (${raw}ms)`,
+        ? input.t('shot.late', { enemy: enemyMs })
+        : input.t('shot.comeback', { ms: raw }),
       reactionMs: raw,
       grade: enemyHits ? '-' : gradeOf(input.rawMs),
       headshot: head && !enemyHits,

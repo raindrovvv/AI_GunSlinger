@@ -1,3 +1,4 @@
+import type { Locale } from '../../shared/locale'
 import { defaultMoodDeltas, peaceAllowed, type Mood } from '../../shared/mood'
 import type { DuelMods, Opponent } from '../types'
 
@@ -6,19 +7,19 @@ type Intent = 'peace' | 'ask' | 'read' | 'threat' | 'taunt' | 'respect' | 'idle'
 const PATTERNS: { intent: Intent; re: RegExp }[] = [
   {
     intent: 'peace',
-    re: /평화|화해|술이나|한잔|한 잔|그만하|그만두|멈추|내려놓|싸우지|싸울 필요|살려|목숨|친구|가족|고향/,
+    re: /평화|화해|술이나|한잔|한 잔|그만하|그만두|멈추|내려놓|싸우지|싸울 필요|살려|목숨|친구|가족|고향|peace|truce|drink|whiskey|holster|stand down|spare|family|home/i,
   },
-  { intent: 'ask', re: /\?|？|뭐야|뭐지|뭔데|무슨 말|무엇|어떻게|왜 그|누구냐|설명해/ },
+  { intent: 'ask', re: /\?|？|뭐야|뭐지|뭔데|무슨 말|무엇|어떻게|왜 그|누구냐|설명해|\bwhat\b|\bwhy\b|\bwho\b|\bhow\b/i },
   {
     intent: 'read',
-    re: /버릇|습관|들켰|들통|들킨|보였|읽었|읽혔|간파|약점|빈틈|숨기지|티가|다 보|떨리|떨고/,
+    re: /버릇|습관|들켰|들통|들킨|보였|읽었|읽혔|간파|약점|빈틈|숨기지|티가|다 보|떨리|떨고|tell|habit|twitch|weakness|crack|I see|shaking/i,
   },
-  { intent: 'threat', re: /죽여|죽는|죽을|무덤|묻어|묻힐|끝장|후회|관에|관 속|지옥|장례|시체/ },
+  { intent: 'threat', re: /죽여|죽는|죽을|무덤|묻어|묻힐|끝장|후회|관에|관 속|지옥|장례|시체|kill|dead|grave|coffin|hell|bury|corpse/i },
   {
     intent: 'taunt',
-    re: /느려|느리|약해|약하|겁쟁|겁먹|무섭|도망|허세|우습|시시|촌뜨기|하찮|별로|풋내기|굼벵/,
+    re: /느려|느리|약해|약하|겁쟁|겁먹|무섭|도망|허세|우습|시시|촌뜨기|하찮|별로|풋내기|굼벵|slow|weak|coward|scared|bluff|green|joke/i,
   },
-  { intent: 'respect', re: /인정|존경|대단|강하|유명|소문|명성|실력|영광|최고|고수/ },
+  { intent: 'respect', re: /인정|존경|대단|강하|유명|소문|명성|실력|영광|최고|고수|respect|honor|skill|legend|glory|finest/i },
 ]
 
 function detectIntent(msg: string): Intent {
@@ -26,6 +27,44 @@ function detectIntent(msg: string): Intent {
     if (p.re.test(msg)) return p.intent
   }
   return 'idle'
+}
+
+const LINES_EN: Record<Intent, string[]> = {
+  taunt: [
+    'Say that again. I will take the tongue first.',
+    'The mouth lives. I will shut it.',
+    'Ha! I will carve that on your stone.',
+  ],
+  respect: [
+    '…Fair words. Lead still does not pick favorites.',
+    'I remember a polite man. Not today.',
+    'Hnh. You can see, at least.',
+  ],
+  threat: [
+    '…Hope that is wind. Why is the hand so heavy.',
+    'I have seen that look. He never fired.',
+    'Trying to scare me. I will not say it worked.',
+  ],
+  read: [
+    '…What did you see. Keep that talk.',
+    'How did you know that.',
+    'You have been watching. That crawls.',
+  ],
+  peace: [
+    'Holster it? First man in this town to say that.',
+    '…A drink. Been a while since I heard that.',
+    'A joke. Then why did the hand stop.',
+  ],
+  ask: [
+    'This is no time for that.',
+    'Ask it in the grave.',
+    '…Too many words. That may be your last.',
+  ],
+  idle: [
+    'Talk is enough. Iron next.',
+    'The West is not won with a pretty line.',
+    'If you are done talking, set the hand.',
+  ],
 }
 
 const LINES: Record<Intent, string[]> = {
@@ -81,17 +120,18 @@ export function fallbackChat(params: {
   playerMessage: string
   turn: number
   round: number
+  locale?: Locale
 }): {
   reply: string
   mood: Mood
   mods: DuelMods
   usedAi: boolean
 } {
-  const { opponent, playerMessage, turn, round } = params
+  const { opponent, playerMessage, turn, round, locale = 'ko' } = params
   const msg = playerMessage.trim()
   const intent = detectIntent(msg)
   const seed = msg.length + turn
-  const sincere = /진심|제발|부탁|목숨|가족|약속|맹세|아이|고향/.test(msg)
+  const sincere = /진심|제발|부탁|목숨|가족|약속|맹세|아이|고향|please|swear|child|family|home|mercy/.test(msg)
 
   let mood: Mood
   switch (intent) {
@@ -116,13 +156,19 @@ export function fallbackChat(params: {
   }
 
   const peaceEnding = intent === 'peace' && peaceAllowed(round, turn, mood)
+  const bank = locale === 'en' ? LINES_EN : LINES
   let reply = peaceEnding
-    ? '…좋다. 오늘은 피를 아끼자. 꺼져라, 살아서.'
-    : pick(LINES[intent], seed)
+    ? locale === 'en'
+      ? '…Fine. Spare the blood today. Get out living.'
+      : '…좋다. 오늘은 피를 아끼자. 꺼져라, 살아서.'
+    : pick(bank[intent], seed)
 
   if (intent === 'taunt' && turn === 1) {
     const name = opponent.name
-    reply = `${reply} 내 이름은 ${name}${hasFinalConsonant(name) ? '이' : ''}다. 잊지 마라.`
+    reply =
+      locale === 'en'
+        ? `${reply} Name is ${name}. Do not forget it.`
+        : `${reply} 내 이름은 ${name}${hasFinalConsonant(name) ? '이' : ''}다. 잊지 마라.`
   }
 
   const effect = defaultMoodDeltas(mood)

@@ -9,7 +9,10 @@
  */
 
 import { TOTAL_ROUNDS } from '../../shared/game.js'
+import type { Locale } from '../../shared/locale.js'
 import { clamp, type Mood } from '../../shared/mood.js'
+
+export { parseLocale, type Locale } from '../../shared/locale.js'
 
 export { FAME_STREAK_THRESHOLD, MAX_STANDOFF_TURNS, TOTAL_ROUNDS } from '../../shared/game.js'
 export {
@@ -31,9 +34,24 @@ JSON 객체만 출력. 마크다운/이모지/설명 금지. 지정된 키만 �
 export const KOREAN_RULES = `[한국어/용어 규칙]
 1880년대 서부극 한국어 입말. 직역체/존댓말/설명체 금지. '텔' 대신 '버릇/손버릇'으로 표현.`
 
+/** 영문 문장 품질 규칙 */
+export const ENGLISH_RULES = `[Language]
+Write ALL flavor text in English. 1880s Western vernacular. No Korean. Short spoken lines. Call the pre-draw habit a "tell".`
+
+export function languageRules(locale: Locale) {
+  return locale === 'en' ? ENGLISH_RULES : KOREAN_RULES
+}
+
 /** 대치 대사 품질 규칙 */
 export const DIALOGUE_RULES = `[대사 규칙]
 실제 입말 1~2문장(최대 50자). 상대의 말에 직접 반응. taunt 반복 금지. 버릇·약점을 짚으면 동요/부정.`
+
+export const DIALOGUE_RULES_EN = `[Dialogue]
+1–2 spoken sentences (max 80 characters). Answer the other person. Do not repeat the opening taunt. If they name the tell or a weakness, flinch or deny.`
+
+export function dialogueRules(locale: Locale) {
+  return locale === 'en' ? DIALOGUE_RULES_EN : DIALOGUE_RULES
+}
 
 /** 세계관 고정 */
 export const WORLD_RULES = `[세계관]
@@ -43,6 +61,14 @@ export const WORLD_RULES = `[세계관]
 export const NAME_RULES = `[이름 규칙]
 - name: 서양식 본명 한글 표기(예: 잭 카슨, 빌리 원암). 한국 성명 금지.
 - alias: 8자 이내 서부식 별명(예: 녹슨 방아쇠, 사막의 과부).`
+
+export const NAME_RULES_EN = `[Name rules]
+- name: Western given + family in English (e.g. Jack Carson, Billy One-Arm). No Korean names.
+- alias: a short Western handle, max 20 characters (e.g. Rusty Trigger, Dust Widow).`
+
+export function nameRules(locale: Locale) {
+  return locale === 'en' ? NAME_RULES_EN : NAME_RULES
+}
 
 /**
  * 초상화 카탈로그 — 미리 렌더링해 둔 초상화 에셋의 식별자.
@@ -118,6 +144,23 @@ export const ARCHETYPES = [
   '그림자 없는 마지막 무법자 — 전지적이고 여유롭다. 오직 진심만이 닿는다',
 ]
 
+export const ARCHETYPES_EN = [
+  'A loud greenhorn — folds at the first taunt',
+  'A cold avenger — feeling does not land; logic and respect do',
+  'A blowhard swindler — collapses when the lie is named',
+  'A silent shadow — short answers; silence and manners move them',
+  'A counting gambler — talks in odds; the unexpected rattles them',
+  'A strange hexer — fickle; odd talk catches their ear',
+  'A fallen sheriff — believes their own justice; conscience shakes them',
+  'A machine-arm hunter — ignores feeling; a contradiction stalls them',
+  'The last outlaw with no shadow — all-seeing and easy. Only sincerity lands',
+]
+
+export function archetypeFor(round: number, locale: Locale) {
+  const list = locale === 'en' ? ARCHETYPES_EN : ARCHETYPES
+  return list[round - 1] ?? list[0]
+}
+
 /* ------------------------------- 검증 유틸 ------------------------------- */
 
 const EMOJI =
@@ -157,7 +200,21 @@ export function sanitizeLine(
 }
 
 /** sanitize 실패 시에도 대화 흐름이 끊기지 않게 mood별 짧은 대사 */
-export function dialogueFallback(mood: Mood): string {
+export function dialogueFallback(mood: Mood, locale: Locale = 'ko'): string {
+  if (locale === 'en') {
+    switch (mood) {
+      case 'angered':
+        return 'Big mouth. Prove it with the hand.'
+      case 'intimidated':
+        return '…I hear the heat. I still will not step back.'
+      case 'scared':
+        return 'Save the bluff. Your hand is the one shaking.'
+      case 'suspicious':
+        return 'What are you looking at so hard?'
+      default:
+        return 'Talk is done. Show the hand.'
+    }
+  }
   switch (mood) {
     case 'angered':
       return '입만 살았군. 손으로 증명해봐.'
@@ -235,6 +292,19 @@ const WESTERN_NAME_FALLBACKS = [
   '무명의 방랑자',
 ]
 
+const WESTERN_NAME_FALLBACKS_EN = [
+  'Jack Carson',
+  'Henry McGraw',
+  'Rosa Beltran',
+  'Billy One-Arm',
+  'Silva Dane',
+  'Marcus Steel',
+  'Frank Morrigan',
+  'Joseph Crawford',
+  'Della Murdock',
+  'Nameless Drifter',
+]
+
 /** 현대 한국식 이름·슬랭인지 판별 */
 export function isModernKoreanName(input: string): boolean {
   const s = input.trim()
@@ -250,16 +320,17 @@ export function isModernKoreanName(input: string): boolean {
 }
 
 /** 서부 무법자 본명 — 한국식 이름이면 라운드별 서양식 이름으로 교체 */
-export function sanitizeWesternName(input: unknown, round: number): string {
-  const fallback = WESTERN_NAME_FALLBACKS[(clamp(Math.round(round), 1, TOTAL_ROUNDS) - 1) % WESTERN_NAME_FALLBACKS.length]
-  const s = sanitizeLine(input, { max: 16, fallback })
+export function sanitizeWesternName(input: unknown, round: number, locale: Locale = 'ko'): string {
+  const names = locale === 'en' ? WESTERN_NAME_FALLBACKS_EN : WESTERN_NAME_FALLBACKS
+  const fallback = names[(clamp(Math.round(round), 1, TOTAL_ROUNDS) - 1) % names.length]
+  const s = sanitizeLine(input, { max: locale === 'en' ? 24 : 16, fallback })
   if (isModernKoreanName(s)) return fallback
   return s
 }
 
 /** 총잡이 별명 — 현대식·한국식 이름이면 교체 */
-export function sanitizeAlias(input: unknown, fallback = '무명의 총잡이'): string {
-  const s = sanitizeLine(input, { max: 14, fallback })
+export function sanitizeAlias(input: unknown, fallback = '무명의 총잡이', locale: Locale = 'ko'): string {
+  const s = sanitizeLine(input, { max: locale === 'en' ? 20 : 14, fallback })
   if (isModernKoreanName(s)) return fallback
   return s
 }
