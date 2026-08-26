@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { sfx } from '../audio/sfx'
 import { perkById } from '../data/perks'
 import { PerkIcon } from './PerkIcon'
 import { downloadNewspaperImage } from '../canvas/newspaperImage'
+import { halftone, loadImage } from '../canvas/halftone'
+import { portraitSrc } from '../data/portraits'
+import { pressPortraitEnabled } from '../gl/flags'
 import type { DuelOutcome, NewspaperArticle, Opponent, PerkId } from '../types'
 
 interface Props {
@@ -75,7 +78,7 @@ export function Newspaper({
 
   const handleDownload = () => {
     sfx.click()
-    downloadNewspaperImage({
+    void downloadNewspaperImage({
       article,
       opponent,
       playerWon,
@@ -102,6 +105,7 @@ export function Newspaper({
         <p className="byline">
           {opponent.alias} — 현상금 ${opponent.bounty.toLocaleString()}
         </p>
+        <NewspaperMug opponent={opponent} round={round} />
         <p className="body">{article.body}</p>
         <blockquote>{article.quote}</blockquote>
 
@@ -184,5 +188,49 @@ export function Newspaper({
         {playerWon || peace ? (isLast ? '전설이 되다' : '더스트 타운 잡화점 들르기 ➔') : '무덤에서 다시'}
       </button>
     </div>
+  )
+}
+
+/**
+ * 신문에 실린 수배 사진.
+ *
+ * 1880년대 신문은 사진을 점의 크기로 바꿔 찍었다(하프톤). 초상화를 그대로
+ * 얹으면 혼자 현대 이미지처럼 떠서, 같은 방식으로 굽어 종이에 인쇄된 것처럼
+ * 만든다. 캔버스로 실제 점을 찍는 것이라 CSS 필터 흉내와 다르다.
+ */
+function NewspaperMug({ opponent, round }: { opponent: Opponent; round: number }) {
+  const ref = useRef<HTMLCanvasElement>(null)
+  const [on] = useState(pressPortraitEnabled)
+
+  useEffect(() => {
+    if (!on) return
+    let alive = true
+    const SIZE = 132
+
+    void loadImage(portraitSrc(opponent, round)).then((img) => {
+      if (!alive || !img) return
+      const canvas = ref.current
+      if (!canvas) return
+      const plate = halftone(img, { size: SIZE, cell: 3, ink: '#1a0c06', paper: null })
+      if (!plate) return
+      canvas.width = SIZE
+      canvas.height = SIZE
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.drawImage(plate, 0, 0)
+      canvas.dataset.ready = '1'
+    })
+
+    return () => {
+      alive = false
+    }
+  }, [on, opponent, round])
+
+  if (!on) return null
+  return (
+    <figure className="press-mug" aria-hidden>
+      <canvas ref={ref} width={132} height={132} />
+      <figcaption>{opponent.alias}</figcaption>
+    </figure>
   )
 }

@@ -1398,6 +1398,42 @@ input {
   font-family: var(--western);
 }
 
+/* 신문에 실린 수배 사진. 본문이 옆으로 흘러 실제 지면처럼 감긴다. */
+.press-mug {
+  float: right;
+  margin: 4px 0 10px 16px;
+  padding: 6px 6px 4px;
+  border: 1px solid rgba(43, 27, 18, 0.55);
+  outline: 3px double rgba(43, 27, 18, 0.35);
+  outline-offset: 2px;
+  background: rgba(255, 252, 244, 0.5);
+}
+
+.press-mug canvas {
+  display: block;
+  width: 132px;
+  height: 132px;
+}
+
+.press-mug figcaption {
+  margin-top: 4px;
+  text-align: center;
+  font-family: var(--western);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* 좁은 화면에서 사진이 본문을 밀어붙이면 단이 깨진다. 가운데로 내린다. */
+@media (max-width: 560px) {
+  .press-mug {
+    float: none;
+    margin: 10px auto;
+    width: max-content;
+  }
+}
+
 .newspaper .body {
   font-size: 15px;
 }
