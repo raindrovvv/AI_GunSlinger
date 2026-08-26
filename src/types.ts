@@ -12,6 +12,28 @@ export type GamePhase =
 
 export type MoodShift = 'intimidated' | 'angered' | 'calm' | 'scared' | 'suspicious'
 
+/**
+ * 초상화 에셋 식별자. api/_lib/rules.ts의 PORTRAIT_IDS와 같은 목록이며,
+ * 런타임 배열과 파일 경로는 src/data/portraits.ts에 있다.
+ */
+export type PortraitId =
+  | 'young_cowboy'
+  | 'veiled_widow'
+  | 'gold_tooth_swindler'
+  | 'masked_poncho'
+  | 'bespectacled_gunman'
+  | 'talisman_woman'
+  | 'fallen_sheriff'
+  | 'mechanical_arm'
+  /** 최종보스 전용. 서버가 고를 수 없고 최종 라운드에서만 쓰인다. */
+  | 'final_boss'
+  | 'young_male'
+  | 'middle_male'
+  | 'elder_male'
+  | 'young_female'
+  | 'middle_female'
+  | 'masked_bandit'
+
 export interface Opponent {
   id: string
   name: string
@@ -22,6 +44,8 @@ export interface Opponent {
   tell: string
   personality: string
   taunt: string
+  /** 서버가 골라준 초상화. 없으면 클라이언트가 외모 문장으로 추정한다. */
+  portrait?: PortraitId | null
   baseReactionMs: number
   baseAccuracy: number
 }

@@ -6,9 +6,11 @@ import {
   MODEL,
   NAME_RULES,
   OUTPUT_RULES,
+  PORTRAIT_RULES,
   WORLD_RULES,
   clamp,
   clientIp,
+  coercePortrait,
   difficultySpec,
   parseJsonLoose,
   rateLimited,
@@ -51,19 +53,22 @@ ${avoidList ? `- 중복 방지: ${avoidList}` : ''}
 - tell: 뽑기 직전 관찰 가능한 신체 버릇 한 줄(손/눈/모자/장비 등)
 - personality: 성격 및 대화 공략 약점 한 줄
 - taunt: 결투 직전 도발 대사(40자 이내)
+${PORTRAIT_RULES}
 
 ${KOREAN_RULES}
 ${WORLD_RULES}
 ${OUTPUT_RULES}
 
 [출력 스키마]
-{"name":"","alias":"","bounty":0,"crime":"","appearance":"","tell":"","personality":"","taunt":"","baseReactionMs":0,"baseAccuracy":0}`
+{"name":"","alias":"","bounty":0,"crime":"","appearance":"","tell":"","personality":"","taunt":"","portrait":"","baseReactionMs":0,"baseAccuracy":0}`
 
   try {
     const completion = await getClient().chat.completions.create({
       model: MODEL,
       temperature: 1.05,
-      max_tokens: 240,
+      // portrait 키가 늘면서 240에서는 잘릴 여지가 생겼다. 잘리면 JSON 전체가
+      // 깨져 폴백으로 떨어지므로 여유를 둔다.
+      max_tokens: 280,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: systemPrompt },
@@ -92,6 +97,9 @@ ${OUTPUT_RULES}
         fallback: '호전적이며 도발에 쉽게 넘어간다',
       }),
       taunt: sanitizeLine(parsed.taunt, { max: 44, fallback: '덤벼라, 이름 없는 놈.' }),
+      // 목록 밖이면 null로 넘긴다. 클라이언트가 appearance 키워드 → 이름 해시
+      // 순으로 대신 배정하므로 초상화가 비는 일은 없다.
+      portrait: coercePortrait(parsed.portrait),
       baseReactionMs: Math.round(
         clamp(Number(parsed.baseReactionMs) || spec.reaction, 220, 560),
       ),

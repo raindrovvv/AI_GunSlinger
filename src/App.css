@@ -641,11 +641,16 @@ input {
   z-index: 1;
 }
 
-.mugshot-svg {
+/* 초상화는 배경을 지운 512px 흉상이다. 세피아·그레인·모서리 눌림은
+   .mugshot 쪽에 걸려 있어서 이 이미지에도 그대로 얹힌다. */
+.mugshot-portrait {
   position: relative;
   z-index: 1;
-  width: 86%;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* 얼굴이 위쪽에 있으니 잘릴 때 아래를 버린다 */
+  object-position: 50% 12%;
 }
 
 .wanted-poster h2,

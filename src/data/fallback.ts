@@ -3,11 +3,12 @@ import type { Opponent } from '../types'
 export const FALLBACK_OPPONENTS: Opponent[] = [
   {
     id: 'fb-1',
+    portrait: 'young_cowboy',
     name: '빌리 카슨',
     alias: '녹슨 방아쇠',
     bounty: 1200,
     crime: '살롱에서 포커 패를 바꿔치기하고 도주',
-    appearance: '낡은 카우보이 모자, 녹슨 권총, 한쪽 눈 안대',
+    appearance: '낡은 카우보이 모자, 녹슨 권총, 덥수룩한 수염 자국',
     tell: '긴장하면 왼손 엄지로 홀스터를 톡톡 두드린다',
     personality: '허세 많고 쉽게 도발당함. 욕설에 약함.',
     taunt: '네 총이 녹슬기 전에 내가 먼저 쏴주지.',
@@ -16,6 +17,7 @@ export const FALLBACK_OPPONENTS: Opponent[] = [
   },
   {
     id: 'fb-2',
+    portrait: 'veiled_widow',
     name: '로사 벨트란',
     alias: '사막의 과부',
     bounty: 2800,
@@ -29,6 +31,7 @@ export const FALLBACK_OPPONENTS: Opponent[] = [
   },
   {
     id: 'fb-3',
+    portrait: 'gold_tooth_swindler',
     name: '렉스 모리건',
     alias: '거짓말쟁이 렉스',
     bounty: 3500,
@@ -42,6 +45,7 @@ export const FALLBACK_OPPONENTS: Opponent[] = [
   },
   {
     id: 'fb-4',
+    portrait: 'masked_poncho',
     name: '실바 카터',
     alias: '말없는 그림자',
     bounty: 5000,
@@ -55,6 +59,7 @@ export const FALLBACK_OPPONENTS: Opponent[] = [
   },
   {
     id: 'fb-5',
+    portrait: 'bespectacled_gunman',
     name: '존 크로포드',
     alias: '계산기 존',
     bounty: 6200,
@@ -68,6 +73,7 @@ export const FALLBACK_OPPONENTS: Opponent[] = [
   },
   {
     id: 'fb-6',
+    portrait: 'talisman_woman',
     name: '마리 델라크루즈',
     alias: '주문 외는 마녀',
     bounty: 7500,
@@ -81,6 +87,7 @@ export const FALLBACK_OPPONENTS: Opponent[] = [
   },
   {
     id: 'fb-7',
+    portrait: 'fallen_sheriff',
     name: '헨리 워드',
     alias: '어긋난 보안관',
     bounty: 9000,
@@ -94,6 +101,7 @@ export const FALLBACK_OPPONENTS: Opponent[] = [
   },
   {
     id: 'fb-8',
+    portrait: 'mechanical_arm',
     name: '마커스 스틸',
     alias: '기계 팔 건맨',
     bounty: 12000,
@@ -107,6 +115,7 @@ export const FALLBACK_OPPONENTS: Opponent[] = [
   },
   {
     id: 'fb-9',
+    portrait: 'final_boss',
     name: '무명의 방랑자',
     alias: '마지막 무법자',
     bounty: 99999,
