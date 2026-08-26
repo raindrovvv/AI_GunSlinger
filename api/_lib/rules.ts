@@ -57,17 +57,57 @@ export function dialogueRules(locale: Locale) {
 export const WORLD_RULES = `[세계관]
 1880년대 서부 마을 '더스트 타운'. 현대 문물/실존인물 언급 금지.`
 
-/** 무법자 이름·별명 규칙 */
+/**
+ * 무법자 이름·별명 규칙
+ *
+ * 예시를 적지 않는다. 작은 모델은 규칙보다 예시를 먼저 베낀다 — 실측으로
+ * 프롬프트에 있던 '빌리 원암'과 '사막의 과부'가 생성 결과에 그대로
+ * 되돌아왔다. 중복 회피 목록에 그 별명을 넣어도 또 나왔다.
+ * 그래서 형태만 말하고 구체적인 이름은 주지 않는다.
+ */
 export const NAME_RULES = `[이름 규칙]
-- name: 서양식 본명 한글 표기(예: 잭 카슨, 빌리 원암). 한국 성명 금지.
-- alias: 8자 이내 서부식 별명(예: 녹슨 방아쇠, 사막의 과부).`
+- name: 서양식 이름 + 성의 한글 표기. 한국 성명 금지.
+- alias: 8자 이내 서부식 별명. 무기·날씨·짐승·지형·신체 특징에서 따온다.`
 
 export const NAME_RULES_EN = `[Name rules]
-- name: Western given + family in English (e.g. Jack Carson, Billy One-Arm). No Korean names.
-- alias: a short Western handle, max 20 characters (e.g. Rusty Trigger, Dust Widow).`
+- name: Western given name + family name in English. No Korean names.
+- alias: a short Western handle, max 20 characters. Draw it from a weapon, weather, beast, landscape, or bodily trait.`
 
 export function nameRules(locale: Locale) {
   return locale === 'en' ? NAME_RULES_EN : NAME_RULES
+}
+
+/** 이름 첫 글자로 쓸 로마자. 서부식 이름에 잘 안 붙는 글자는 뺐다. */
+const INITIALS = 'ABCDEGHJKLMNOPRSTVW'
+/** 별명이 매번 같은 우물에서 나오지 않도록 돌리는 소재 */
+const ALIAS_THEMES_KO = ['날씨', '짐승', '연장이나 무기', '지형', '시간대', '소리', '색깔', '상처나 흉터']
+const ALIAS_THEMES_EN = ['weather', 'a beast', 'a tool or weapon', 'landscape', 'time of day', 'a sound', 'a color', 'a scar']
+
+/**
+ * 매 호출마다 이름의 씨앗을 바꾼다.
+ *
+ * 회피 목록만으로는 부족했다. 라운드와 회피 목록이 같으면 프롬프트가 완전히
+ * 같아져서 작은 모델이 늘 같은 답으로 수렴한다 — 실측에서 이름이 'Jesse'로
+ * 계속 몰렸다. 첫 글자 두 개를 무작위로 못 박으면 조합이 수백 가지가 되어
+ * 같은 프롬프트 자체가 나오지 않는다.
+ */
+export function varietyRules(locale: Locale): string {
+  const pick = (s: string) => s[Math.floor(Math.random() * s.length)]
+  const first = pick(INITIALS)
+  let last = pick(INITIALS)
+  if (last === first) {
+    last = INITIALS[(INITIALS.indexOf(first) + 7) % INITIALS.length]
+  }
+
+  if (locale === 'en') {
+    const theme = ALIAS_THEMES_EN[Math.floor(Math.random() * ALIAS_THEMES_EN.length)]
+    return `- The given name must start with "${first}" and the family name with "${last}".
+- Build the alias from ${theme}.`
+  }
+
+  const theme = ALIAS_THEMES_KO[Math.floor(Math.random() * ALIAS_THEMES_KO.length)]
+  return `- 이름은 로마자 "${first}"로, 성은 "${last}"로 시작하는 것을 골라 한글로 적는다.
+- alias는 ${theme}에서 따온다.`
 }
 
 /**

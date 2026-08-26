@@ -12,6 +12,7 @@ import {
   difficultySpec,
   languageRules,
   nameRules,
+  varietyRules,
   parseJsonLoose,
   parseLocale,
   rateLimited,
@@ -43,6 +44,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const archetype = archetypeFor(spec.round, locale)
   const avoidList = Array.isArray(previousNames) ? previousNames.slice(-6).join(', ') : ''
   const en = locale === 'en'
+  // 호출마다 이름 씨앗을 갈아서 같은 프롬프트가 두 번 나오지 않게 한다
+  const variety = varietyRules(locale)
 
   const systemPrompt = en
     ? `Create a Western duel opponent and return JSON.
@@ -51,7 +54,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 [Stats] baseReactionMs ~${spec.reaction} (lower is faster), baseAccuracy ~${spec.accuracy}, bounty ~$${spec.bounty}
 
 ${nameRules(locale)}
-${avoidList ? `- Do not reuse: ${avoidList}` : ''}
+${variety}
+${avoidList ? `- Do not reuse any of these: ${avoidList}` : ''}
 - crime: one concrete crime
 - appearance: one line of looks
 - tell: one visible pre-draw habit (hand/eye/hat/gear)
@@ -71,7 +75,8 @@ ${OUTPUT_RULES}
 [기준 스탯] baseReactionMs ~${spec.reaction} (낮을수록 빠름), baseAccuracy ~${spec.accuracy}, bounty ~$${spec.bounty}
 
 ${nameRules(locale)}
-${avoidList ? `- 중복 방지: ${avoidList}` : ''}
+${variety}
+${avoidList ? `- 다음 이름·별명은 절대 다시 쓰지 않는다: ${avoidList}` : ''}
 - crime: 구체적 범죄 한 줄
 - appearance: 외모 특징 한 줄
 - tell: 뽑기 직전 관찰 가능한 신체 버릇 한 줄(손/눈/모자/장비 등)
